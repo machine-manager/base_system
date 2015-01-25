@@ -39,7 +39,7 @@ chattr -i /etc/resolv.conf
 install-config /etc/resolv.conf
 # Prevent Ubuntu's networking scripts from overwriting it
 chattr +i /etc/resolv.conf
-etckeeper commit "Use Google DNS resolvers"
+etckeeper commit "Use Google DNS resolvers" || true
 
 dist-upgrade-y
 aginir-y openssh-server openntpd unattended-upgrades pollinate molly-guard psmisc zsh $HUMAN_ADMIN_NEEDS
@@ -49,7 +49,7 @@ apt-get clean
 chsh -s /bin/zsh
 
 install-config /etc/openntpd/ntpd.conf
-etckeeper commit "Use more time servers"
+etckeeper commit "Use more time servers" || true
 service openntpd restart
 
 if grep -Pxq 'AllowUsers .*' /etc/ssh/sshd_config; then
