@@ -88,6 +88,12 @@ if [ -n "$FIRST_USER" ]; then
 	su "$FIRST_USER" -c "if [ ! -f ~/.zshrc ]; then touch ~/.zshrc; fi"
 fi
 
+# Set zsh as default shell for new users
+sed -i -r 's,^DSHELL=/bin/bash$,DSHELL=/bin/zsh,g' /etc/adduser.conf
+if [ ! -f /etc/skel/.zshrc ]; then
+	touch /etc/skel/.zshrc
+fi
+
 ### ntpd
 
 install-config /etc/openntpd/ntpd.conf
