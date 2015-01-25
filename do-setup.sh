@@ -67,6 +67,10 @@ if ! grep -Fxq 'source /etc/zsh/zshrc-cont' /etc/zsh/zshrc; then
 	echo >> /etc/zsh/zshrc
 	echo 'source /etc/zsh/zshrc-cont' >> /etc/zsh/zshrc
 fi
+# Create empty ~/.zshrc to prevent zsh from prompting on first run
+if [ ! -f ~/.zshrc ]; then
+	touch ~/.zshrc
+fi
 
 echo
 echo "If anything was upgraded (esp. the kernel), you should reboot now."
