@@ -55,10 +55,10 @@ service openntpd restart
 if grep -Pxq 'AllowUsers .*' /etc/ssh/sshd_config; then
 	echo "AllowUsers root" >> /etc/ssh/sshd_config
 fi
-
 if grep -Pxq 'MaxSessions .*' /etc/ssh/sshd_config; then
 	echo "MaxSessions 60" >> /etc/ssh/sshd_config
 fi
+service ssh restart
 
 install-config /etc/apt/apt.conf.d/20auto-upgrades
 
