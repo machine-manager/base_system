@@ -21,6 +21,10 @@ upgrade-y apt libssl1.0.0
 ### etckeeper
 
 aginir-y git
+
+git config --global user.email "root@$HOSTNAME"
+git config --global user.name "root"
+
 aginir-y etckeeper
 
 if grep -Fxq 'VCS="bzr"' /etc/etckeeper/etckeeper.conf; then
