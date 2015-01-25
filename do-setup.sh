@@ -33,6 +33,7 @@ remove-purge-y ntpd
 # resolvconf = put garbage in my /etc/resolv.conf
 remove-purge-y resolvconf
 
+chattr -i /etc/resolv.conf
 install-config /etc/resolv.conf
 # Prevent Ubuntu's networking scripts from overwriting it
 chattr +i /etc/resolv.conf
