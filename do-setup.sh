@@ -72,5 +72,12 @@ if [ ! -f ~/.zshrc ]; then
 	touch ~/.zshrc
 fi
 
+# Set up zsh for first Ubuntu user as well
+FIRST_USER="$(cat /etc/passwd | grep -P "^[^:]+:x:1000:1000:" | cut -f 1 -d ":")"
+if [ -n "$FIRST_USER" ]; then
+	chsh -s /bin/zsh "$FIRST_USER"
+	su "$FIRST_USER" -c "if [ ! -f ~/.zshrc ]; then touch ~/.zshrc; fi"
+fi
+
 echo
 echo "If anything was upgraded (esp. the kernel), you should reboot now."
