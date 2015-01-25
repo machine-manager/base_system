@@ -30,6 +30,15 @@ fi
 
 etckeeper init || echo "Could not etckeeper init; maybe already initialized?"
 
+### don't get stuck on grub screen forever if last boot failed
+### (e.g. power outage during boot process)
+
+if ! grep -Pxq 'GRUB_RECORDFAIL_TIMEOUT=.*' /etc/default/grub; then
+	sed -i -r 's,^GRUB_TIMEOUT=(.*),GRUB_TIMEOUT=\1\nGRUB_RECORDFAIL_TIMEOUT=\1,g' /etc/default/grub
+fi
+
+update-grub
+
 ### non-ntp time managers
 
 # ntpdate can slightly mess up on the time on boot
