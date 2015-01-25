@@ -3,7 +3,7 @@
 set -e
 set -u
 
-HUMAN_ADMIN_NEEDS="htop dstat tmux git tig zsh wget nano mtr"
+HUMAN_ADMIN_NEEDS="htop dstat tmux git tig wget nano mtr"
 
 . funcs.sh
 
@@ -42,13 +42,31 @@ chattr +i /etc/resolv.conf
 etckeeper commit "Use Google DNS resolvers"
 
 dist-upgrade-y
-aginir-y openssh-server openntpd unattended-upgrades pollinate molly-guard $HUMAN_ADMIN_NEEDS
+aginir-y openssh-server openntpd unattended-upgrades pollinate molly-guard psmisc zsh $HUMAN_ADMIN_NEEDS
 autoremove-purge-y
 apt-get clean
+
+chsh -s /bin/zsh
 
 install-config /etc/openntpd/ntpd.conf
 etckeeper commit "Use more time servers"
 service openntpd restart
 
-# TODO: configure unattended-upgrades
-# TODO: configure openssh-server
+if grep -Pxq 'AllowUsers .*' /etc/ssh/sshd_config; then
+	echo "AllowUsers root" >> /etc/ssh/sshd_config
+fi
+
+if grep -Pxq 'MaxSessions .*' /etc/ssh/sshd_config; then
+	echo "MaxSessions 60" >> /etc/ssh/sshd_config
+fi
+
+install-config /etc/apt/apt.conf.d/20auto-upgrades
+
+install-config /etc/zsh/zshrc-cont
+if grep -Fxq 'source /etc/zsh/zshrc-cont' /etc/zsh/zshrc; then
+	echo >> /etc/zsh/zshrc
+	echo 'source /etc/zsh/zshrc-cont' >> /etc/zsh/zshrc
+fi
+
+echo
+echo "If anything was upgraded (esp. the kernel), you should reboot now."

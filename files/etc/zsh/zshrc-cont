@@ -1,0 +1,93 @@
+umask 007
+
+# Need to be in a comma locale for sort -n to properly sort numbers with commas
+export LANG=en_US.UTF-8
+
+HISTSIZE=10000
+SAVEHIST=3000
+HISTFILE=~/.zsh_history
+
+# Use modern completion system
+autoload -Uz compinit
+compinit
+
+zstyle ':completion:*' auto-description 'specify: %d'
+zstyle ':completion:*' completer _expand _complete _correct _approximate
+zstyle ':completion:*' format 'Completing %d'
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' menu select=2
+#eval "$(dircolors -b)"
+zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*' list-colors ''
+zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
+zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
+zstyle ':completion:*' menu select=long
+zstyle ':completion:*' select-prompt %SScrolling active: current selection at %p%s
+zstyle ':completion:*' use-compctl false
+zstyle ':completion:*' verbose true
+
+zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
+zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
+
+# Use emacs keybindings even if our EDITOR is set to vi
+bindkey -e
+
+# Don't require typing the 'cd ' to change directory
+setopt autocd
+
+# precmd is run before the prompt is displayed
+precmd() {
+	print -Pn '\e]0;%~\a'
+}
+
+# preexec is run after you hit Enter, but before the command is run
+preexec() {
+	# Set the terminal title to the command being run
+	#
+	# See http://www.zsh.org/mla/users/2004/msg00948.html
+	# "Re: question about quoting % in preexec" to understand
+	# the escaping strategy here.
+	print -Pn '\e]0;'
+	print -rn -- "$1"
+	print -Pn '\a'
+}
+
+fast-cat() {
+	echo "$(< $1)"
+}
+
+print-git-branch() {
+	if [[ -f ".git/HEAD" ]]; then
+		echo ":${$(fast-cat .git/HEAD)#ref: refs/heads/}"
+	fi
+}
+
+setopt promptsubst # needed for \$ evaluation
+export PS1="%D %T $(print '%{\e[1;31m%}')%n$(print '%{\e[0;37m%}')@$(print '%{\e[0;36m%}')%m$(print '%{\e[0m%}'):$(print '%{\e[0;32m%}')%d$(print '%{\e[0m%}')\$(print-git-branch)# "
+
+export EDITOR=nano
+export PAGER=less
+export LESS="-IMx4R" # -R for color for git log
+export LESSHISTFILE=-
+
+alias cp='cp -a'
+alias mv='mv -i'
+# Use LC_COLLATE=C to fix the sort order of .dotfiles (they should appear
+# before any non-.dotfiles.)
+alias ls="LC_COLLATE=C ls --block-size=\'1 -A --color=auto -F --time-style=long-iso"
+alias du="du --block-size=\'1"
+# List all files, including hidden, in order by mtime
+alias l='ls -lArt'
+alias nano='nano -w'
+alias s='sudo'
+alias p2=python2
+alias p3=python3
+
+alias plog='git log --pretty=format:"%h %ad | %s%d [%an]" --graph --date=short'
+alias w='git branch'
+alias gpr='git pull --rebase'
+alias gb='git branch'
+alias aggro='git gc --aggressive'
+alias gd='git diff'
+
+alias units='units --verbose'
