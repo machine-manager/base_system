@@ -52,10 +52,10 @@ install-config /etc/openntpd/ntpd.conf
 etckeeper commit "Use more time servers" || true
 service openntpd restart
 
-if grep -Pxq 'AllowUsers .*' /etc/ssh/sshd_config; then
+if ! grep -Pxq 'AllowUsers .*' /etc/ssh/sshd_config; then
 	echo "AllowUsers root" >> /etc/ssh/sshd_config
 fi
-if grep -Pxq 'MaxSessions .*' /etc/ssh/sshd_config; then
+if ! grep -Pxq 'MaxSessions .*' /etc/ssh/sshd_config; then
 	echo "MaxSessions 60" >> /etc/ssh/sshd_config
 fi
 service ssh restart
@@ -63,7 +63,7 @@ service ssh restart
 install-config /etc/apt/apt.conf.d/20auto-upgrades
 
 install-config /etc/zsh/zshrc-cont
-if grep -Fxq 'source /etc/zsh/zshrc-cont' /etc/zsh/zshrc; then
+if ! grep -Fxq 'source /etc/zsh/zshrc-cont' /etc/zsh/zshrc; then
 	echo >> /etc/zsh/zshrc
 	echo 'source /etc/zsh/zshrc-cont' >> /etc/zsh/zshrc
 fi
