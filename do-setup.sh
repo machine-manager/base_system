@@ -22,6 +22,8 @@ if grep -Fxq 'VCS="bzr"' /etc/etckeeper/etckeeper.conf; then
 	sed -i -r 's,^#VCS="git",VCS="git",g' /etc/etckeeper/etckeeper.conf
 fi
 
+etckeeper init || echo "Could not etckeeper init; maybe already initialized?"
+
 # ntpdate can slightly mess up on the time on boot
 remove-purge-y ntpdate
 
