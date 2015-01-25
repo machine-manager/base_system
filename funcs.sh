@@ -17,7 +17,7 @@ autoremove-purge-y() {
 }
 
 remove-purge-y() {
-	DEBIAN_FRONTEND=noninteractive apt-get remove --purge -q -y "$@"
+	DEBIAN_FRONTEND=noninteractive apt-get remove --purge -q -y "$@" || echo "Could not remove package(s)"
 }
 
 aginir-y() {
