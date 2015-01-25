@@ -27,8 +27,10 @@ etckeeper init || echo "Could not etckeeper init; maybe already initialized?"
 # ntpdate can slightly mess up on the time on boot
 remove-purge-y ntpdate
 
-# remove ntpd in case it was installed
+# remove other time managers in case they were installed
 remove-purge-y ntpd
+remove-purge-y adjtimex
+remove-purge-y chrony
 
 # resolvconf = put garbage in my /etc/resolv.conf
 remove-purge-y resolvconf
