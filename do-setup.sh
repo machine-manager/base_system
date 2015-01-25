@@ -7,7 +7,7 @@ HUMAN_ADMIN_NEEDS="htop dstat tmux git tig zsh wget nano mtr"
 
 . funcs.sh
 
-echo "Etc/UTC" > /etc/timezone
+install-config /etc/timezone
 dpkg-reconfigure --frontend noninteractive tzdata
 
 apt-get update
