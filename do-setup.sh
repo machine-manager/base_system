@@ -67,7 +67,7 @@ etckeeper commit "Use Google DNS resolvers" || true
 ### upgrade and install packages
 
 dist-upgrade-y
-aginir-y openssh-server openntpd unattended-upgrades pollinate molly-guard psmisc zsh $HUMAN_ADMIN_NEEDS
+aginir-y openssh-server openntpd unattended-upgrades pollinate molly-guard psmisc acl zsh $HUMAN_ADMIN_NEEDS
 autoremove-purge-y
 apt-get clean
 
