@@ -26,4 +26,7 @@ aginir-y() {
 
 install-config() {
 	cp -a "files/$1" "$1"
+	# Needed in case the system has a restrictive umask that makes
+	# files unreadable by other by default
+	chmod a+r "$1"
 }
