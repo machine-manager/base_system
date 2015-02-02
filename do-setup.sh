@@ -139,8 +139,12 @@ cd /opt && clone-or-pull /root/anonssh-git anonssh-git && chmod -R a+rX /opt/ano
 PATH="$PATH:/opt/anonssh-git"
 
 install-anonssh-config
-
 alias git=anonssh-git
+
+# Now that we have anonssh-git set up, we can switch to the non-https://
+# origin for uSanity and anonssh-git
+cd /root/uSanity && git remote set-url origin git@github.com:ludios/uSanity.git
+cd /root/anonssh-git && git remote set-url origin git@github.com:ludios/anonssh-git.git
 
 cd /root && clone-or-pull https://github.com/ludios/ubuntils ubuntils
 cd /opt && clone-or-pull /root/ubuntils ubuntils && chmod -R a+rX /opt/ubuntils
