@@ -153,6 +153,10 @@ if ! grep -Fxq 'alias git=anonssh-git' /etc/zsh/zshrc-cont; then
 	echo "alias git=anonssh-git" >> /etc/zsh/zshrc-cont
 fi
 
+if ! grep -Fxq 'alias r=tmux-resume' /etc/zsh/zshrc-cont; then
+	echo "alias r=tmux-resume" >> /etc/zsh/zshrc-cont
+fi
+
 if [ -n "$FIRST_USER" ]; then
 	su "$FIRST_USER" -c /opt/anonssh-git/install-anonssh-config
 fi
