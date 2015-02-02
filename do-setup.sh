@@ -120,20 +120,33 @@ install-config /etc/apt/apt.conf.d/20auto-upgrades
 
 ### utilities
 
+clone-or-pull() {
+	local url=$1
+	local dir=$2
+	if [ -e "$dir" ]; then
+		cd "$dir"
+		git pull
+	else
+		git clone "$url" "$dir"
+	fi
+}
+
 mkdir -p /opt
 
-cd /root && git clone https://github.com/ludios/anonssh-git
-cd /opt && git clone /root/anonssh-git && chmod -R a+rX /opt/anonssh-git
+cd /root && clone-or-pull https://github.com/ludios/anonssh-git anonssh-git
+cd /opt && clone-or-pull /root/anonssh-git anonssh-git && chmod -R a+rX /opt/anonssh-git
 
 PATH="$PATH:/opt/anonssh-git"
 
 install-anonssh-config
 
-cd /root && anonssh-git clone https://github.com/ludios/ubuntils
-cd /opt && anonssh-git clone /root/ubuntils && chmod -R a+rX /opt/ubuntils
+alias git=anonssh-git
 
-cd /root && anonssh-git clone https://github.com/ludios/quickmunge
-cd /opt && anonssh-git clone /root/quickmunge && chmod -R a+rX /opt/quickmunge
+cd /root && clone-or-pull https://github.com/ludios/ubuntils ubuntils
+cd /opt && clone-or-pull /root/ubuntils ubuntils && chmod -R a+rX /opt/ubuntils
+
+cd /root && clone-or-pull https://github.com/ludios/quickmunge quickmunge
+cd /opt && clone-or-pull /root/quickmunge quickmunge && chmod -R a+rX /opt/quickmunge
 
 if ! grep -Fxq 'alias git=anonssh-git' /etc/zsh/zshrc-cont; then
 	echo 'PATH="$PATH:/opt/anonssh-git:/opt/ubuntils/bin:/opt/quickmunge/bin"' >> /etc/zsh/zshrc-cont
