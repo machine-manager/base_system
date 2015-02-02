@@ -141,7 +141,7 @@ if ! grep -Fxq 'alias git=anonssh-git' /etc/zsh/zshrc-cont; then
 fi
 
 if [ -n "$FIRST_USER" ]; then
-	su "$FIRST_USER" -c install-anonssh-config
+	su "$FIRST_USER" -c /opt/anonssh-git/install-anonssh-config
 fi
 
 ###
