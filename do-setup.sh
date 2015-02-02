@@ -118,6 +118,32 @@ service ssh restart
 
 install-config /etc/apt/apt.conf.d/20auto-upgrades
 
+### utilities
+
+mkdir -p /opt
+
+cd /root && git clone https://github.com/ludios/anonssh-git
+cd /opt && git clone /root/anonssh-git && chmod -R a+rX /opt/anonssh-git
+
+PATH="$PATH:/opt/anonssh-git"
+
+install-anonssh-config
+
+cd /root && anonssh-git clone https://github.com/ludios/ubuntils
+cd /opt && anonssh-git clone /root/ubuntils && chmod -R a+rX /opt/ubuntils
+
+cd /root && anonssh-git clone https://github.com/ludios/quickmunge
+cd /opt && anonssh-git clone /root/quickmunge && chmod -R a+rX /opt/quickmunge
+
+if ! grep -Fxq 'alias git=anonssh-git' /etc/zsh/zshrc-cont; then
+	echo 'PATH="$PATH:/opt/anonssh-git:/opt/ubuntils/bin:/opt/quickmunge/bin"' >> /etc/zsh/zshrc-cont
+	echo "alias git=anonssh-git" >> /etc/zsh/zshrc-cont
+fi
+
+if [ -n "$FIRST_USER" ]; then
+	su "$FIRST_USER" -c install-anonssh-config
+fi
+
 ###
 
 echo
