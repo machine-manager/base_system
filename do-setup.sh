@@ -3,7 +3,7 @@
 set -e
 set -u
 
-HUMAN_ADMIN_NEEDS="htop dstat tmux git tig wget nano mtr"
+HUMAN_ADMIN_NEEDS="htop dstat tmux git tig wget nano mtr nethogs iftop"
 
 . funcs.sh
 
