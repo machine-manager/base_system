@@ -12,6 +12,14 @@ HUMAN_ADMIN_NEEDS="htop dstat tmux git tig wget nano mtr nethogs iftop"
 install-config /etc/timezone
 dpkg-reconfigure --frontend noninteractive tzdata
 
+### locales
+
+# Needed because some servers (e.g. Ubuntu 14.04 OVH Classic VPS)
+# come with a broken locale setup
+
+locale-gen en_US.UTF-8
+dpkg-reconfigure locales
+
 ### update package listings and apt
 
 apt-get update
@@ -67,6 +75,8 @@ chattr +i /etc/resolv.conf
 etckeeper commit "Use Google DNS resolvers" || true
 
 ### upgrade and install packages
+
+# TODO: no openntpd if in OpenVZ environment (check for /proc/user_beancounters)
 
 dist-upgrade-y
 aginir-y openssh-server openntpd unattended-upgrades pollinate molly-guard psmisc acl zsh $HUMAN_ADMIN_NEEDS
