@@ -96,3 +96,6 @@ alias gsf='git svn fetch'
 alias gcam='git commit -a -m'
 
 alias units='units --verbose'
+
+# Typos caused by keyboard matrix circuit
+alias Grep=grep
