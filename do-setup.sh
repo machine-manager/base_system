@@ -3,7 +3,7 @@
 set -e
 set -u
 
-HUMAN_ADMIN_NEEDS="htop dstat tmux git tig wget nano mtr nethogs iftop software-properties-common"
+HUMAN_ADMIN_NEEDS="htop dstat tmux git tig wget nano mtr nethogs iftop lsof software-properties-common rsync"
 
 . funcs.sh
 
