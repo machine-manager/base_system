@@ -1,5 +1,8 @@
 umask 007
 
+# Let me type a ! in a filename without escaping it
+set +o histexpand
+
 # Need to be in a comma locale for sort -n to properly sort numbers with commas
 export LANG=en_US.UTF-8
 
