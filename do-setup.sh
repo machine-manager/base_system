@@ -50,6 +50,12 @@ if [ -f /etc/default/grub ]; then
 		sed -i -r 's,^GRUB_TIMEOUT=(.*),GRUB_TIMEOUT=\1\nGRUB_RECORDFAIL_TIMEOUT=\1,g' /etc/default/grub
 	fi
 
+	# Disable quiet and splash for easier debugging of early boot problems
+	# Enable noautogroup to make 'nice' actually work
+	if grep -Pxq 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"' /etc/default/grub; then
+		sed -i -r 's,GRUB_CMDLINE_LINUX_DEFAULT="quiet splash",GRUB_CMDLINE_LINUX_DEFAULT="noautogroup",g' /etc/default/grub
+	fi
+
 	update-grub
 fi
 
