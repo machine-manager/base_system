@@ -138,17 +138,6 @@ install-config /etc/apt/apt.conf.d/20auto-upgrades
 
 ### utilities
 
-clone-or-pull() {
-	local url=$1
-	local dir=$2
-	if [ -e "$dir" ]; then
-		cd "$dir"
-		git pull
-	else
-		git clone "$url" "$dir"
-	fi
-}
-
 mkdir -p /opt
 
 cd /root && clone-or-pull https://github.com/ludios/anonssh-git anonssh-git

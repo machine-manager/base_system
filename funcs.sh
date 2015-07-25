@@ -30,3 +30,14 @@ install-config() {
 	# files unreadable by other by default
 	chmod a+r "$1"
 }
+
+clone-or-pull() {
+	local url=$1
+	local dir=$2
+	if [ -e "$dir" ]; then
+		cd "$dir"
+		git pull
+	else
+		git clone "$url" "$dir"
+	fi
+}
