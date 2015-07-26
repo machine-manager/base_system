@@ -40,17 +40,18 @@ setopt autocd
 
 # precmd is run before the prompt is displayed
 precmd() {
-	print -Pn '\e]0;%~\a'
+	# Set the terminal title to 'hostname # pwd'
+	print -Pn '\e]0;%m # %~\a'
 }
 
 # preexec is run after you hit Enter, but before the command is run
 preexec() {
-	# Set the terminal title to the command being run
+	# Set the terminal title to 'hostname # the command being run'
 	#
 	# See http://www.zsh.org/mla/users/2004/msg00948.html
 	# "Re: question about quoting % in preexec" to understand
 	# the escaping strategy here.
-	print -Pn '\e]0;'
+	print -Pn '\e]0;%m # '
 	print -rn -- "$1"
 	print -Pn '\a'
 }
