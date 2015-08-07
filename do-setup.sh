@@ -80,6 +80,11 @@ install-config /etc/resolv.conf
 chattr +i /etc/resolv.conf || true
 etckeeper commit "Use Google DNS resolvers" || true
 
+### disable sudo credential caching ###
+
+install-config /etc/sudoers.d/no_cred_caching
+etckeeper commit "Don't let sudo cache credentials" || true
+
 ### upgrade and install packages
 
 # TODO: no openntpd if in OpenVZ environment (check for /proc/user_beancounters)

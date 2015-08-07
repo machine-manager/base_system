@@ -1,0 +1,4 @@
+# Credential caching is extremely dangerous; by default, sudo keeps credentials
+# around for 15 minutes, and any subprocess launched from your shell (not just
+# the shell itself) can silently use `sudo`.
+Defaults timestamp_timeout=0
