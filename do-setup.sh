@@ -3,7 +3,16 @@
 set -e
 set -u
 
-HUMAN_ADMIN_NEEDS="htop dstat tmux git tig wget nano mtr nethogs iftop lsof software-properties-common rsync"
+CONTAINED=0
+if [[ -f /proc/vz/veinfo ]]; then
+	CONTAINED=1
+fi
+if [[ "$container" = "lxc" ]]; then
+	CONTAINED=1
+	deluser ubuntu
+fi
+
+HUMAN_ADMIN_NEEDS="htop dstat tmux git tig wget nano mtr-tiny nethogs iftop lsof software-properties-common rsync"
 
 . funcs.sh
 
@@ -71,14 +80,21 @@ remove-purge-y chrony
 
 ### /etc/resolv.conf
 
-# resolvconf = put garbage in my /etc/resolv.conf
-remove-purge-y resolvconf
+# If we're in a container, trust /etc/resolv.conf to point
+# to something useful (e.g. LXC dnsmasq, or on OVH,
+# OVH's internal DNS server that is reachable when you're
+# being DDoSed)
 
-chattr -i /etc/resolv.conf || rm -f /etc/resolv.conf
-install-config /etc/resolv.conf
-# Prevent Ubuntu's networking scripts from overwriting it
-chattr +i /etc/resolv.conf || true
-etckeeper commit "Use Google DNS resolvers" || true
+if [[ $CONTAINED -eq 0 ]]; then
+	# resolvconf = put garbage in my /etc/resolv.conf
+	remove-purge-y resolvconf
+
+	chattr -i /etc/resolv.conf || rm -f /etc/resolv.conf
+	install-config /etc/resolv.conf
+	# Prevent Ubuntu's networking scripts from overwriting it
+	chattr +i /etc/resolv.conf || true
+	etckeeper commit "Use Google DNS resolvers" || true
+fi
 
 ### disable sudo credential caching ###
 
@@ -87,10 +103,11 @@ etckeeper commit "Don't let sudo cache credentials" || true
 
 ### upgrade and install packages
 
-# TODO: no openntpd if in OpenVZ environment (check for /proc/user_beancounters)
-
 dist-upgrade-y
-aginir-y openssh-server openntpd unattended-upgrades pollinate molly-guard psmisc acl zsh $HUMAN_ADMIN_NEEDS
+if [[ $CONTAINED -eq 0 ]]; then
+	aginir-y openntpd pollinate
+fi
+aginir-y openssh-server unattended-upgrades molly-guard psmisc acl zsh $HUMAN_ADMIN_NEEDS
 autoremove-purge-y
 apt-get clean
 
@@ -123,9 +140,11 @@ fi
 
 ### ntpd
 
-install-config /etc/openntpd/ntpd.conf
-etckeeper commit "Use more time servers" || true
-service openntpd restart
+if [[ $CONTAINED -eq 0 ]]; then
+	install-config /etc/openntpd/ntpd.conf
+	etckeeper commit "Use more time servers" || true
+	service openntpd restart
+fi
 
 ### ssh
 
