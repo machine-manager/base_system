@@ -12,6 +12,7 @@ if [[ "$container" = "lxc" ]]; then
 	deluser ubuntu || true
 fi
 
+# Need software-properties-common for apt-add-repository
 HUMAN_ADMIN_NEEDS="htop dstat tmux git tig wget nano mtr-tiny nethogs iftop lsof software-properties-common rsync"
 
 . funcs.sh
