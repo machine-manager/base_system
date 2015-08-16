@@ -9,7 +9,7 @@ if [[ -f /proc/vz/veinfo ]]; then
 fi
 if [[ "$container" = "lxc" ]]; then
 	CONTAINED=1
-	deluser ubuntu
+	deluser ubuntu || true
 fi
 
 HUMAN_ADMIN_NEEDS="htop dstat tmux git tig wget nano mtr-tiny nethogs iftop lsof software-properties-common rsync"
