@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-set -u
 
 CONTAINED=0
 if [[ -f /proc/vz/veinfo ]]; then
