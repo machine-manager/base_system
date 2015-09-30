@@ -196,6 +196,10 @@ if [ -n "$FIRST_USER" ]; then
 	su "$FIRST_USER" -c /opt/anonssh-git/install-anonssh-config
 fi
 
+### tmux settings
+
+install-config /etc/tmux.conf
+
 ###
 
 echo
