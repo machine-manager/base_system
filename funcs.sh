@@ -1,5 +1,7 @@
 #!/bin/bash
 
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 install-y() {
 	DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" "$@"
 }
@@ -25,7 +27,7 @@ aginir-y() {
 }
 
 install-config() {
-	cp -a "files/$1" "$1"
+	cp -a "$DIR/files/$1" "$1"
 	# Needed in case the system has a restrictive umask that makes
 	# files unreadable by other by default
 	chmod a+r "$1"
