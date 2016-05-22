@@ -99,6 +99,10 @@ alias gs='git status'
 alias gsf='git svn fetch'
 alias gcam='git commit -a -m'
 
+du1s() {
+	du -d1 | sort -n
+}
+
 alias units='units --verbose'
 
 # Typos caused by keyboard matrix circuit
