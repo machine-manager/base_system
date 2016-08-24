@@ -160,6 +160,10 @@ service ssh restart
 
 install-config /etc/apt/apt.conf.d/20auto-upgrades
 
+### nano
+
+install-config /etc/nanorc
+
 ### utilities
 
 mkdir -p /opt

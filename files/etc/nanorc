@@ -1,0 +1,6 @@
+set locking
+set nowrap
+set suspend
+set tabsize 4
+
+include "/usr/share/nano/*.nanorc"
