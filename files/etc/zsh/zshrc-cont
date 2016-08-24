@@ -67,22 +67,43 @@ print-git-branch() {
 }
 
 setopt promptsubst # needed for \$ evaluation
-export PS1="%D %T $(print '%{\e[1;31m%}')%n$(print '%{\e[0;37m%}')@$(print '%{\e[0;36m%}')%m$(print '%{\e[0m%}'):$(print '%{\e[0;32m%}')%d$(print '%{\e[0m%}')\$(print-git-branch)# "
+# PS1= YY-MM-DD HH:MM USER@HOST:PWD:GIT_BRANCH#
+export PS1="\
+%D \
+%T \
+$(print '%{\e[1;31m%}')%n\
+$(print '%{\e[0;37m%}')@\
+$(print '%{\e[0;36m%}')%m\
+$(print '%{\e[0m%}'):\
+$(print '%{\e[0;32m%}')%d\
+$(print '%{\e[0m%}')\$(print-git-branch)\
+# "
 
 export EDITOR=nano
 export PAGER=less
 export LESS="-IMx4R" # -R for color for git log
 export LESSHISTFILE=-
 
+# Only add aliases that make sense to have on all user accounts on every server.
+# Keep in mind that aliases are for human use, not for scripts.
+
 alias cp='cp -a'
 alias mv='mv -i'
+alias du="du --block-size=\'1"
+alias nano='nano -w'
+
 # Use LC_COLLATE=C to fix the sort order of .dotfiles (they should appear
 # before any non-.dotfiles.)
+#
+# Use --block-size=\'1 to show commas at thousands places in file sizes
+#
+# -A / --almost-all shows hidden files except '.' and '..'
+#
+# -F / --classify appends indicator (one of */=>@|) to entries
 alias ls="LC_COLLATE=C ls --block-size=\'1 -A --color=auto -F --time-style=long-iso"
-alias du="du --block-size=\'1"
-# List all files, including hidden, in order by mtime
+
+# List all files, including hidden files, sorted by mtime, most recent last
 alias l='ls -lArt'
-alias nano='nano -w'
 
 alias gpr='git pull --rebase'
 alias gb='git branch'
@@ -98,7 +119,5 @@ du1s() {
 	du -d1 | sort -n
 }
 
-alias units='units --verbose'
-
-# Typos caused by keyboard matrix circuit
+# Typos caused by keyboard matrix circuit not releasing Shift fast enough
 alias Grep=grep
