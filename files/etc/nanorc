@@ -4,3 +4,4 @@ set suspend
 set tabsize 4
 
 include "/usr/share/nano/*.nanorc"
+include "/etc/nano.d/*.nanorc"

@@ -1,0 +1,43 @@
+syntax "elixir" "\.exs?$"
+
+# Reserved words.
+color yellow "\<(def|defdelegate|defexception|defimpl|defmacro|defmacrop|defmodule|defoverridable|defp|defprotocol|defstruct)\>"
+color yellow "\<(do|end|case|cond|if|else|unless|alias|require|import|use|try|catch|rescue|after)\>"
+
+# Constants.
+color brightblue "(\$|@|@@)?\<[A-Z]+[0-9A-Z_a-z]*"
+
+# Ruby "symbols".
+icolor magenta "([ 	]|^):[0-9A-Z_]+\>"
+
+# Some unique things we want to stand out.
+color brightyellow "\<(__FILE__|__LINE__)\>"
+
+# Regular expressions.
+color brightmagenta "/([^/]|(\\/))*/[iomx]*" "%r\{([^}]|(\\}))*\}[iomx]*"
+
+# Shell command expansion is in `backticks` or like %x{this}.  These are
+
+# "double-quotish" (to use a perlism).
+color brightblue "`[^`]*`" "%x\{[^}]*\}"
+
+# Strings, double-quoted.
+color green ""([^"]|(\\"))*"" "%[QW]?\{[^}]*\}" "%[QW]?\([^)]*\)" "%[QW]?<[^>]*>" "%[QW]?\[[^]]*\]" "%[QW]?\$[^$]*\$" "%[QW]?\^[^^]*\^" "%[QW]?![^!]*!"
+
+# Expression substitution.  These go inside double-quoted strings,
+
+# "like #{this}".
+color brightgreen "#\{[^}]*\}"
+
+# Strings, single-quoted.
+color green "'([^']|(\\'))*'" "%[qw]\{[^}]*\}" "%[qw]\([^)]*\)" "%[qw]<[^>]*>" "%[qw]\[[^]]*\]" "%[qw]\$[^$]*\$" "%[qw]\^[^^]*\^" "%[qw]![^!]*!"
+
+# Comments.
+color cyan "#[^{].*$" "#$"
+color brightcyan "##[^{].*$" "##$"
+
+# "Here" docs.
+color green start="<<-?'?EOT'?" end="^EOT"
+
+# Some common markers.
+color brightcyan "(XXX|TODO|FIXME|\?\?\?)"
