@@ -83,20 +83,15 @@ alias du="du --block-size=\'1"
 # List all files, including hidden, in order by mtime
 alias l='ls -lArt'
 alias nano='nano -w'
-alias s='sudo'
-alias p2=python2
-alias p3=python3
 
-alias plog='git log --pretty=format:"%h %ad | %s%d [%an]" --graph --date=short'
-alias w='git branch'
 alias gpr='git pull --rebase'
 alias gb='git branch'
 alias aggro='git gc --aggressive'
 alias gd='git diff'
-alias gt='git tag'
 alias gbsu='git branch --set-upstream'
 alias gs='git status'
-alias gsf='git svn fetch'
+alias gc='git commit'
+alias gca='git commit -a'
 alias gcam='git commit -a -m'
 
 du1s() {
@@ -107,35 +102,3 @@ alias units='units --verbose'
 
 # Typos caused by keyboard matrix circuit
 alias Grep=grep
-
-# Starts an process with arguments and restarts it when it exits,
-# slowing down the restart speed if the process returns a non-0
-# exit code.  Useful for development-mode servers that exit when
-# they detect source changes.
-restarter() {
-	local wait=0.0625
-	while true; do
-		echo -n -e '\e[33m'
-		print -n -P '[restarter] %D %*'
-		echo -E " starting ${*}"
-		echo -n -e '\e[39m'
-		# eval "$@" is need to make `restarter somealias args` work
-		# eval "${(q)@}" is need to make that work with spaces
-		eval "${(q)@}"
-		local exitcode=$?
-		if [[ $exitcode -eq 0 ]]; then
-			wait=0.0625
-		else
-			wait=$(( wait * 2))
-			# zsh adds a needless trailing . on integers
-			wait=${wait%%.}
-			if [[ $wait -gt 4 ]]; then
-				wait=4
-			fi
-		fi
-		echo -n -e '\e[33m'
-		echo -E "[restarter] Child exit code: $exitcode.  Restarting in $wait seconds..."
-		echo -n -e '\e[39m'
-		sleep $wait
-	done
-}
