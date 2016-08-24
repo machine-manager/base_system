@@ -1,10 +1,8 @@
-umask 007
+### zsh setup
 
-# Let me type a ! in a filename without escaping it
+# Makes ! have no special meaning so that you can use it in a filename
+# without escaping
 set +o histexpand
-
-# Need to be in a comma locale for sort -n to properly sort numbers with commas
-export LANG=en_US.UTF-8
 
 HISTSIZE=10000
 SAVEHIST=3000
@@ -56,6 +54,7 @@ preexec() {
 	print -Pn '\a'
 }
 
+# `cat` without spawning a process
 fast-cat() {
 	echo "$(< $1)"
 }
@@ -79,18 +78,33 @@ $(print '%{\e[0;32m%}')%d\
 $(print '%{\e[0m%}')\$(print-git-branch)\
 # "
 
+
+
+### Environment
+
+umask 007
+
+# Need to be in a comma locale for sort -n to properly sort numbers with commas
+export LANG=en_US.UTF-8
+
 export EDITOR=nano
 export PAGER=less
 export LESS="-IMx4R" # -R for color for git log
 export LESSHISTFILE=-
 
+
+
+### Aliases
+
 # Only add aliases that make sense to have on all user accounts on every server.
 # Keep in mind that aliases are for human use, not for scripts.
 
 alias cp='cp -a'
+# preserve extended attributes
+alias rsync='rsync -X'
 alias mv='mv -i'
 alias du="du --block-size=\'1"
-alias nano='nano -w'
+alias df='df -T'
 
 # Use LC_COLLATE=C to fix the sort order of .dotfiles (they should appear
 # before any non-.dotfiles.)
