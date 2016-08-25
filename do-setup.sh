@@ -12,7 +12,8 @@ if [[ "$container" = "lxc" ]]; then
 fi
 
 # Need software-properties-common for apt-add-repository
-HUMAN_ADMIN_NEEDS="htop dstat tmux git tig wget nano mtr-tiny nethogs iftop lsof software-properties-common ppa-purge rsync pv"
+# Need time because fish lacks it
+HUMAN_ADMIN_NEEDS="htop dstat tmux git tig wget nano mtr-tiny nethogs iftop lsof software-properties-common ppa-purge rsync pv tree time"
 
 . funcs.sh
 

@@ -133,6 +133,8 @@ alias ls="LC_COLLATE=C ls --block-size=\'1 -A --color=auto -F --time-style=long-
 # List all files, including hidden files, sorted by mtime, most recent last
 alias l='ls -lArt'
 
+alias r=tmux-resume
+
 alias gpr='git pull --rebase'
 alias gb='git branch'
 alias aggro='git gc --aggressive'
