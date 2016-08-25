@@ -115,10 +115,10 @@ apt-get clean
 
 chsh -s /bin/zsh
 
-install-config /etc/zsh/zshrc-cont
-if ! grep -Fxq 'source /etc/zsh/zshrc-cont' /etc/zsh/zshrc; then
+install-config /etc/zsh/zshrc-custom
+if ! grep -Fxq 'source /etc/zsh/zshrc-custom' /etc/zsh/zshrc; then
 	echo >> /etc/zsh/zshrc
-	echo 'source /etc/zsh/zshrc-cont' >> /etc/zsh/zshrc
+	echo 'source /etc/zsh/zshrc-custom' >> /etc/zsh/zshrc
 fi
 # Create empty ~/.zshrc to prevent zsh from prompting on first run
 if [ ! -f ~/.zshrc ]; then
@@ -187,13 +187,13 @@ cd /opt && clone-or-pull /root/ubuntils ubuntils && chmod -R a+rX /opt/ubuntils
 cd /root && clone-or-pull https://github.com/ludios/quickmunge quickmunge
 cd /opt && clone-or-pull /root/quickmunge quickmunge && chmod -R a+rX /opt/quickmunge
 
-if ! grep -Fxq 'alias git=anonssh-git' /etc/zsh/zshrc-cont; then
-	echo 'PATH="$PATH:/opt/anonssh-git:/opt/ubuntils/bin:/opt/quickmunge/bin"' >> /etc/zsh/zshrc-cont
-	echo "alias git=anonssh-git" >> /etc/zsh/zshrc-cont
+if ! grep -Fxq 'alias git=anonssh-git' /etc/zsh/zshrc-custom; then
+	echo 'PATH="$PATH:/opt/anonssh-git:/opt/ubuntils/bin:/opt/quickmunge/bin"' >> /etc/zsh/zshrc-custom
+	echo "alias git=anonssh-git" >> /etc/zsh/zshrc-custom
 fi
 
-if ! grep -Fxq 'alias r=tmux-resume' /etc/zsh/zshrc-cont; then
-	echo "alias r=tmux-resume" >> /etc/zsh/zshrc-cont
+if ! grep -Fxq 'alias r=tmux-resume' /etc/zsh/zshrc-custom; then
+	echo "alias r=tmux-resume" >> /etc/zsh/zshrc-custom
 fi
 
 if [ -n "$FIRST_USER" ]; then

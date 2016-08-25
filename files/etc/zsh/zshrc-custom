@@ -4,8 +4,8 @@
 # without escaping
 set +o histexpand
 
-HISTSIZE=10000
-SAVEHIST=3000
+HISTSIZE=32768
+SAVEHIST=32768
 HISTFILE=~/.zsh_history
 
 # Use modern completion system
@@ -15,6 +15,7 @@ compinit
 # $LS_COLORS used by completion setup below
 eval "$(/usr/bin/dircolors -b)"
 
+# This configuration comes from /etc/zsh/newuser.zshrc.recommended
 zstyle ':completion:*' auto-description 'specify: %d'
 zstyle ':completion:*' completer _expand _complete _correct _approximate
 zstyle ':completion:*' format 'Completing %d'
@@ -26,7 +27,12 @@ zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character t
 zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
 zstyle ':completion:*' menu select=long
 zstyle ':completion:*' select-prompt %SScrolling active: current selection at %p%s
+
+# Disable old-style completion
 zstyle ':completion:*' use-compctl false
+
+# "If verbose is true, the function generating the matches may, at its
+# discretion, decide to show more information about them"
 zstyle ':completion:*' verbose true
 
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
@@ -37,6 +43,12 @@ bindkey -e
 
 # Don't require typing the 'cd ' to change directory
 setopt autocd
+
+# Prevent commands from entering history when preceded by a space
+setopt hist_ignore_space
+
+# Append commands to history immediately so that they show up in new shells
+setopt inc_append_history
 
 # precmd is run before the prompt is displayed
 precmd() {
