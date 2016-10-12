@@ -50,6 +50,7 @@ if grep -Fxq 'VCS="bzr"' /etc/etckeeper/etckeeper.conf; then
 	sed -i -r 's,^#VCS="git",VCS="git",g' /etc/etckeeper/etckeeper.conf
 fi
 
+# Not necessary? etckeeper does this at install
 etckeeper init || echo "Could not etckeeper init; maybe already initialized?"
 
 ### don't get stuck on grub screen forever if last boot failed
