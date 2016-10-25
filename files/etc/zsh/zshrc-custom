@@ -9,7 +9,12 @@ set +o histexpand
 # http://www.zsh.org/mla/workers/1996/msg00615.html
 HISTSIZE=11000
 SAVEHIST=10000
+mkdir -p ~/.config/zsh
+touch    ~/.config/zsh/history
 HISTFILE=~/.config/zsh/history
+
+# LS_COLORS used by completion setup below
+eval "$(/usr/bin/dircolors -b)"
 
 # Use modern completion system
 autoload -Uz compinit
@@ -21,15 +26,20 @@ bindkey -e
 # Don't require typing the 'cd ' to change directory
 setopt autocd
 
+# Prevent commands from entering history when preceded by a space
+setopt hist_ignore_space
 
-### Essential settings copied from the stock .zshrc
+# Append commands to history immediately so that they show up in new shells
+setopt inc_append_history
+
+
+### Essential stock settings from /etc/zsh/newuser.zshrc.recommended
 
 zstyle ':completion:*' auto-description 'specify: %d'
 zstyle ':completion:*' completer _expand _complete _correct _approximate
 zstyle ':completion:*' format 'Completing %d'
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*' menu select=2
-#eval "$(dircolors -b)"
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*' list-colors ''
 zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
@@ -80,7 +90,15 @@ print-git-branch() {
 ### System-wide environment
 
 setopt promptsubst # needed for \$ evaluation
-export PS1="$(print '%{\e[1;31m%}')%n$(print '%{\e[0;37m%}')@$(print '%{\e[0;36m%}')%m$(print '%{\e[0m%}'):$(print '%{\e[0;32m%}')%d$(print '%{\e[0m%}')\$(print-git-branch)# "
+# PS1=USER@HOST:PWD:GIT_BRANCH#
+export PS1="\
+$(print '%{\e[1;31m%}')%n\
+$(print '%{\e[0;37m%}')@\
+$(print '%{\e[0;36m%}')%m\
+$(print '%{\e[0m%}'):\
+$(print '%{\e[0;32m%}')%d\
+$(print '%{\e[0m%}')\$(print-git-branch)\
+# "
 
 # Need to be in a comma locale for sort -n to properly sort numbers with commas
 export LANG=en_US.UTF-8
@@ -105,6 +123,16 @@ alias mv='mv -i'
 # Make du and df report sizes in bytes, with commas, like our ls
 alias du="du --block-size=\'1"
 alias df="df -T --block-size=\'1"
+
+# Use LC_COLLATE=C to fix the sort order of .dotfiles (they should appear
+# before any non-.dotfiles.)
+#
+# Use --block-size=\'1 to show commas at thousands places in file sizes
+#
+# -A / --almost-all shows hidden files except '.' and '..'
+#
+# -F / --classify appends indicator (one of */=>@|) to entries
+alias ls="LC_COLLATE=C ls --block-size=\'1 -A --color=auto -F --time-style=long-iso"
 
 # List all files, including hidden files, sorted by mtime, most recent last
 alias l='ls -lArt'
@@ -157,3 +185,13 @@ restarter() {
 		sleep $wait
 	done
 }
+
+. /etc/zsh/zsh-autosuggestions.zsh
+
+# https://github.com/zsh-users/zsh-autosuggestions#configuration
+export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE=fg=6
+# "Chooses the most recent match whose preceding history item matches the most
+# recently executed command (more info). Note that this strategy won't work as
+# expected with ZSH options that don't preserve the history order such as
+# HIST_IGNORE_ALL_DUPS or HIST_EXPIRE_DUPS_FIRST"
+export ZSH_AUTOSUGGEST_STRATEGY=match_prev_cmd
