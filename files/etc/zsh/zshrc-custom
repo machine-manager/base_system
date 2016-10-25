@@ -1,42 +1,19 @@
-### zsh setup
+#!/bin/zsh
+# This is meant to be sourced; shebang line is for editors
 
-# Makes ! have no special meaning so that you can use it in a filename
-# without escaping
+umask 027
+
+# Let me type a ! in a filename without escaping it
 set +o histexpand
 
-HISTSIZE=32768
-SAVEHIST=32768
-HISTFILE=~/.zsh_history
+# http://www.zsh.org/mla/workers/1996/msg00615.html
+HISTSIZE=11000
+SAVEHIST=10000
+HISTFILE=~/.config/zsh/history
 
 # Use modern completion system
 autoload -Uz compinit
 compinit
-
-# $LS_COLORS used by completion setup below
-eval "$(/usr/bin/dircolors -b)"
-
-# This configuration comes from /etc/zsh/newuser.zshrc.recommended
-zstyle ':completion:*' auto-description 'specify: %d'
-zstyle ':completion:*' completer _expand _complete _correct _approximate
-zstyle ':completion:*' format 'Completing %d'
-zstyle ':completion:*' group-name ''
-zstyle ':completion:*' menu select=2
-zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
-zstyle ':completion:*' list-colors ''
-zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
-zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
-zstyle ':completion:*' menu select=long
-zstyle ':completion:*' select-prompt %SScrolling active: current selection at %p%s
-
-# Disable old-style completion
-zstyle ':completion:*' use-compctl false
-
-# "If verbose is true, the function generating the matches may, at its
-# discretion, decide to show more information about them"
-zstyle ':completion:*' verbose true
-
-zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
-zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 
 # Use emacs keybindings even if our EDITOR is set to vi
 bindkey -e
@@ -44,11 +21,29 @@ bindkey -e
 # Don't require typing the 'cd ' to change directory
 setopt autocd
 
-# Prevent commands from entering history when preceded by a space
-setopt hist_ignore_space
 
-# Append commands to history immediately so that they show up in new shells
-setopt inc_append_history
+### Essential settings copied from the stock .zshrc
+
+zstyle ':completion:*' auto-description 'specify: %d'
+zstyle ':completion:*' completer _expand _complete _correct _approximate
+zstyle ':completion:*' format 'Completing %d'
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' menu select=2
+#eval "$(dircolors -b)"
+zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*' list-colors ''
+zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
+zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
+zstyle ':completion:*' menu select=long
+zstyle ':completion:*' select-prompt %SScrolling active: current selection at %p%s
+zstyle ':completion:*' use-compctl false
+zstyle ':completion:*' verbose true
+
+zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
+zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
+
+
+### Terminal title configuration
 
 # precmd is run before the prompt is displayed
 precmd() {
@@ -68,7 +63,9 @@ preexec() {
 	print -Pn '\a'
 }
 
-# `cat` without spawning a process
+
+### Helper functions for prompt
+
 fast-cat() {
 	echo "$(< $1)"
 }
@@ -79,27 +76,18 @@ print-git-branch() {
 	fi
 }
 
+
+### System-wide environment
+
 setopt promptsubst # needed for \$ evaluation
-# PS1= YY-MM-DD HH:MM USER@HOST:PWD:GIT_BRANCH#
-export PS1="\
-%D \
-%T \
-$(print '%{\e[1;31m%}')%n\
-$(print '%{\e[0;37m%}')@\
-$(print '%{\e[0;36m%}')%m\
-$(print '%{\e[0m%}'):\
-$(print '%{\e[0;32m%}')%d\
-$(print '%{\e[0m%}')\$(print-git-branch)\
-# "
-
-
-
-### Environment
-
-umask 007
+export PS1="$(print '%{\e[1;31m%}')%n$(print '%{\e[0;37m%}')@$(print '%{\e[0;36m%}')%m$(print '%{\e[0m%}'):$(print '%{\e[0;32m%}')%d$(print '%{\e[0m%}')\$(print-git-branch)# "
 
 # Need to be in a comma locale for sort -n to properly sort numbers with commas
 export LANG=en_US.UTF-8
+
+# Keep these files out of HOME
+export ICEAUTHORITY="$XDG_RUNTIME_DIR"/ICEauthority
+export XAUTHORITY="$XDG_RUNTIME_DIR"/Xauthority
 
 export EDITOR=nano
 export PAGER=less
@@ -107,34 +95,24 @@ export LESS="-IMx4R" # -R for color for git log
 export LESSHISTFILE=-
 
 
-
-### Aliases
-
-# Only add aliases that make sense to have on all user accounts on every server.
-# Keep in mind that aliases are for human use, not for scripts.
+### System-wide aliases
 
 alias cp='cp -a'
-# preserve extended attributes
+# preserve extended attributes (-X is not included in -a)
 alias rsync='rsync -X'
-alias mv='mv -i'
-alias du="du --block-size=\'1"
-alias df='df -T'
 
-# Use LC_COLLATE=C to fix the sort order of .dotfiles (they should appear
-# before any non-.dotfiles.)
-#
-# Use --block-size=\'1 to show commas at thousands places in file sizes
-#
-# -A / --almost-all shows hidden files except '.' and '..'
-#
-# -F / --classify appends indicator (one of */=>@|) to entries
-alias ls="LC_COLLATE=C ls --block-size=\'1 -A --color=auto -F --time-style=long-iso"
+alias mv='mv -i'
+# Make du and df report sizes in bytes, with commas, like our ls
+alias du="du --block-size=\'1"
+alias df="df -T --block-size=\'1"
 
 # List all files, including hidden files, sorted by mtime, most recent last
 alias l='ls -lArt'
+alias ll='ls -l'
 
-alias r=tmux-resume
+alias tree='tree -F'
 
+alias git=pinned-git
 alias gpr='git pull --rebase'
 alias gb='git branch'
 alias aggro='git gc --aggressive'
@@ -145,9 +123,37 @@ alias gc='git commit'
 alias gca='git commit -a'
 alias gcam='git commit -a -m'
 
-du1s() {
-	du -d1 | sort -n
-}
-
 # Typos caused by keyboard matrix circuit not releasing Shift fast enough
 alias Grep=grep
+
+# Starts an process with arguments and restarts it when it exits,
+# slowing down the restart speed if the process returns a non-0
+# exit code.  Useful for development-mode servers that exit when
+# they detect source changes.
+restarter() {
+	local wait=0.0625
+	while true; do
+		echo -n -e '\e[33m'
+		print -n -P '[restarter] %D %*'
+		echo -E " starting ${*}"
+		echo -n -e '\e[39m'
+		# eval "$@" is need to make `restarter somealias args` work
+		# eval "${(q)@}" is need to make that work with spaces
+		eval "${(q)@}"
+		local exitcode=$?
+		if [[ $exitcode -eq 0 ]]; then
+			wait=0.0625
+		else
+			wait=$(( wait * 2))
+			# zsh adds a needless trailing . on integers
+			wait=${wait%%.}
+			if [[ $wait -gt 4 ]]; then
+				wait=4
+			fi
+		fi
+		echo -n -e '\e[33m'
+		echo -E "[restarter] Child exit code: $exitcode.  Restarting in $wait seconds..."
+		echo -n -e '\e[39m'
+		sleep $wait
+	done
+}
