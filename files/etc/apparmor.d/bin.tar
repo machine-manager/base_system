@@ -1,5 +1,5 @@
 # tar treats some pathnames as rmt URLs, but because nobody knows about this,
-# there are probably exploitable programs that unintentionally download a
+# there are probably exploitable programs that can unintentionally download a
 # tarball over the remote magtape protocol, instead of using the local file.
 #
 # Prevent tar from doing any kind of network access to avoid these problems.
