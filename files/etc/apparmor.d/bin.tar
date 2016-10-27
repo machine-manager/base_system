@@ -1,10 +1,17 @@
-# tar treats some pathnames as rmt URLs, but because nobody knows about this,
-# there are probably exploitable programs that can unintentionally download a
-# tarball over the remote magtape protocol, instead of using the local file.
+# tar treats some pathnames as rmt paths, but because few people know about
+# this, there are probably exploitable programs that can unintentionally
+# download a tarball over the remote magtape protocol, instead of using the
+# local file that was intended.
 #
 # Prevent tar from doing any kind of network access to avoid these problems.
 #
 # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=290435
+
 /bin/tar {
 	file,
+
+	# tar tries to use these, and even though it seems to work fine without
+	# them, allow both because they're not related to the rmt problem.
+	signal,
+	unix,
 }
