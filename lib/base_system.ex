@@ -1,4 +1,4 @@
-alias Converge.{Runner, Context, StandardReporter, FilePresent, MetaPackageInstalled, PackagePurged, Trigger, Assert, All}
+alias Converge.{Runner, Context, TerminalReporter, FilePresent, MetaPackageInstalled, PackagePurged, Trigger, Assert, All}
 
 defmodule BaseSystem do
 	defmacro content(filename) do
@@ -14,7 +14,7 @@ defmodule BaseSystem do
 			},
 			%Assert{unit: %PackagePurged{name: "ureadahead"}}
 		]}
-		ctx = %Context{run_meet: true, reporter: StandardReporter.new()}
+		ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}
 		Runner.converge(all, ctx)
 	end
 end
