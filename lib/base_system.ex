@@ -7,7 +7,7 @@ defmodule BaseSystem do
 
 	def main(_args) do
 		all = %All{units: [
-			%FilePresent{path: "/etc/nanorc",    content: content("files/etc/nanorc"),    mode: 0o644},
+			%FilePresent{path: "/etc/nanorc", content: content("files/etc/nanorc"), mode: 0o644},
 			%Trigger{
 				unit:    %FilePresent{path: "/etc/tmux.conf", content: content("files/etc/tmux.conf"), mode: 0o644},
 				trigger: fn -> {_, 0} = System.cmd("service", ["cups", "restart"]) end
