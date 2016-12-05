@@ -8,12 +8,13 @@ defmodule BaseSystem.Mixfile do
 			elixir: ">= 1.4.0",
 			build_embedded: Mix.env == :prod,
 			start_permanent: Mix.env == :prod,
+			escript: escript(),
 			deps: deps()
 		]
 	end
 
-	def application do
-		[extra_applications: [:logger, :converge]]
+	def escript do
+		[main_module: BaseSystem]
 	end
 
 	defp deps do
