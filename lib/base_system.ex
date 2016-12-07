@@ -1,8 +1,10 @@
 alias Converge.{
-	Runner, Context, TerminalReporter, FilePresent, DirectoryPresent, EtcCommitted, MetaPackageInstalled,
-	DanglingPackagesPurged, PackagesMarkedAutoInstalled, PackagePurged, Trigger, Assert, All}
+	Runner, Context, TerminalReporter, FilePresent, FileMissing, DirectoryPresent, EtcCommitted,
+	PackageIndexUpdated, MetaPackageInstalled, DanglingPackagesPurged, PackagesMarkedAutoInstalled,
+	PackagePurged, Trigger, Assert, All
+}
 
-defmodule BaseSystem.Country do
+defmodule BaseSystem.Gather do
 	@country_file "/etc/country"
 
 	@doc """
@@ -26,6 +28,10 @@ defmodule BaseSystem.Country do
 				country
 		end
 	end
+
+	def get_hostname() do
+		File.read!("/etc/hostname") |> String.trim_trailing()
+	end
 end
 
 defmodule BaseSystem.Configure do
@@ -35,16 +41,20 @@ defmodule BaseSystem.Configure do
 
 	Requires that these packages are already installed: erlang-base-hipe curl
 	"""
+	import BaseSystem.Gather
 
 	defmacro content(filename) do
 		File.read!(filename)
 	end
 
 	def main(_args) do
+		# Notes:
+		# libpam-systemd - to make ssh server disconnect clients when it shuts down
+		# psmisc         - for killall
 		base_packages = ~w(
 			linux-image-generic grub-pc netbase ifupdown isc-dhcp-client rsyslog
-			cron net-tools iputils-ping openssh-server molly-guard chrony less
-			strace zsh psmisc acl apparmor apparmor-profiles)
+			cron net-tools iputils-ping sudo openssh-server libpam-systemd molly-guard
+			chrony less strace zsh psmisc acl apparmor apparmor-profiles)
 		human_admin_needs = ~w(
 			htop dstat tmux git tig wget curl nano mtr-tiny nethogs iftop lsof
 			software-properties-common ppa-purge rsync pv tree)
@@ -52,13 +62,21 @@ defmodule BaseSystem.Configure do
 		all = %All{units: [
 			%FilePresent{
 				path:    "/etc/apt/sources.list",
-				content: EEx.eval_string(content("files/etc/apt/sources.list"), [country: get_country()]),
+				content: EEx.eval_string(content("files/etc/apt/sources.list.eex"), [country: get_country()]),
 				mode:    0o644
 			},
-			%DirectoryExists{path: "/var/custom-packages"},
+			%DirectoryPresent{path: "/var/custom-packages", mode: 0o700},
 			%PackageIndexUpdated{},
 			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper"]},
-			%PackagesMarkedAutoInstalled{name: "converge-desired-packages-early"},
+			%PackagesMarkedAutoInstalled{names: "converge-desired-packages-early"},
+
+			# We need a git config with a name and email for etckeeper to work
+			%FilePresent{
+				path:    "/root/.config/git/config",
+				content: EEx.eval_string(content("files/root/.config/git/config.eex"), [hostname: get_hostname()]),
+				mode:    0o640
+			},
+			%EtcCommitted{message: "converge (early)"},
 
 			# ureadahead has some very suspect code and spews messages to syslog
 			# complaining about relative paths
@@ -70,19 +88,40 @@ defmodule BaseSystem.Configure do
 			%Assert{unit: %PackagePurged{name: "ntp"}},
 			%Assert{unit: %PackagePurged{name: "openntpd"}},
 
+			# Make sure that we don't have superfluous stuff that we would find
+			# on a non-minbase install
+			%Assert{unit: %PackagePurged{name: "snapd"}},
+			# We probably don't have many computers that need thermald because the
+			# BIOS and kernel also take actions to keep the CPU cool.
+			# https://01.org/linux-thermal-daemon/documentation/introduction-thermal-daemon
+			%Assert{unit: %PackagePurged{name: "thermald"}},
+			%Assert{unit: %PackagePurged{name: "unattended-upgrades"}},
+			%Assert{unit: %PackagePurged{name: "libnss-mdns"}},
+			%Assert{unit: %PackagePurged{name: "avahi-daemon"}},
+
 			%MetaPackageInstalled{
 				name: "converge-desired-packages",
 				depends: ["converge-desired-packages-early"] ++ base_packages ++ human_admin_needs},
 			%DanglingPackagesPurged{},
+
+			# zfsutils-linux drops a file to do a scrub on the second Sunday of every month
+			%FileMissing{path: "/etc/cron.d/zfsutils-linux"},
+
+			# util-linux drops a file to do a TRIM every week.  If we have servers
+			# with SSDs that benefit from TRIM, we should probably do this some
+			# other time.
+			%FileMissing{path: "/etc/cron.weekly/fstrim"},
 
 			%FilePresent{path: "/etc/timezone",                     content: content("files/etc/timezone"),                     mode: 0o644},
 			%FilePresent{path: "/etc/sudoers.d/no_cred_caching",    content: content("files/etc/sudoers.d/no_cred_caching"),    mode: 0o644},
 			%FilePresent{path: "/etc/apparmor.d/bin.tar",           content: content("files/etc/apparmor.d/bin.tar"),           mode: 0o644},
 			%FilePresent{path: "/etc/resolv.conf",                  content: content("files/etc/resolv.conf"),                  mode: 0o644, immutable: true},
 			%FilePresent{path: "/etc/tmux.conf",                    content: content("files/etc/tmux.conf"),                    mode: 0o644},
+
 			%FilePresent{path: "/etc/nanorc",                       content: content("files/etc/nanorc"),                       mode: 0o644},
 			%FilePresent{path: "/etc/nano.d/elixir.nanorc",         content: content("files/etc/nano.d/elixir.nanorc"),         mode: 0o644},
 			%FilePresent{path: "/etc/nano.d/git-commit-msg.nanorc", content: content("files/etc/nano.d/git-commit-msg.nanorc"), mode: 0o644},
+
 			%FilePresent{path: "/etc/zsh/zshrc-custom",             content: content("files/etc/zsh/zshrc-custom"),             mode: 0o644},
 			%FilePresent{path: "/etc/zsh/zsh-autosuggestions.zsh",  content: content("files/etc/zsh/zsh-autosuggestions.zsh"),  mode: 0o644},
 			%FilePresent{
@@ -90,6 +129,7 @@ defmodule BaseSystem.Configure do
 				content: content("files/etc/zsh/zshrc.factory") <> "\n\n" <> "source /etc/zsh/zshrc-custom",
 				mode:    0o644
 			},
+
 			%Trigger{
 				unit: %FilePresent{
 					path:    "/etc/chrony/chrony.conf",
@@ -98,6 +138,8 @@ defmodule BaseSystem.Configure do
 				},
 				trigger: fn -> {_, 0} = System.cmd("service", ["chrony", "restart"]) end
 			},
+
+			%EtcCommitted{message: "converge"}
 		]}
 		ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}
 		Runner.converge(all, ctx)

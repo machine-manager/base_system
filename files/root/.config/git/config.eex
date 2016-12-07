@@ -1,0 +1,21 @@
+[user]
+	email = root@<%= hostname %>
+	name = root
+
+[core]
+	# Don't hang forever when we `git fetch` a repo that's been deleted
+	askPass = /bin/true
+
+[commit]
+	# Show diff of commit in editor when using 'git commit'
+	verbose = true
+
+[diff]
+	# Show more-logically-grouped diffs
+	compactionHeuristic = true
+
+[branch]
+	autoSetupRebase = always
+
+[tig]
+	wrap-lines = true

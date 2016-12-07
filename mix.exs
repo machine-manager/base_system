@@ -17,6 +17,10 @@ defmodule BaseSystem.Mixfile do
 		[main_module: BaseSystem.Configure]
 	end
 
+	def application do
+		[extra_applications: [:eex]]
+	end
+
 	defp deps do
 		[{:converge, ">= 0.1.0"}]
 	end
