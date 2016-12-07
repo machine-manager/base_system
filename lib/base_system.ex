@@ -44,7 +44,7 @@ defmodule BaseSystem.Configure do
 		base_packages = ~w(
 			linux-image-generic grub-pc netbase ifupdown isc-dhcp-client rsyslog
 			cron net-tools iputils-ping openssh-server molly-guard chrony less
-			strace zsh psmisc acl)
+			strace zsh psmisc acl apparmor apparmor-profiles)
 		human_admin_needs = ~w(
 			htop dstat tmux git tig wget curl nano mtr-tiny nethogs iftop lsof
 			software-properties-common ppa-purge rsync pv tree)
@@ -76,14 +76,24 @@ defmodule BaseSystem.Configure do
 			%DanglingPackagesPurged{},
 
 			%FilePresent{path: "/etc/timezone",                     content: content("files/etc/timezone"),                     mode: 0o644},
+			%FilePresent{path: "/etc/sudoers.d/no_cred_caching",    content: content("files/etc/sudoers.d/no_cred_caching"),    mode: 0o644},
+			%FilePresent{path: "/etc/apparmor.d/bin.tar",           content: content("files/etc/apparmor.d/bin.tar"),           mode: 0o644},
+			%FilePresent{path: "/etc/resolv.conf",                  content: content("files/etc/resolv.conf"),                  mode: 0o644, immutable: true},
+			%FilePresent{path: "/etc/tmux.conf",                    content: content("files/etc/tmux.conf"),                    mode: 0o644},
 			%FilePresent{path: "/etc/nanorc",                       content: content("files/etc/nanorc"),                       mode: 0o644},
 			%FilePresent{path: "/etc/nano.d/elixir.nanorc",         content: content("files/etc/nano.d/elixir.nanorc"),         mode: 0o644},
 			%FilePresent{path: "/etc/nano.d/git-commit-msg.nanorc", content: content("files/etc/nano.d/git-commit-msg.nanorc"), mode: 0o644},
-			%FilePresent{path: "/etc/tmux.conf",                    content: content("files/etc/tmux.conf"),                    mode: 0o644},
+			%FilePresent{path: "/etc/zsh/zshrc-custom",             content: content("files/etc/zsh/zshrc-custom"),             mode: 0o644},
+			%FilePresent{path: "/etc/zsh/zsh-autosuggestions.zsh",  content: content("files/etc/zsh/zsh-autosuggestions.zsh"),  mode: 0o644},
+			%FilePresent{
+				path:    "/etc/zsh/zshrc",
+				content: content("files/etc/zsh/zshrc.factory") <> "\n\n" <> "source /etc/zsh/zshrc-custom",
+				mode:    0o644
+			},
 			%Trigger{
 				unit: %FilePresent{
-					path:    "/etc/tmux.conf",
-					content: EEx.eval_string(content("files/etc/chrony.conf.eex"), [country: get_country()]),
+					path:    "/etc/chrony/chrony.conf",
+					content: EEx.eval_string(content("files/etc/chrony/chrony.conf.eex"), [country: get_country()]),
 					mode:    0o644
 				},
 				trigger: fn -> {_, 0} = System.cmd("service", ["chrony", "restart"]) end
