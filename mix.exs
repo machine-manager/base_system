@@ -14,7 +14,7 @@ defmodule BaseSystem.Mixfile do
 	end
 
 	def escript do
-		[main_module: BaseSystem]
+		[main_module: BaseSystem.Configure]
 	end
 
 	defp deps do
