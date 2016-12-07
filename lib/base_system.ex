@@ -1,7 +1,7 @@
 alias Converge.{
 	Runner, Context, TerminalReporter, FilePresent, FileMissing, DirectoryPresent, EtcCommitted,
 	PackageIndexUpdated, MetaPackageInstalled, DanglingPackagesPurged, PackagesMarkedAutoInstalled,
-	PackagePurged, Trigger, Assert, All
+	PackagesMarkedManualInstalled, PackagePurged, Trigger, Assert, All
 }
 
 defmodule BaseSystem.Gather do
@@ -68,9 +68,11 @@ defmodule BaseSystem.Configure do
 			%DirectoryPresent{path: "/var/custom-packages", mode: 0o700},
 			%PackageIndexUpdated{},
 			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper"]},
-			%PackagesMarkedAutoInstalled{names: "converge-desired-packages-early"},
+			%PackagesMarkedAutoInstalled{names: ["converge-desired-packages-early"]},
 
 			# We need a git config with a name and email for etckeeper to work
+			%DirectoryPresent{path: "/root/.config",     mode: 0o700},
+			%DirectoryPresent{path: "/root/.config/git", mode: 0o700},
 			%FilePresent{
 				path:    "/root/.config/git/config",
 				content: EEx.eval_string(content("files/root/.config/git/config.eex"), [hostname: get_hostname()]),
@@ -102,6 +104,7 @@ defmodule BaseSystem.Configure do
 			%MetaPackageInstalled{
 				name: "converge-desired-packages",
 				depends: ["converge-desired-packages-early"] ++ base_packages ++ human_admin_needs},
+			%PackagesMarkedManualInstalled{names: ["converge-desired-packages"]},
 			%DanglingPackagesPurged{},
 
 			# zfsutils-linux drops a file to do a scrub on the second Sunday of every month
@@ -112,13 +115,22 @@ defmodule BaseSystem.Configure do
 			# other time.
 			%FileMissing{path: "/etc/cron.weekly/fstrim"},
 
+			%Trigger{
+				unit: %FilePresent{
+					path:    "/etc/apparmor.d/bin.tar",
+					content: content("files/etc/apparmor.d/bin.tar"),
+					mode:    0o644
+				},
+				trigger: fn -> {_, 0} = System.cmd("service", ["apparmor", "reload"]) end
+			},
+
 			%FilePresent{path: "/etc/timezone",                     content: content("files/etc/timezone"),                     mode: 0o644},
 			%FilePresent{path: "/etc/sudoers.d/no_cred_caching",    content: content("files/etc/sudoers.d/no_cred_caching"),    mode: 0o644},
-			%FilePresent{path: "/etc/apparmor.d/bin.tar",           content: content("files/etc/apparmor.d/bin.tar"),           mode: 0o644},
 			%FilePresent{path: "/etc/resolv.conf",                  content: content("files/etc/resolv.conf"),                  mode: 0o644, immutable: true},
 			%FilePresent{path: "/etc/tmux.conf",                    content: content("files/etc/tmux.conf"),                    mode: 0o644},
 
 			%FilePresent{path: "/etc/nanorc",                       content: content("files/etc/nanorc"),                       mode: 0o644},
+			%DirectoryPresent{path: "/etc/nano.d",                                                                              mode: 0o755},
 			%FilePresent{path: "/etc/nano.d/elixir.nanorc",         content: content("files/etc/nano.d/elixir.nanorc"),         mode: 0o644},
 			%FilePresent{path: "/etc/nano.d/git-commit-msg.nanorc", content: content("files/etc/nano.d/git-commit-msg.nanorc"), mode: 0o644},
 
