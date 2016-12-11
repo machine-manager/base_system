@@ -138,8 +138,14 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> {_, 0} = System.cmd("service", ["apparmor", "reload"]) end
 			},
 
+			# Disable the Intel Management Engine Interface driver, which we do not need.
+			%FilePresent{path: "/etc/modprobe.d/no-mei.conf",       content: content("files/etc/modprobe.d/no-mei.conf"),       mode: 0o644},
+			# UTC timezone everywhere to avoid confusion and timezone-handling bugs
 			%FilePresent{path: "/etc/timezone",                     content: content("files/etc/timezone"),                     mode: 0o644},
+			# Prevent sudo from caching credentials, because otherwise programs
+			# in the same terminal may be able to unexpectedly `sudo` without asking.
 			%FilePresent{path: "/etc/sudoers.d/no_cred_caching",    content: content("files/etc/sudoers.d/no_cred_caching"),    mode: 0o644},
+			# Lock /etc/resolv.conf to Google DNS servers and without any search domain
 			%FilePresent{path: "/etc/resolv.conf",                  content: content("files/etc/resolv.conf"),                  mode: 0o644, immutable: true},
 			%FilePresent{path: "/etc/tmux.conf",                    content: content("files/etc/tmux.conf"),                    mode: 0o644},
 
