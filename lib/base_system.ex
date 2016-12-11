@@ -1,7 +1,7 @@
 alias Converge.{
 	Runner, Context, TerminalReporter, FilePresent, FileMissing, DirectoryPresent, EtcCommitted,
 	PackageIndexUpdated, MetaPackageInstalled, DanglingPackagesPurged, PackagesMarkedAutoInstalled,
-	PackagesMarkedManualInstalled, PackagePurged, Trigger, Assert, All
+	PackagesMarkedManualInstalled, PackagePurged, Fstab, FstabEntry, Trigger, Assert, All
 }
 
 defmodule BaseSystem.Gather do
@@ -101,6 +101,8 @@ defmodule BaseSystem.Configure do
 			%Assert{unit: %PackagePurged{name: "libnss-mdns"}},
 			%Assert{unit: %PackagePurged{name: "avahi-daemon"}},
 
+			fstab_unit(),
+
 			%MetaPackageInstalled{
 				name: "converge-desired-packages",
 				depends: ["converge-desired-packages-early"] ++ base_packages ++ human_admin_needs},
@@ -155,5 +157,31 @@ defmodule BaseSystem.Configure do
 		]}
 		ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}
 		Runner.converge(all, ctx)
+	end
+
+	defp fstab_unit() do
+		fstab_existing_entries = Fstab.get_entries()
+			|> Enum.map(fn entry -> {entry.mount_point, entry} end)
+			|> Enum.into(%{})
+		fstab_entries = [
+			fstab_existing_entries["/"],
+			fstab_existing_entries["/boot"],
+			fstab_existing_entries["/boot/efi"],
+			%FstabEntry{
+				spec:             "proc",
+				mount_point:      "/proc",
+				type:             "proc",
+				# hidepid=2 prevents users from seeing other users' processes
+				options:          "nodev,noexec,nosuid,hidepid=2",
+				fsck_pass_number: 0
+			}
+		] |> Enum.filter(&(&1 != nil))
+		fstab_trigger = fn ->
+			{_, 0} = System.cmd("mount", ["-o", "remount", "/proc"])
+		end
+		%Trigger{
+			unit:    %Fstab{entries: fstab_entries},
+			trigger: fstab_trigger
+		}
 	end
 end
