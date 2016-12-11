@@ -159,6 +159,7 @@ alias gcam='git commit -a -m'
 
 # Typos caused by keyboard matrix circuit not releasing Shift fast enough
 alias Grep=grep
+alias Sort=sort
 
 # Starts an process with arguments and restarts it when it exits,
 # slowing down the restart speed if the process returns a non-0
