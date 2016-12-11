@@ -55,11 +55,12 @@ defmodule BaseSystem.Configure do
 		# psmisc         - for killall
 		base_packages = ~w(
 			linux-image-generic grub-pc netbase ifupdown isc-dhcp-client rsyslog
-			cron net-tools iputils-ping sudo openssh-server libpam-systemd molly-guard
-			chrony less strace zsh psmisc acl apparmor apparmor-profiles)
+			cron net-tools sudo openssh-server libpam-systemd chrony zsh psmisc
+			acl apparmor apparmor-profiles)
 		human_admin_needs = ~w(
-			htop dstat tmux git tig wget curl nano mtr-tiny nethogs iftop lsof
-			software-properties-common ppa-purge rsync pv tree)
+			molly-guard iputils-ping less strace htop dstat tmux git tig wget curl
+			nano mtr-tiny nethogs iftop lsof software-properties-common ppa-purge
+			rsync pv tree)
 
 		all = %All{units: [
 			%FilePresent{
