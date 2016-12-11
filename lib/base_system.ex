@@ -151,7 +151,7 @@ defmodule BaseSystem.Configure do
 
 			# Prevent sudo from caching credentials, because otherwise programs
 			# in the same terminal may be able to unexpectedly `sudo` without asking.
-			%FilePresent{path: "/etc/sudoers.d/no_cred_caching",    content: content("files/etc/sudoers.d/no_cred_caching"),    mode: 0o644},
+			%FilePresent{path: "/etc/sudoers.d/no-cred-caching",    content: content("files/etc/sudoers.d/no-cred-caching"),    mode: 0o644},
 
 			# Lock /etc/resolv.conf to Google DNS servers and without any search domain
 			%FilePresent{path: "/etc/resolv.conf",                  content: content("files/etc/resolv.conf"),                  mode: 0o644, immutable: true},
