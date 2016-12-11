@@ -140,6 +140,19 @@ defmodule BaseSystem.Configure do
 			%FilePresent{path: "/etc/resolv.conf",                  content: content("files/etc/resolv.conf"),                  mode: 0o644, immutable: true},
 			%FilePresent{path: "/etc/tmux.conf",                    content: content("files/etc/tmux.conf"),                    mode: 0o644},
 
+			# Prevent non-root users from restarting or shutting down the system using the GUI.
+			# This is mostly to prevent accidental restarts; the "Log Out" and "Restart" buttons
+			# are right next to each other and "Restart" does not require confirmation.
+			# http://askubuntu.com/questions/453479/how-to-disable-shutdown-reboot-from-lightdm-in-14-04/454230#454230
+			%DirectoryPresent{path: "/etc/polkit-1",                                                                            mode: 0o755},
+			%DirectoryPresent{path: "/etc/polkit-1/localauthority",                                                             mode: 0o700}, # it ships as 0700
+			%DirectoryPresent{path: "/etc/polkit-1/localauthority/50-local.d",                                                  mode: 0o755},
+			%FilePresent{
+				path:    "/etc/polkit-1/localauthority/50-local.d/restrict-login-powermgmt.pkla",
+				content: content("files/etc/polkit-1/localauthority/50-local.d/restrict-login-powermgmt.pkla"),
+				mode:    0o644
+			},
+
 			%FilePresent{path: "/etc/nanorc",                       content: content("files/etc/nanorc"),                       mode: 0o644},
 			%DirectoryPresent{path: "/etc/nano.d",                                                                              mode: 0o755},
 			%FilePresent{path: "/etc/nano.d/elixir.nanorc",         content: content("files/etc/nano.d/elixir.nanorc"),         mode: 0o644},
