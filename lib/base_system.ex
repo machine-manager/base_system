@@ -1,7 +1,9 @@
 alias Converge.{
-	Runner, Context, TerminalReporter, FilePresent, FileMissing, DirectoryPresent, EtcCommitted,
-	PackageIndexUpdated, MetaPackageInstalled, DanglingPackagesPurged, PackagesMarkedAutoInstalled,
-	PackagesMarkedManualInstalled, PackagePurged, Fstab, FstabEntry, Trigger, Assert, All
+	Runner, Context, TerminalReporter, FilePresent, FileMissing, SymlinkPresent,
+	DirectoryPresent, EtcCommitted, PackageIndexUpdated, MetaPackageInstalled,
+	DanglingPackagesPurged, PackagesMarkedAutoInstalled,
+	PackagesMarkedManualInstalled, PackagePurged, Fstab, FstabEntry, Trigger,
+	Assert, All
 }
 
 defmodule BaseSystem.Gather do
@@ -116,6 +118,13 @@ defmodule BaseSystem.Configure do
 			# with SSDs that benefit from TRIM, we should probably do this some
 			# other time.
 			%FileMissing{path: "/etc/cron.weekly/fstrim"},
+
+			# Disable systemd's atrocious "one ctrl-alt-del reboots the system" feature.
+			# This does not affect the 7x ctrl-alt-del force reboot feature.
+			%Trigger{
+				unit:    %SymlinkPresent{path: "/etc/systemd/system/ctrl-alt-del.target", target: "/dev/null"},
+				trigger: fn -> {_, 0} = System.cmd("systemctl", ["daemon-reload"]) end
+			},
 
 			%Trigger{
 				unit: %FilePresent{
