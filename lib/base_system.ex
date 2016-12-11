@@ -102,6 +102,9 @@ defmodule BaseSystem.Configure do
 			%Assert{unit: %PackagePurged{name: "unattended-upgrades"}},
 			%Assert{unit: %PackagePurged{name: "libnss-mdns"}},
 			%Assert{unit: %PackagePurged{name: "avahi-daemon"}},
+			# Having this installed loads the btrfs kernel module and slows down
+			# the boot with a scan for btrfs volumes.
+			%Assert{unit: %PackagePurged{name: "btrfs-tools"}},
 
 			fstab_unit(),
 
