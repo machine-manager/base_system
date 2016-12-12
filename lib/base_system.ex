@@ -169,6 +169,7 @@ defmodule BaseSystem.Configure do
 				mode:    0o644
 			},
 
+			%FilePresent{path: "/etc/issue",                        content: content("files/etc/issue"),                        mode: 0o644},
 			%FilePresent{path: "/etc/tmux.conf",                    content: content("files/etc/tmux.conf"),                    mode: 0o644},
 			%FilePresent{path: "/etc/nanorc",                       content: content("files/etc/nanorc"),                       mode: 0o644},
 			%DirectoryPresent{path: "/etc/nano.d",                                                                              mode: 0o755},
