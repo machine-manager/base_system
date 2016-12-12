@@ -110,7 +110,7 @@ defmodule BaseSystem.Configure do
 			fstab_unit(),
 
 			%MetaPackageInstalled{
-				name: "converge-desired-packages",
+				name:    "converge-desired-packages",
 				depends: ["converge-desired-packages-early"] ++ base_packages ++ human_admin_needs},
 			%PackagesMarkedManualInstalled{names: ["converge-desired-packages"]},
 			%DanglingPackagesPurged{},
