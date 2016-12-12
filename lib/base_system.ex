@@ -212,7 +212,7 @@ defmodule BaseSystem.Configure do
 				mount_point:      "/proc",
 				type:             "proc",
 				# hidepid=2 prevents users from seeing other users' processes
-				options:          "nodev,noexec,nosuid,hidepid=2",
+				options:          "hidepid=2",
 				fsck_pass_number: 0
 			}
 		] |> Enum.filter(&(&1 != nil))
