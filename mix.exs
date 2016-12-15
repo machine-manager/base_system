@@ -8,10 +8,14 @@ defmodule BaseSystem.Mixfile do
 			elixir: ">= 1.4.0",
 			build_embedded: Mix.env == :prod,
 			start_permanent: Mix.env == :prod,
+			elixirc_options: debug_info(Mix.env),
 			escript: escript(),
 			deps: deps()
 		]
 	end
+
+	defp debug_info(:prod), do: [debug_info: false]
+	defp debug_info(_),     do: [debug_info: true]
 
 	def escript do
 		[main_module: BaseSystem.Configure]
