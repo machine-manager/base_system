@@ -41,7 +41,8 @@ defmodule BaseSystem.Configure do
 	Converts a `debootstrap --variant=minbase` install of Ubuntu LTS into a
 	useful Ubuntu system.
 
-	Requires that these packages are already installed: erlang-base-hipe curl
+	Requires that these packages are already installed:
+	erlang-base-hipe erlang-crypto curl
 	"""
 	import BaseSystem.Gather
 
@@ -103,6 +104,10 @@ defmodule BaseSystem.Configure do
 			%Assert{unit: %PackagePurged{name: "unattended-upgrades"}},
 			%Assert{unit: %PackagePurged{name: "libnss-mdns"}},
 			%Assert{unit: %PackagePurged{name: "avahi-daemon"}},
+			%Assert{unit: %PackagePurged{name: "apport"}},
+			%Assert{unit: %PackagePurged{name: "apport-gtk"}},
+			%Assert{unit: %PackagePurged{name: "python3-apport"}},
+			%Assert{unit: %PackagePurged{name: "python3-problem-report"}},
 			# Having this installed loads the btrfs kernel module and slows down
 			# the boot with a scan for btrfs volumes.
 			%Assert{unit: %PackagePurged{name: "btrfs-tools"}},
