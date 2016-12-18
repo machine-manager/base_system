@@ -27,11 +27,11 @@ defmodule BaseSystem.Configure do
 	end
 
 	def configure(opts \\ []) do
-		use_custom_packages          = Keyword.get(opts, :use_custom_packages,          false)
-		optimize_for_temporary_files = Keyword.get(opts, :optimize_for_temporary_files, false)
+		use_custom_packages            = Keyword.get(opts, :use_custom_packages,            false)
+		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files, false)
 		# Is our boot fully managed by the host, to the point where we don't have
 		# to install a linux kernel and bootloader?  Use `true` for scaleway machines.
-		outside_boot                 = Keyword.get(opts, :outside_boot,                 false)
+		outside_boot                   = Keyword.get(opts, :outside_boot,                   false)
 
 		boot_packages = case outside_boot do
 			false -> ~w(linux-image-generic grub-pc)
@@ -48,7 +48,7 @@ defmodule BaseSystem.Configure do
 			molly-guard iputils-ping less strace htop dstat tmux git tig wget curl
 			nano mtr-tiny nethogs iftop lsof software-properties-common ppa-purge
 			rsync pv tree dnsutils whois)
-		dirty_settings = get_dirty_settings(optimize_for_temporary_files: optimize_for_temporary_files)
+		dirty_settings = get_dirty_settings(optimize_for_short_lived_files: optimize_for_short_lived_files)
 
 		all = %All{units: [
 			%FilePresent{
@@ -267,11 +267,11 @@ defmodule BaseSystem.Configure do
 	end
 
 	defp get_dirty_settings(opts) do
-		optimize_for_temporary_files = Keyword.get(opts, :optimize_for_temporary_files)
-		gb                           = 1024 * 1024 * 1024
-		memtotal                     = Util.get_meminfo()["MemTotal"] # bytes
-		threshold                    = 14 * gb # bytes
-		if optimize_for_temporary_files do
+		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files)
+		gb                             = 1024 * 1024 * 1024
+		memtotal                       = Util.get_meminfo()["MemTotal"] # bytes
+		threshold                      = 14 * gb # bytes
+		if optimize_for_short_lived_files do
 			# Some servers have a workload where they download files, keep them on
 			# disk for a minute or two, upload them, then delete them.  For these
 			# servers, optimize for avoiding writes to disk.
