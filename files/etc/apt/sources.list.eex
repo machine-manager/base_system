@@ -1,7 +1,9 @@
+<%#
 # /var/custom-packages must be first, or apt will guess wrong which source
 # our linux-meta packages came from (because they have the same versions)
 # and go into a "downgrade" loop.
-deb [lang="none"] file:/var/custom-packages ./
+%>
+<%= if use_custom_packages do %>deb [lang="none"] file:/var/custom-packages ./<% end %>
 deb http://<%= country %>.archive.ubuntu.com/ubuntu xenial          main restricted universe multiverse
 deb http://<%= country %>.archive.ubuntu.com/ubuntu xenial-updates  main restricted universe multiverse
 deb http://<%= country %>.archive.ubuntu.com/ubuntu xenial-security main restricted universe multiverse
