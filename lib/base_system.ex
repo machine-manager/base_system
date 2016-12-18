@@ -3,7 +3,7 @@ alias Converge.{
 	DirectoryPresent, EtcCommitted, PackageIndexUpdated, MetaPackageInstalled,
 	DanglingPackagesPurged, PackagesMarkedAutoInstalled,
 	PackagesMarkedManualInstalled, PackagePurged, Fstab, FstabEntry, Trigger,
-	Assert, All
+	Util, Assert, All
 }
 
 defmodule BaseSystem.Gather do
@@ -22,7 +22,7 @@ defmodule BaseSystem.Gather do
 			_              ->
 				{out, 0} = System.cmd("curl", ["-q", "--silent", "http://freegeoip.net/json/"])
 				country =
-					Regex.run(~r/"country_code": ?"(..)"/, out, [capture: :all_but_first])
+					Regex.run(~r/"country_code": ?"(..)"/, out, capture: :all_but_first)
 					|> hd
 					|> String.downcase
 				File.write(@country_file, country)
@@ -37,6 +37,11 @@ defmodule BaseSystem.Gather do
 end
 
 defmodule BaseSystem.Configure do
+	@external_resource "files/etc/apt/sources.list.eex"
+	@external_resource "files/root/.config/git/config.eex"
+	@external_resource "files/etc/chrony/chrony.conf.eex"
+	@external_resource "files/etc/sysctl.conf.eex"
+
 	@moduledoc """
 	Converts a `debootstrap --variant=minbase` install of Ubuntu LTS into a
 	useful Ubuntu system.
@@ -51,6 +56,12 @@ defmodule BaseSystem.Configure do
 	end
 
 	def main(_args) do
+		configure()
+	end
+
+	def configure(opts \\ []) do
+		optimize_for_temporary_files = Keyword.get(opts, :optimize_for_temporary_files)
+
 		# Notes:
 		# libpam-systemd - to make ssh server disconnect clients when it shuts down
 		# psmisc         - for killall
@@ -62,6 +73,7 @@ defmodule BaseSystem.Configure do
 			molly-guard iputils-ping less strace htop dstat tmux git tig wget curl
 			nano mtr-tiny nethogs iftop lsof software-properties-common ppa-purge
 			rsync pv tree)
+		dirty_settings = get_dirty_settings(optimize_for_temporary_files: optimize_for_temporary_files)
 
 		all = %All{units: [
 			%FilePresent{
@@ -97,17 +109,21 @@ defmodule BaseSystem.Configure do
 			# Make sure that we don't have superfluous stuff that we would find
 			# on a non-minbase install
 			%Assert{unit: %PackagePurged{name: "snapd"}},
+			%Assert{unit: %PackagePurged{name: "unattended-upgrades"}},
+			%Assert{unit: %PackagePurged{name: "libnss-mdns"}},
+			%Assert{unit: %PackagePurged{name: "avahi-daemon"}},
+
 			# We probably don't have many computers that need thermald because the
 			# BIOS and kernel also take actions to keep the CPU cool.
 			# https://01.org/linux-thermal-daemon/documentation/introduction-thermal-daemon
 			%Assert{unit: %PackagePurged{name: "thermald"}},
-			%Assert{unit: %PackagePurged{name: "unattended-upgrades"}},
-			%Assert{unit: %PackagePurged{name: "libnss-mdns"}},
-			%Assert{unit: %PackagePurged{name: "avahi-daemon"}},
+
+			# https://donncha.is/2016/12/compromising-ubuntu-desktop/
 			%Assert{unit: %PackagePurged{name: "apport"}},
 			%Assert{unit: %PackagePurged{name: "apport-gtk"}},
 			%Assert{unit: %PackagePurged{name: "python3-apport"}},
 			%Assert{unit: %PackagePurged{name: "python3-problem-report"}},
+
 			# Having this installed loads the btrfs kernel module and slows down
 			# the boot with a scan for btrfs volumes.
 			%Assert{unit: %PackagePurged{name: "btrfs-tools"}},
@@ -198,6 +214,17 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> {_, 0} = System.cmd("service", ["chrony", "restart"]) end
 			},
 
+			%Trigger{
+				unit: %FilePresent{
+					path:    "/etc/sysctl.conf",
+					content: EEx.eval_string(content("files/etc/sysctl.conf.eex"),
+					                         [vm: Map.merge(%{min_free_kbytes: get_min_free_kbytes()},
+					                                        dirty_settings)]),
+					mode:    0o644
+				},
+				trigger: fn -> {_, 0} = System.cmd("service", ["procps", "restart"]) end
+			},
+
 			%EtcCommitted{message: "converge"}
 		]}
 		ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}
@@ -228,5 +255,59 @@ defmodule BaseSystem.Configure do
 			unit:    %Fstab{entries: fstab_entries},
 			trigger: fstab_trigger
 		}
+	end
+
+	# `nil` means don't set; use the default
+	defp get_min_free_kbytes() do
+		memtotal  = Util.get_meminfo()["MemTotal"] # bytes
+		threshold = 30 * 1024 * 1024 * 1024        # bytes
+		# VirtualBox needs a lot of free memory to to avoid dropping some network
+		# packets.  See https://www.virtualbox.org/ticket/15569
+		# We only set this on machines with >= 30GB RAM.
+		case memtotal >= threshold and Util.installed?("virtualbox-5.1") do
+			true  -> 1024 * 1024 # kbytes
+			false -> nil
+		end
+	end
+
+	defp get_dirty_settings(opts) do
+		optimize_for_temporary_files = Keyword.get(opts, :optimize_for_temporary_files)
+		gb                           = 1024 * 1024 * 1024
+		memtotal                     = Util.get_meminfo()["MemTotal"] # bytes
+		threshold                    = 14 * gb # bytes
+		if optimize_for_temporary_files do
+			# Some servers have a workload where they download files, keep them on
+			# disk for a minute or two, upload them, then delete them.  For these
+			# servers, optimize for avoiding writes to disk.
+			%{
+				dirty_background_bytes: round(0.35 * memtotal),
+				dirty_bytes:            round(0.70 * memtotal),
+				dirty_expire_centisecs: 30000 # 300 seconds = 5 minutes
+			}
+		else
+			# On servers with >= 14GB RAM, try to reduce hangs caused by a large
+			# number of dirty pages being written to disk, blocking other reads
+			# and writes.
+			#
+			# These settings might become unnecessary if the "Throttled background
+			# buffered writeback" patches make it into the kernel.
+			#
+			# https://www.kernel.org/doc/Documentation/sysctl/vm.txt
+			# https://lonesysadmin.net/2013/12/22/better-linux-disk-caching-performance-vm-dirty_ratio/
+			# https://lwn.net/Articles/699806/
+			if memtotal >= threshold do
+				%{
+					dirty_background_bytes: 1 * gb,
+					dirty_bytes:            3 * gb,
+					dirty_expire_centisecs: nil
+				}
+			else
+				%{
+					dirty_background_bytes: round(0.1 * memtotal),
+					dirty_bytes:            round(0.2 * memtotal),
+					dirty_expire_centisecs: nil
+				}
+			end
+		end
 	end
 end
