@@ -119,10 +119,10 @@ defmodule BaseSystem.Configure do
 			%Assert{unit: %PackagePurged{name: "thermald"}},
 
 			# https://donncha.is/2016/12/compromising-ubuntu-desktop/
-			%Assert{unit: %PackagePurged{name: "apport"}},
-			%Assert{unit: %PackagePurged{name: "apport-gtk"}},
-			%Assert{unit: %PackagePurged{name: "python3-apport"}},
-			%Assert{unit: %PackagePurged{name: "python3-problem-report"}},
+			%PackagePurged{name: "apport"},
+			%PackagePurged{name: "apport-gtk"},
+			%PackagePurged{name: "python3-apport"},
+			%PackagePurged{name: "python3-problem-report"},
 
 			# Having this installed loads the btrfs kernel module and slows down
 			# the boot with a scan for btrfs volumes.
