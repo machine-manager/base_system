@@ -205,7 +205,8 @@ defmodule BaseSystem.Configure do
 					path:    "/etc/sysctl.conf",
 					content: EEx.eval_string(content("files/etc/sysctl.conf.eex"),
 					                         [vm: Map.merge(%{min_free_kbytes: get_min_free_kbytes()},
-					                                        dirty_settings)]),
+					                                        dirty_settings)],
+					                         trim: true),
 					mode:    0o644
 				},
 				trigger: fn -> {_, 0} = System.cmd("service", ["procps", "restart"]) end
