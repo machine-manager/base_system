@@ -6,23 +6,9 @@ alias Converge.{
 	Util, Assert, All
 }
 
-defmodule ExternalResources do
-	defmacro external_resources() do
-		quote do
-			{out, 0} = System.cmd("find", ["files", "-type", "f", "-print0"])
-			files = out
-				|> String.trim_trailing("\0")
-				|> String.split("\0")
-			for f <- files do
-				@external_resource f
-			end
-		end
-	end
-end
-
 defmodule BaseSystem.Configure do
-	require ExternalResources
-	ExternalResources.external_resources()
+	require Util
+	Util.declare_external_resources("files")
 
 	@moduledoc """
 	Converts a `debootstrap --variant=minbase` install of Ubuntu LTS into a
