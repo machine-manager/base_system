@@ -6,12 +6,23 @@ alias Converge.{
 	Util, Assert, All
 }
 
+defmodule ExternalResources do
+	defmacro external_resources() do
+		quote do
+			{out, 0} = System.cmd("find", ["files", "-type", "f", "-print0"])
+			files = out
+				|> String.trim_trailing("\0")
+				|> String.split("\0")
+			for f <- files do
+				@external_resource f
+			end
+		end
+	end
+end
+
 defmodule BaseSystem.Configure do
-	@external_resource "files/etc/apt/sources.list.eex"
-	@external_resource "files/etc/chrony/chrony.conf.eex"
-	@external_resource "files/etc/sysctl.conf.eex"
-	@external_resource "files/etc/zsh/zshrc-custom.eex"
-	@external_resource "files/root/.config/git/config.eex"
+	require ExternalResources
+	ExternalResources.external_resources()
 
 	@moduledoc """
 	Converts a `debootstrap --variant=minbase` install of Ubuntu LTS into a
