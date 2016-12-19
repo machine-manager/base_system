@@ -58,7 +58,6 @@ defmodule BaseSystem.Configure do
 				                          use_custom_packages: use_custom_packages]),
 				mode:    0o644
 			},
-			%DirectoryPresent{path: "/var/custom-packages", mode: 0o700},
 			%PackageIndexUpdated{},
 			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper"]},
 			%PackagesMarkedAutoInstalled{names: ["converge-desired-packages-early"]},
