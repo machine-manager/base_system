@@ -257,7 +257,8 @@ defmodule BaseSystem.Configure do
 		memtotal  = Util.get_meminfo()["MemTotal"] # bytes
 		threshold = 30 * 1024 * 1024 * 1024        # bytes
 		# VirtualBox needs a lot of free memory to to avoid dropping some network
-		# packets.  See https://www.virtualbox.org/ticket/15569
+		# packets.  Though it will stop drop packets with this tweak.
+		# See https://www.virtualbox.org/ticket/15569
 		# We only set this on machines with >= 30GB RAM.
 		case memtotal >= threshold and Util.installed?("virtualbox-5.1") do
 			true  -> 1024 * 1024 # kbytes
