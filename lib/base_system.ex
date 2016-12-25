@@ -129,7 +129,10 @@ defmodule BaseSystem.Configure do
 				# https://github.com/torvalds/linux/commit/444eb2a449ef36fe115431ed7b71467c4563c7f1
 				"kernel/mm/transparent_hugepage/defrag"  => "madvise",
 
-				# Note: high-memory systems will need a lower scan_sleep_millisecs
+				# Note: high-memory systems will need a much lower scan_sleep_millisecs
+				# to increase hugepage availability.
+
+				# See also https://www.kernel.org/doc/Documentation/vm/transhuge.txt
 			}},
 
 			# zfsutils-linux drops a file to do a scrub on the second Sunday of every month
