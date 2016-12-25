@@ -29,6 +29,7 @@ defmodule BaseSystem.Configure do
 	def configure(opts \\ []) do
 		use_custom_packages            = Keyword.get(opts, :use_custom_packages,            false)
 		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files, false)
+		extra_sysctl_parameters        = Keyword.get(opts, :extra_sysctl_parameters,        %{})
 		# Is our boot fully managed by the host, to the point where we don't have
 		# to install a linux kernel and bootloader?  Use `true` for scaleway machines.
 		outside_boot                   = Keyword.get(opts, :outside_boot,                   false)
@@ -203,17 +204,34 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> {_, 0} = System.cmd("service", ["chrony", "restart"]) end
 			},
 
-			%Trigger{
-				unit: %FilePresent{
-					path:    "/etc/sysctl.conf",
-					content: EEx.eval_string(content("files/etc/sysctl.conf.eex"),
-					                         [vm: Map.merge(%{min_free_kbytes: get_min_free_kbytes()},
-					                                        dirty_settings)],
-					                         trim: true),
-					mode:    0o644
-				},
-				trigger: fn -> {_, 0} = System.cmd("service", ["procps", "restart"]) end
-			},
+			# TODO: min_free_kbytes
+			%Sysctl{parameters: Map.merge(%{
+				# Note that some important settings are already set by the procps package,
+				# which creates .conf files in /etc/sysctl.d/.  Anything we set here will
+				# override those default settings.  (If that is not the case, check
+				# /etc/sysctl.d for a file that sorts after "99-sysctl.conf".)
+				#
+				# Warning: removing a variable here will not necessarily restore a default
+				# value, until the next reboot!
+
+				# Don't allow non-root users to use dmesg.
+				# http://blog.wpkg.org/2013/06/11/lxc-restricting-container-view-of-dmesg/
+				"kernel.dmesg_restrict"              => 1,
+
+				# Use the canonical IPv6 address instead of using the privacy extensions.
+				# Servers generally are expected to use the canonical address.
+				# https://bugs.launchpad.net/ubuntu/+source/procps/+bug/1068756
+				"net.ipv6.conf.all.use_tempaddr"     => 0,
+				"net.ipv6.conf.default.use_tempaddr" => 0,
+
+				# Prefer to retain directory and inode objects.
+				# http://www.beegfs.com/wiki/StorageServerTuning
+				"vm.vfs_cache_pressure"              => 50,
+
+				"vm.dirty_background_bytes"          => dirty_settings.dirty_background_bytes,
+				"vm.dirty_bytes"                     => dirty_settings.dirty_bytes,
+				"vm.dirty_expire_centisecs"          => dirty_settings.dirty_expire_centisecs,
+			}, extra_sysctl_parameters)},
 
 			%EtcCommitted{message: "converge"}
 		]}
@@ -302,13 +320,13 @@ defmodule BaseSystem.Configure do
 				%{
 					dirty_background_bytes: 1 * gb,
 					dirty_bytes:            3 * gb,
-					dirty_expire_centisecs: nil
+					dirty_expire_centisecs: 3000, # Linux default of 30 sec
 				}
 			else
 				%{
 					dirty_background_bytes: round(0.1 * memtotal),
 					dirty_bytes:            round(0.2 * memtotal),
-					dirty_expire_centisecs: nil
+					dirty_expire_centisecs: 3000, # Linux default of 30 sec
 				}
 			end
 		end
