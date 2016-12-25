@@ -75,7 +75,7 @@ defmodule BaseSystem.Configure do
 
 			# ureadahead has some very suspect code and spews messages to syslog
 			# complaining about relative paths
-			%Assert{unit: %PackagePurged{name: "ureadahead"}},
+			%PackagePurged{name: "ureadahead"},
 
 			# Make sure no time managers besides chrony are installed
 			%Assert{unit: %PackagePurged{name: "ntpdate"}},
