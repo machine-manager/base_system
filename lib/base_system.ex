@@ -3,7 +3,7 @@ alias Converge.{
 	DirectoryPresent, EtcCommitted, PackageIndexUpdated, MetaPackageInstalled,
 	DanglingPackagesPurged, PackagesMarkedAutoInstalled,
 	PackagesMarkedManualInstalled, PackagePurged, Fstab, FstabEntry, Trigger,
-	Util, Assert, All
+	Sysctl, Sysfs, Util, Assert, All
 }
 
 defmodule BaseSystem.Configure do
@@ -40,9 +40,10 @@ defmodule BaseSystem.Configure do
 		# Notes:
 		# libpam-systemd - to make ssh server disconnect clients when it shuts down
 		# psmisc         - for killall
+		# sysfsutils     - for Sysfs unit and /sys configuration on boot
 		base_packages = ~w(
 			netbase ifupdown isc-dhcp-client rsyslog cron net-tools sudo openssh-server
-			libpam-systemd chrony zsh psmisc acl apparmor apparmor-profiles)
+			libpam-systemd chrony sysfsutils zsh psmisc acl apparmor apparmor-profiles)
 		# dnsutils       - for dig
 		human_admin_needs = ~w(
 			molly-guard iputils-ping less strace htop dstat tmux git tig wget curl
@@ -113,6 +114,12 @@ defmodule BaseSystem.Configure do
 				depends: ["converge-desired-packages-early"] ++ boot_packages ++ base_packages ++ human_admin_needs},
 			%PackagesMarkedManualInstalled{names: ["converge-desired-packages"]},
 			%DanglingPackagesPurged{},
+
+			%Sysfs{variables: %{
+				# Warning: removing variables here will *not* reset to Linux defaults until a reboot
+				"kernel/mm/transparent_hugepage/enabled" => "never",
+				"kernel/mm/transparent_hugepage/defrag"  => "never",
+			}},
 
 			# zfsutils-linux drops a file to do a scrub on the second Sunday of every month
 			%FileMissing{path: "/etc/cron.d/zfsutils-linux"},
