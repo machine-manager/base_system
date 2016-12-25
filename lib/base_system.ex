@@ -117,9 +117,19 @@ defmodule BaseSystem.Configure do
 			%DanglingPackagesPurged{},
 
 			%Sysfs{variables: %{
-				# Warning: removing variables here will *not* reset to Linux defaults until a reboot
-				"kernel/mm/transparent_hugepage/enabled" => "never",
-				"kernel/mm/transparent_hugepage/defrag"  => "never",
+				# Warning: removing a variable here will *not* reset it to the
+				# Linux default until a reboot.
+
+				# According to https://goo.gl/Ep8iM6 system stalls are not caused by
+				# transparent hugepages but by synchronous defrag, so leave THP enabled.
+				"kernel/mm/transparent_hugepage/enabled" => "always",
+
+				# Linux 4.4 has default "always", so set to "madvise" to reduce
+				# stalls caused by defrag.  Linux 4.6+ has default "madvise"; see
+				# https://github.com/torvalds/linux/commit/444eb2a449ef36fe115431ed7b71467c4563c7f1
+				"kernel/mm/transparent_hugepage/defrag"  => "madvise",
+
+				# Note: high-memory systems will need a lower scan_sleep_millisecs
 			}},
 
 			# zfsutils-linux drops a file to do a scrub on the second Sunday of every month
