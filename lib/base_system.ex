@@ -44,7 +44,8 @@ defmodule BaseSystem.Configure do
 		# sysfsutils     - for Sysfs unit and /sys configuration on boot
 		base_packages = ~w(
 			netbase ifupdown isc-dhcp-client rsyslog cron net-tools sudo openssh-server
-			libpam-systemd chrony sysfsutils zsh psmisc acl apparmor apparmor-profiles)
+			libpam-systemd apt gnupg2 chrony sysfsutils zsh psmisc acl apparmor
+			apparmor-profiles)
 		# dnsutils       - for dig
 		human_admin_needs = ~w(
 			molly-guard iputils-ping less strace htop dstat tmux git tig wget curl
@@ -101,6 +102,9 @@ defmodule BaseSystem.Configure do
 			%PackagePurged{name: "apport-gtk"},
 			%PackagePurged{name: "python3-apport"},
 			%PackagePurged{name: "python3-problem-report"},
+
+			# apt will use either gnupg or gnupg2, and gnupg2 is less bad
+			%PackagePurged{name: "gnupg"},
 
 			# Having this installed loads the btrfs kernel module and slows down
 			# the boot with a scan for btrfs volumes.
