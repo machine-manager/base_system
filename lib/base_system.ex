@@ -117,7 +117,7 @@ defmodule BaseSystem.Configure do
 			%DanglingPackagesPurged{},
 
 			%Sysfs{variables: %{
-				# Warning: removing a variable here will *not* reset it to the
+				# WARNING: removing a variable here will *not* reset it to the
 				# Linux default until a reboot.
 
 				# According to https://goo.gl/Ep8iM6 system stalls are not caused by
@@ -224,7 +224,7 @@ defmodule BaseSystem.Configure do
 				# override those default settings.  (If that is not the case, check
 				# /etc/sysctl.d for a file that sorts after "99-sysctl.conf".)
 				#
-				# Warning: removing a variable here will not necessarily restore a default
+				# WARNING: removing a variable here will not necessarily restore a default
 				# value, until the next reboot!
 
 				# Don't allow non-root users to use dmesg.
