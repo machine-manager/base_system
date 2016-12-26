@@ -33,6 +33,9 @@ setopt hist_ignore_space
 # Append commands to history immediately so that they show up in new shells
 setopt inc_append_history
 
+# Ignore "# comments" typed or pasted into an interactive shell
+setopt interactivecomments
+
 
 ### Mostly essential stock settings from /etc/zsh/newuser.zshrc.recommended
 
