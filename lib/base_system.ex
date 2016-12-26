@@ -58,7 +58,8 @@ defmodule BaseSystem.Configure do
 				path:    "/etc/apt/sources.list",
 				content: EEx.eval_string(content("files/etc/apt/sources.list.eex"),
 				                         [country:             Util.get_country(),
-				                          use_custom_packages: use_custom_packages]),
+				                          use_custom_packages: use_custom_packages])
+				         |> String.replace(~r/\n+/, "\n"),
 				mode:    0o644
 			},
 			%PackageIndexUpdated{},
