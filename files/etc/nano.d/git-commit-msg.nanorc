@@ -1,5 +1,5 @@
 # This syntax format is used for editing commit and tag messages
 syntax "git commit/tag messages" "COMMIT_EDITMSG|TAG_EDITMSG"
 
-color red start="^\-" end=".$"
-color green start="^\+" end=".$"
+color red start="^\-" end="$"
+color green start="^\+" end="$"
