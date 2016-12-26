@@ -93,6 +93,7 @@ defmodule BaseSystem.Configure do
 			%Assert{unit: %PackagePurged{name: "unattended-upgrades"}},
 			%Assert{unit: %PackagePurged{name: "libnss-mdns"}},
 			%Assert{unit: %PackagePurged{name: "avahi-daemon"}},
+			%Assert{unit: %PackagePurged{name: "popularity-contest"}},
 
 			# We probably don't have many computers that need thermald because the
 			# BIOS and kernel also take actions to keep the CPU cool.
