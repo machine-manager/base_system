@@ -27,7 +27,7 @@ defmodule BaseSystem.Configure do
 	end
 
 	def configure(opts \\ []) do
-		use_custom_packages            = Keyword.get(opts, :use_custom_packages,            false)
+		use_custom_packages            = Keyword.get(opts, :use_custom_packages,            true)
 		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files, false)
 		extra_sysctl_parameters        = Keyword.get(opts, :extra_sysctl_parameters,        %{})
 		# Is our boot fully managed by the host, to the point where we don't have
