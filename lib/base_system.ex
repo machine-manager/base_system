@@ -141,15 +141,12 @@ defmodule BaseSystem.Configure do
 				# See also https://www.kernel.org/doc/Documentation/vm/transhuge.txt
 			}},
 
-			# Make /etc/cron.daily/google-chrome a no-op to prevent it from
+			# Make /etc/cron.daily/google-chrome* no-ops to prevent them from
 			# re-adding the obsolete 7FAC5991 key to apt's trusted keys, and to
-			# stop it from modifying /etc/apt/sources.list.d/
-			%FilePresent{
-				path:      "/etc/cron.daily/google-chrome",
-				content:   content("files/etc/cron.daily/google-chrome"),
-				mode:      0o644,
-				immutable: true
-			},
+			# stop them from modifying /etc/apt/sources.list.d/
+			%FilePresent{path: "/etc/cron.daily/google-chrome",          content: "", mode: 0o644, immutable: true},
+			%FilePresent{path: "/etc/cron.daily/google-chrome-beta",     content: "", mode: 0o644, immutable: true},
+			%FilePresent{path: "/etc/cron.daily/google-chrome-unstable", content: "", mode: 0o644, immutable: true},
 
 			# zfsutils-linux drops a file to do a scrub on the second Sunday of every month
 			%FileMissing{path: "/etc/cron.d/zfsutils-linux"},
