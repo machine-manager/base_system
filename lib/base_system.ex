@@ -142,9 +142,12 @@ defmodule BaseSystem.Configure do
 				# See also https://www.kernel.org/doc/Documentation/vm/transhuge.txt
 			}},
 
-			# Make /etc/cron.daily/google-chrome* no-ops to prevent them from
-			# re-adding the obsolete 7FAC5991 key to apt's trusted keys, and to
-			# stop them from modifying /etc/apt/sources.list.d/
+			# Google Chrome installs symlinks at /etc/cron.daily/google-chrome*;
+			# these scripts function as a little configuration manager that re-adds
+			# apt keys and apt sources if they are missing (e.g. after an Ubuntu
+			# upgrade).  Make these scripts no-ops to prevent them from re-adding
+			# the obsolete 7FAC5991 key to apt's trusted keys, and to stop them
+			# from mucking with /etc/apt/sources.list.d/
 			%FilePresent{path: "/etc/cron.daily/google-chrome",          content: "", mode: 0o644, immutable: true},
 			%FilePresent{path: "/etc/cron.daily/google-chrome-beta",     content: "", mode: 0o644, immutable: true},
 			%FilePresent{path: "/etc/cron.daily/google-chrome-unstable", content: "", mode: 0o644, immutable: true},
