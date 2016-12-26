@@ -1,3 +1,4 @@
+alias Gears.StringUtil
 alias Converge.{
 	Runner, Context, TerminalReporter, FilePresent, FileMissing, SymlinkPresent,
 	DirectoryPresent, EtcCommitted, PackageIndexUpdated, MetaPackageInstalled,
@@ -59,7 +60,7 @@ defmodule BaseSystem.Configure do
 				content: EEx.eval_string(content("files/etc/apt/sources.list.eex"),
 				                         [country:             Util.get_country(),
 				                          use_custom_packages: use_custom_packages])
-				         |> String.replace(~r/\n+/, "\n"),
+				         |> StringUtil.remove_empty_lines,
 				mode:    0o644
 			},
 			%PackageIndexUpdated{},
