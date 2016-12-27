@@ -8,9 +8,6 @@ alias Converge.{
 }
 
 defmodule BaseSystem.Configure do
-	require Util
-	Util.declare_external_resources("files")
-
 	@moduledoc """
 	Converts a `debootstrap --variant=minbase` install of Ubuntu LTS into a
 	useful Ubuntu system.
@@ -18,6 +15,8 @@ defmodule BaseSystem.Configure do
 	Requires that these packages are already installed:
 	erlang-base-hipe erlang-crypto curl
 	"""
+	require Util
+	Util.declare_external_resources("files")
 
 	defmacro content(filename) do
 		File.read!(filename)
