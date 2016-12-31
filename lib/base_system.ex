@@ -306,20 +306,6 @@ defmodule BaseSystem.Configure do
 		%All{units: units}
 	end
 
-	# `nil` means don't set; use the default
-	defp get_min_free_kbytes() do
-		memtotal  = Util.get_meminfo()["MemTotal"] # bytes
-		threshold = 30 * 1024 * 1024 * 1024        # bytes
-		# VirtualBox needs a lot of free memory to to avoid dropping some network
-		# packets.  Though it will stop drop packets with this tweak.
-		# See https://www.virtualbox.org/ticket/15569
-		# We only set this on machines with >= 30GB RAM.
-		case memtotal >= threshold and Util.installed?("virtualbox-5.1") do
-			true  -> 1024 * 1024 # kbytes
-			false -> nil
-		end
-	end
-
 	defp get_dirty_settings(opts) do
 		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files)
 		gb                             = 1024 * 1024 * 1024
