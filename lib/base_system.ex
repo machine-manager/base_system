@@ -4,7 +4,7 @@ alias Converge.{
 	DirectoryPresent, DirectoryEmpty, EtcCommitted, PackageIndexUpdated,
 	MetaPackageInstalled, DanglingPackagesPurged, PackagesMarkedAutoInstalled,
 	PackagesMarkedManualInstalled, PackagePurged, Fstab, FstabEntry, AfterMeet,
-	BeforeMeet, Sysctl, Sysfs, Util, Assert, All, GPG2Keyring
+	BeforeMeet, Sysctl, Sysfs, Util, Assert, All, GPGSimpleKeyring
 }
 
 defmodule BaseSystem.Configure do
@@ -103,7 +103,7 @@ defmodule BaseSystem.Configure do
 					# so remove anything that may be in /etc/apt/sources.list.d/
 					%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
 
-					%GPG2Keyring{path: "/etc/apt/trusted.gpg", keys: apt_trusted_gpg_keys, mode: 0o644},
+					%GPGSimpleKeyring{path: "/etc/apt/trusted.gpg", keys: apt_trusted_gpg_keys, mode: 0o644, immutable: true},
 					# We centralize management of our apt sources in /etc/apt/trusted.gpg,
 					# so remove anything that may be in /etc/apt/trusted.gpg.d/
 					%DirectoryEmpty{path: "/etc/apt/trusted.gpg.d"},
