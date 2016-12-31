@@ -1,10 +1,10 @@
 alias Gears.StringUtil
 alias Converge.{
 	Runner, Context, TerminalReporter, FilePresent, FileMissing, SymlinkPresent,
-	DirectoryPresent, EtcCommitted, PackageIndexUpdated, MetaPackageInstalled,
-	DanglingPackagesPurged, PackagesMarkedAutoInstalled,
-	PackagesMarkedManualInstalled, PackagePurged, Fstab, FstabEntry, Trigger,
-	Sysctl, Sysfs, Util, Assert, All
+	DirectoryPresent, DirectoryEmpty, EtcCommitted, PackageIndexUpdated,
+	MetaPackageInstalled, DanglingPackagesPurged, PackagesMarkedAutoInstalled,
+	PackagesMarkedManualInstalled, PackagePurged, Fstab, FstabEntry, AfterMeet,
+	BeforeMeet, Sysctl, Sysfs, Util, Assert, All, GPG2Keyring
 }
 
 defmodule BaseSystem.Configure do
@@ -27,12 +27,29 @@ defmodule BaseSystem.Configure do
 	end
 
 	def configure(opts \\ []) do
-		use_custom_packages            = Keyword.get(opts, :use_custom_packages,            true)
+		apt_keys = %{
+			:ubuntu               => content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).txt"),
+			:custom_packages      => content("files/apt_keys/2AAA29C8 Custom Packages.txt"),
+			:google_chrome        => content("files/apt_keys/D38B4796 Google Inc. (Linux Packages Signing Authority).txt"),
+			:oracle_virtualbox    => content("files/apt_keys/2980AECF Oracle Corporation (VirtualBox archive signing key).txt"),
+			:graphics_drivers_ppa => content("files/apt_keys/1118213C Launchpad PPA for Graphics Drivers Team.txt"),
+			:wine_ppa             => content("files/apt_keys/77C899CB Launchpad PPA for Wine.txt"),
+		}
+
+		default_extra_repositories = MapSet.new([
+			:custom_packages,
+		])
+
+		extra_repositories             = Keyword.get(opts, :extra_repositories,             default_extra_repositories)
 		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files, false)
 		extra_sysctl_parameters        = Keyword.get(opts, :extra_sysctl_parameters,        %{})
 		# Is our boot fully managed by the host, to the point where we don't have
 		# to install a linux kernel and bootloader?  Use `true` for scaleway machines.
 		outside_boot                   = Keyword.get(opts, :outside_boot,                   false)
+
+		apt_trusted_gpg_keys = for repo <- extra_repositories |> MapSet.put(:ubuntu) do
+			apt_keys[repo]
+		end
 
 		boot_packages = case outside_boot do
 			false -> ~w(linux-image-generic grub-pc)
@@ -54,18 +71,6 @@ defmodule BaseSystem.Configure do
 		dirty_settings = get_dirty_settings(optimize_for_short_lived_files: optimize_for_short_lived_files)
 
 		all = %All{units: [
-			%FilePresent{
-				path:    "/etc/apt/sources.list",
-				content: EEx.eval_string(content("files/etc/apt/sources.list.eex"),
-				                         [country:             Util.get_country(),
-				                          use_custom_packages: use_custom_packages])
-				         |> StringUtil.remove_empty_lines,
-				mode:    0o644
-			},
-			%PackageIndexUpdated{},
-			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper"]},
-			%PackagesMarkedAutoInstalled{names: ["converge-desired-packages-early"]},
-
 			# We need a git config with a name and email for etckeeper to work
 			%DirectoryPresent{path: "/root/.config",     mode: 0o700},
 			%DirectoryPresent{path: "/root/.config/git", mode: 0o700},
@@ -74,7 +79,37 @@ defmodule BaseSystem.Configure do
 				content: EEx.eval_string(content("files/root/.config/git/config.eex"), [hostname: Util.get_hostname()]),
 				mode:    0o640
 			},
+
+			# Make sure etckeeper and gnupg2 are installed, as they are required for some units here
+			%BeforeMeet{
+				unit:    %MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper", "gnupg2"]},
+				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{}, ctx) end
+			},
+			%PackagesMarkedAutoInstalled{names: ["converge-desired-packages-early"]},
 			%EtcCommitted{message: "converge (early)"},
+
+			%AfterMeet{
+				unit: %All{units: [
+					%FilePresent{
+						path:    "/etc/apt/sources.list",
+						content: EEx.eval_string(content("files/etc/apt/sources.list.eex"),
+						                         [country:             Util.get_country(),
+						                          extra_repositories:  extra_repositories])
+						         |> StringUtil.remove_empty_lines,
+						mode:    0o644
+					},
+
+					# We centralize management of our apt sources in /etc/apt/sources.list,
+					# so remove anything that may be in /etc/apt/sources.list.d/
+					%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
+
+					%GPG2Keyring{path: "/etc/apt/trusted.gpg", keys: apt_trusted_gpg_keys, mode: 0o644},
+					# We centralize management of our apt sources in /etc/apt/trusted.gpg,
+					# so remove anything that may be in /etc/apt/trusted.gpg.d/
+					%DirectoryEmpty{path: "/etc/apt/trusted.gpg.d"},
+				]},
+				trigger: fn -> Util.remove_cached_package_index() end
+			},
 
 			# ureadahead has some very suspect code and spews messages to syslog
 			# complaining about relative paths
@@ -116,9 +151,13 @@ defmodule BaseSystem.Configure do
 
 			fstab_unit(),
 
-			%MetaPackageInstalled{
-				name:    "converge-desired-packages",
-				depends: ["converge-desired-packages-early"] ++ boot_packages ++ base_packages ++ human_admin_needs},
+			%BeforeMeet{
+				unit: %MetaPackageInstalled{
+					name:    "converge-desired-packages",
+					depends: ["converge-desired-packages-early"] ++ boot_packages ++ base_packages ++ human_admin_needs
+				},
+				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{}, ctx) end,
+			},
 			%PackagesMarkedManualInstalled{names: ["converge-desired-packages"]},
 			%DanglingPackagesPurged{},
 
@@ -161,12 +200,12 @@ defmodule BaseSystem.Configure do
 
 			# Disable systemd's atrocious "one ctrl-alt-del reboots the system" feature.
 			# This does not affect the 7x ctrl-alt-del force reboot feature.
-			%Trigger{
+			%AfterMeet{
 				unit:    %SymlinkPresent{path: "/etc/systemd/system/ctrl-alt-del.target", target: "/dev/null"},
 				trigger: fn -> {_, 0} = System.cmd("systemctl", ["daemon-reload"]) end
 			},
 
-			%Trigger{
+			%AfterMeet{
 				unit: %FilePresent{
 					path:    "/etc/apparmor.d/bin.tar",
 					content: content("files/etc/apparmor.d/bin.tar"),
@@ -215,7 +254,7 @@ defmodule BaseSystem.Configure do
 			%FilePresent{path: "/etc/zsh/zsh-autosuggestions.zsh",  content: content("files/etc/zsh/zsh-autosuggestions.zsh"),  mode: 0o644},
 			%FilePresent{
 				path:    "/etc/zsh/zshrc-custom",
-				content: EEx.eval_string(content("files/etc/zsh/zshrc-custom.eex"), [use_custom_packages: use_custom_packages]),
+				content: EEx.eval_string(content("files/etc/zsh/zshrc-custom.eex"), [extra_repositories: extra_repositories]),
 				mode:    0o644
 			},
 			%FilePresent{
@@ -224,7 +263,7 @@ defmodule BaseSystem.Configure do
 				mode:    0o644
 			},
 
-			%Trigger{
+			%AfterMeet{
 				unit: %FilePresent{
 					path:    "/etc/chrony/chrony.conf",
 					content: EEx.eval_string(content("files/etc/chrony/chrony.conf.eex"), [country: Util.get_country()]),
@@ -288,7 +327,7 @@ defmodule BaseSystem.Configure do
 		fstab_trigger = fn ->
 			{_, 0} = System.cmd("mount", ["-o", "remount", "/proc"])
 		end
-		%Trigger{
+		%AfterMeet{
 			unit:    %Fstab{entries: fstab_entries},
 			trigger: fstab_trigger
 		}

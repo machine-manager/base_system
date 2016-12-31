@@ -152,7 +152,7 @@ alias egrep='egrep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias pgrep='pgrep --color=auto'
 
-<%= if use_custom_packages do %>alias git=pinned-git<% end %>
+<%= if MapSet.member?(extra_repositories, :custom_packages) do %>alias git=pinned-git<% end %>
 alias gpr='git pull --rebase'
 alias gb='git branch'
 alias aggro='git gc --aggressive'

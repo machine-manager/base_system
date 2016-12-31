@@ -3,9 +3,21 @@
 # our linux-meta packages came from (because they have the same versions)
 # and go into a "downgrade" loop.
 %>
-<%= if use_custom_packages do %>
+<%= if MapSet.member?(extra_repositories, :custom_packages) do %>
 deb [lang="none"] file:/var/custom-packages ./
 <% end %>
-deb http://<%= country %>.archive.ubuntu.com/ubuntu xenial          main restricted universe multiverse
-deb http://<%= country %>.archive.ubuntu.com/ubuntu xenial-updates  main restricted universe multiverse
-deb http://<%= country %>.archive.ubuntu.com/ubuntu xenial-security main restricted universe multiverse
+deb http://<%= country %>.archive.ubuntu.com/ubuntu xenial           main restricted universe multiverse
+deb http://<%= country %>.archive.ubuntu.com/ubuntu xenial-updates   main restricted universe multiverse
+deb http://<%= country %>.archive.ubuntu.com/ubuntu xenial-security  main restricted universe multiverse
+<%= if MapSet.member?(extra_repositories, :google_chrome) do %>
+deb [arch=amd64] http://dl.google.com/linux/chrome/deb/  stable main
+<% end %>
+<%= if MapSet.member?(extra_repositories, :oracle_virtualbox) do %>
+deb http://download.virtualbox.org/virtualbox/debian     xenial contrib
+<% end %>
+<%= if MapSet.member?(extra_repositories, :graphics_drivers_ppa) do %>
+deb http://ppa.launchpad.net/graphics-drivers/ppa/ubuntu xenial main
+<% end %>
+<%= if MapSet.member?(extra_repositories, :wine_ppa) do %>
+deb http://ppa.launchpad.net/wine/wine-builds/ubuntu     xenial main
+<% end %>
