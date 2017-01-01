@@ -81,9 +81,9 @@ defmodule BaseSystem.Configure do
 				mode:    0o640
 			},
 
-			# Make sure etckeeper and gnupg2 are installed, as they are required for some units here
+			# Make sure etckeeper is installed, as it is required for the EtcCommitted units here
 			%BeforeMeet{
-				unit:    %MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper", "gnupg2"]},
+				unit:    %MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper"]},
 				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{}, ctx) end
 			},
 			%PackagesMarkedAutoInstalled{names: ["converge-desired-packages-early"]},
