@@ -97,7 +97,10 @@ defmodule BaseSystem.Configure do
 						                         [country:             Util.get_country(),
 						                          extra_repositories:  extra_repositories])
 						         |> StringUtil.remove_empty_lines,
-						mode:    0o644
+						# TODO: after we have _apt in a group, use 0o640 and group: ...
+						mode:    0o644,
+						user:    "root",
+						#group:   "_apt",
 					},
 
 					# We centralize management of our apt sources in /etc/apt/sources.list,
@@ -105,6 +108,7 @@ defmodule BaseSystem.Configure do
 					%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
 
 					%GPGSimpleKeyring{path: "/etc/apt/trusted.gpg", keys: apt_trusted_gpg_keys, mode: 0o644, immutable: true},
+					%DirectoryPresent{path: "/etc/apt/trusted.gpg.d", mode: 0o755, immutable: true},
 					# We centralize management of our apt sources in /etc/apt/trusted.gpg,
 					# so remove anything that may be in /etc/apt/trusted.gpg.d/
 					%DirectoryEmpty{path: "/etc/apt/trusted.gpg.d"},
