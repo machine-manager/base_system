@@ -53,7 +53,7 @@ defmodule BaseSystem.Configure do
 		end
 
 		boot_packages = case outside_boot do
-			false -> ~w(linux-image-generic grub-pc)
+			false -> ["linux-image-generic", "grub-pc | grub-efi-amd64"]
 			true  -> []
 		end
 		# Notes:
@@ -345,7 +345,8 @@ defmodule BaseSystem.Configure do
 		units = case outside_boot do
 			false -> []
 			true  -> [%PackagePurged{name: "linux-image-generic"},
-						 %PackagePurged{name: "grub-pc"}]
+						 %PackagePurged{name: "grub-pc"},
+						 %PackagePurged{name: "grub-efi-amd64"}]
 		end
 		%All{units: units}
 	end
