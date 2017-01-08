@@ -2,6 +2,9 @@ set locking
 set nowrap
 set suspend
 set tabsize 4
+# Make ctrl-j wrap at 80 characters, not at the width of the terminal.
+# Useful when writing git commit messages.
+set fill 80
 
 include "/usr/share/nano/*.nanorc"
 include "/etc/nano.d/*.nanorc"
