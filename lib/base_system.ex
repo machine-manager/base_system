@@ -34,6 +34,8 @@ defmodule BaseSystem.Configure do
 			:oracle_virtualbox    => content("files/apt_keys/2980AECF Oracle Corporation (VirtualBox archive signing key).txt"),
 			:graphics_drivers_ppa => content("files/apt_keys/1118213C Launchpad PPA for Graphics Drivers Team.txt"),
 			:wine_ppa             => content("files/apt_keys/77C899CB Launchpad PPA for Wine.txt"),
+			:nodesource_node_6    => content("files/apt_keys/68576280 NodeSource.txt"),
+			:nodesource_node_7    => content("files/apt_keys/68576280 NodeSource.txt"),
 		}
 
 		default_extra_repositories = MapSet.new([

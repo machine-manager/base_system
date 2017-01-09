@@ -21,3 +21,9 @@ deb http://ppa.launchpad.net/graphics-drivers/ppa/ubuntu xenial main
 <%= if MapSet.member?(extra_repositories, :wine_ppa) do %>
 deb http://ppa.launchpad.net/wine/wine-builds/ubuntu     xenial main
 <% end %>
+<%= if MapSet.member?(extra_repositories, :nodesource_node_6) do %>
+deb https://deb.nodesource.com/node_6.x                  xenial main
+<% end %>
+<%= if MapSet.member?(extra_repositories, :nodesource_node_7) do %>
+deb https://deb.nodesource.com/node_7.x                  xenial main
+<% end %>
