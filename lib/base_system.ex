@@ -40,7 +40,7 @@ defmodule BaseSystem.Configure do
 		}
 
 		default_extra_repositories = MapSet.new([
-			:custom_packages,
+			:custom_packages_remote,
 		])
 
 		extra_repositories             = Keyword.get(opts, :extra_repositories,             default_extra_repositories)
