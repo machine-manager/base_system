@@ -28,14 +28,15 @@ defmodule BaseSystem.Configure do
 
 	def configure(opts \\ []) do
 		apt_keys = %{
-			:ubuntu               => content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).txt"),
-			:custom_packages      => content("files/apt_keys/2AAA29C8 Custom Packages.txt"),
-			:google_chrome        => content("files/apt_keys/D38B4796 Google Inc. (Linux Packages Signing Authority).txt"),
-			:oracle_virtualbox    => content("files/apt_keys/2980AECF Oracle Corporation (VirtualBox archive signing key).txt"),
-			:graphics_drivers_ppa => content("files/apt_keys/1118213C Launchpad PPA for Graphics Drivers Team.txt"),
-			:wine_ppa             => content("files/apt_keys/77C899CB Launchpad PPA for Wine.txt"),
-			:nodesource_node_6    => content("files/apt_keys/68576280 NodeSource.txt"),
-			:nodesource_node_7    => content("files/apt_keys/68576280 NodeSource.txt"),
+			:ubuntu                 => content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).txt"),
+			:custom_packages_local  => content("files/apt_keys/2AAA29C8 Custom Packages.txt"),
+			:custom_packages_remote => content("files/apt_keys/2AAA29C8 Custom Packages.txt"),
+			:google_chrome          => content("files/apt_keys/D38B4796 Google Inc. (Linux Packages Signing Authority).txt"),
+			:oracle_virtualbox      => content("files/apt_keys/2980AECF Oracle Corporation (VirtualBox archive signing key).txt"),
+			:graphics_drivers_ppa   => content("files/apt_keys/1118213C Launchpad PPA for Graphics Drivers Team.txt"),
+			:wine_ppa               => content("files/apt_keys/77C899CB Launchpad PPA for Wine.txt"),
+			:nodesource_node_6      => content("files/apt_keys/68576280 NodeSource.txt"),
+			:nodesource_node_7      => content("files/apt_keys/68576280 NodeSource.txt"),
 		}
 
 		default_extra_repositories = MapSet.new([
