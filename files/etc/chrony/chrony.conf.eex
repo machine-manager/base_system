@@ -66,7 +66,7 @@ dumpdir /var/lib/chrony
 
 # This directive forces `chronyd' to send a message to syslog if it
 # makes a system clock adjustment larger than a threshold value in seconds.
-
+# Keep this value smaller than the makestep value below.
 logchange 0.05
 
 # This directive defines an email address to which mail should be sent
@@ -85,5 +85,6 @@ hwclockfile /etc/adjtime
 
 rtcsync
 
-# https://chrony.tuxfamily.org/doc/devel/chrony.conf.html
+# Step the system clock immediately when it's off by more than 0.1 sec.
+# https://chrony.tuxfamily.org/doc/devel/chrony.conf.html#makestep
 makestep 0.1 -1
