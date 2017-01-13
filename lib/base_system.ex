@@ -4,7 +4,7 @@ alias Converge.{
 	DirectoryPresent, DirectoryEmpty, EtcCommitted, PackageIndexUpdated,
 	MetaPackageInstalled, DanglingPackagesPurged, PackagesMarkedAutoInstalled,
 	PackagesMarkedManualInstalled, PackagePurged, Fstab, FstabEntry, AfterMeet,
-	BeforeMeet, Sysctl, Sysfs, Util, Assert, All, GPGSimpleKeyring
+	BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring
 }
 
 defmodule BaseSystem.Configure do
@@ -85,6 +85,57 @@ defmodule BaseSystem.Configure do
 			true  -> ["ubuntils", "pinned-git", "ripgrep"] ++ human_admin_needs
 			false -> human_admin_needs
 		end
+		all_desired_packages = boot_packages ++ base_packages ++ human_admin_needs ++ extra_packages
+		# Packages to be purged, unless listed in all_desired_packages.  None of this
+		# should be necessary on a minbase system, but we keep this here
+		# 1) in case a package listed here ends up installed by accident or because it is depended-on
+		# 2) to make base_system more useful on non-minbase systems
+		generally_undesirable_packages = [
+			# ureadahead has some very suspect code and spews messages to syslog
+			# complaining about relative paths
+			"ureadahead",
+
+			# Make sure no time managers besides chrony are installed
+			"ntpdate",
+			"adjtimex",
+			"ntp",
+			"openntpd",
+
+			# Make sure that we don't have superfluous stuff that we would find
+			# on a non-minbase install
+			"snapd",
+			"unattended-upgrades",
+			"libnss-mdns",
+			"avahi-daemon",
+			"popularity-contest",
+
+			# We probably don't have many computers that need thermald because the
+			# BIOS and kernel also take actions to keep the CPU cool.
+			# https://01.org/linux-thermal-daemon/documentation/introduction-thermal-daemon
+			"thermald",
+
+			# https://donncha.is/2016/12/compromising-ubuntu-desktop/
+			"apport",
+			"apport-gtk",
+			"python3-apport",
+			"python3-problem-report",
+
+			# Having this installed loads the btrfs kernel module and slows down
+			# the boot with a scan for btrfs volumes.
+			"btrfs-tools",
+
+			# apt will use either gnupg or gnupg2, and gnupg2 is less bad
+			"gnupg",
+		]
+		generally_undesirable_packages = case outside_boot do
+			# linux-zygote creates an install where linux-image-generic and grub-pc
+			# are marked manual-installed, so we might need to purge these packages
+			# for machines with `outside_boot`
+			true  -> generally_undesirable_packages ++ ["linux-image-generic", "grub-pc", "grub-efi-amd64"]
+			false -> generally_undesirable_packages
+		end
+		packages_to_purge = MapSet.difference(MapSet.new(generally_undesirable_packages), MapSet.new(all_desired_packages))
+
 		dirty_settings = get_dirty_settings(optimize_for_short_lived_files: optimize_for_short_lived_files)
 
 		all = %All{units: [
@@ -100,7 +151,7 @@ defmodule BaseSystem.Configure do
 			# Make sure etckeeper is installed, as it is required for the EtcCommitted units here
 			%BeforeMeet{
 				unit:    %MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper"]},
-				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{}, ctx) end
+				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{max_age: 0}, ctx) end
 			},
 			%PackagesMarkedAutoInstalled{names: ["converge-desired-packages-early"]},
 			%EtcCommitted{message: "converge (early)"},
@@ -132,54 +183,19 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> Util.remove_cached_package_index() end
 			},
 
-			# ureadahead has some very suspect code and spews messages to syslog
-			# complaining about relative paths
-			%PackagePurged{name: "ureadahead"},
-
-			# Make sure no time managers besides chrony are installed
-			%Assert{unit: %PackagePurged{name: "ntpdate"}},
-			%Assert{unit: %PackagePurged{name: "adjtimex"}},
-			%Assert{unit: %PackagePurged{name: "ntp"}},
-			%Assert{unit: %PackagePurged{name: "openntpd"}},
-
-			# Make sure that we don't have superfluous stuff that we would find
-			# on a non-minbase install
-			%Assert{unit: %PackagePurged{name: "snapd"}},
-			%Assert{unit: %PackagePurged{name: "unattended-upgrades"}},
-			%Assert{unit: %PackagePurged{name: "libnss-mdns"}},
-			%Assert{unit: %PackagePurged{name: "avahi-daemon"}},
-
-			%PackagePurged{name: "popularity-contest"},
-
-			# We probably don't have many computers that need thermald because the
-			# BIOS and kernel also take actions to keep the CPU cool.
-			# https://01.org/linux-thermal-daemon/documentation/introduction-thermal-daemon
-			%PackagePurged{name: "thermald"},
-
-			# https://donncha.is/2016/12/compromising-ubuntu-desktop/
-			%PackagePurged{name: "apport"},
-			%PackagePurged{name: "apport-gtk"},
-			%PackagePurged{name: "python3-apport"},
-			%PackagePurged{name: "python3-problem-report"},
-
-			# Having this installed loads the btrfs kernel module and slows down
-			# the boot with a scan for btrfs volumes.
-			%Assert{unit: %PackagePurged{name: "btrfs-tools"}},
-
-			purge_boot_packages_unit(outside_boot),
-
 			fstab_unit(),
 
 			%BeforeMeet{
 				unit: %MetaPackageInstalled{
 					name:    "converge-desired-packages",
-					depends: ["converge-desired-packages-early"] ++ boot_packages ++ base_packages ++ human_admin_needs ++ extra_packages
+					depends: ["converge-desired-packages-early"] ++ all_desired_packages
 				},
-				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{}, ctx) end,
+				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{max_age: 0}, ctx) end,
 			},
 			%PackagesMarkedManualInstalled{names: ["converge-desired-packages"]},
-			# apt will use either gnupg or gnupg2, and gnupg2 is less bad
-			%PackagePurged{name: "gnupg"},
+			# This comes after MetaPackageInstalled because the undesired gnupg
+			# must be purged *after* installing gnupg2.
+			%All{units: packages_to_purge |> Enum.map(fn name -> %PackagePurged{name: name} end)},
 			%DanglingPackagesPurged{},
 
 			%Sysfs{variables: %{
@@ -352,19 +368,6 @@ defmodule BaseSystem.Configure do
 			unit:    %Fstab{entries: fstab_entries},
 			trigger: fstab_trigger
 		}
-	end
-
-	# linux-zygote creates an install where linux-image-generic and grub-pc
-	# are marked manual-installed, so we might need to purge these packages
-	# for machines with `outside_boot`
-	defp purge_boot_packages_unit(outside_boot) do
-		units = case outside_boot do
-			false -> []
-			true  -> [%PackagePurged{name: "linux-image-generic"},
-						 %PackagePurged{name: "grub-pc"},
-						 %PackagePurged{name: "grub-efi-amd64"}]
-		end
-		%All{units: units}
 	end
 
 	defp get_dirty_settings(opts) do
