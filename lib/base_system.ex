@@ -4,7 +4,7 @@ alias Converge.{
 	DirectoryPresent, DirectoryEmpty, EtcCommitted, PackageIndexUpdated,
 	MetaPackageInstalled, DanglingPackagesPurged, PackagesMarkedAutoInstalled,
 	PackagesMarkedManualInstalled, PackagePurged, Fstab, FstabEntry, AfterMeet,
-	BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring
+	BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring, SystemdUnitStopped
 }
 
 defmodule BaseSystem.Configure do
@@ -191,15 +191,9 @@ defmodule BaseSystem.Configure do
 			fstab_unit(),
 
 			%BeforeMeet{
-				unit: %AfterMeet{
-					unit: %MetaPackageInstalled{
-						name:    "converge-desired-packages",
-						depends: ["converge-desired-packages-early"] ++ all_desired_packages
-					},
-					# /lib/systemd/system/systemd-timesyncd.service.d/disable-with-time-daemon.conf
-					# stops systemd-timesyncd from starting if chrony is installed, but systemd-timesyncd
-					# may still be running if the system hasn't been rebooted.
-					trigger: fn -> {"", 0} = System.cmd("systemctl", ["stop", "--", "systemd-timesyncd.service"]) end,
+				unit: %MetaPackageInstalled{
+					name:    "converge-desired-packages",
+					depends: ["converge-desired-packages-early"] ++ all_desired_packages
 				},
 				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{max_age: 30}, ctx) end,
 			},
@@ -208,6 +202,11 @@ defmodule BaseSystem.Configure do
 			# must be purged *after* installing gnupg2.
 			%All{units: packages_to_purge |> Enum.map(fn name -> %PackagePurged{name: name} end)},
 			%DanglingPackagesPurged{},
+
+			# /lib/systemd/system/systemd-timesyncd.service.d/disable-with-time-daemon.conf
+			# stops systemd-timesyncd from starting if chrony is installed, but systemd-timesyncd
+			# may still be running if the system hasn't been rebooted.
+			%SystemdUnitStopped{name: "systemd-timesyncd.service"},
 
 			%Sysfs{variables: %{
 				# WARNING: removing a variable here will *not* reset it to the
