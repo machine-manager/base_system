@@ -51,6 +51,10 @@ defmodule BaseSystem.Configure do
 		# to install a linux kernel and bootloader?  Use `true` for scaleway machines.
 		outside_boot                   = Keyword.get(opts, :outside_boot,                   false)
 
+		custom_packages = \
+			MapSet.member?(extra_repositories, :custom_packages_local) or
+			MapSet.member?(extra_repositories, :custom_packages_remote)
+
 		apt_trusted_gpg_keys = for repo <- extra_repositories |> MapSet.put(:ubuntu) do
 			apt_keys[repo]
 		end
@@ -72,6 +76,11 @@ defmodule BaseSystem.Configure do
 			molly-guard iputils-ping less strace htop dstat tmux git tig wget curl
 			nano mtr-tiny nethogs iftop lsof software-properties-common ppa-purge
 			rsync pv tree dnsutils whois)
+		# If custom-packages is available, assume ubuntils, pinned-git, and ripgrep are desired
+		human_admin_needs = case custom_packages do
+			true  -> ["ubuntils", "pinned-git", "ripgrep"] ++ human_admin_needs
+			false -> human_admin_needs
+		end
 		dirty_settings = get_dirty_settings(optimize_for_short_lived_files: optimize_for_short_lived_files)
 
 		all = %All{units: [
@@ -262,7 +271,7 @@ defmodule BaseSystem.Configure do
 			%FilePresent{path: "/etc/zsh/zsh-autosuggestions.zsh",  content: content("files/etc/zsh/zsh-autosuggestions.zsh"),  mode: 0o644},
 			%FilePresent{
 				path:    "/etc/zsh/zshrc-custom",
-				content: EEx.eval_string(content("files/etc/zsh/zshrc-custom.eex"), [extra_repositories: extra_repositories]),
+				content: EEx.eval_string(content("files/etc/zsh/zshrc-custom.eex"), [custom_packages: custom_packages]),
 				mode:    0o644
 			},
 			%FilePresent{
