@@ -158,9 +158,6 @@ defmodule BaseSystem.Configure do
 			%PackagePurged{name: "python3-apport"},
 			%PackagePurged{name: "python3-problem-report"},
 
-			# apt will use either gnupg or gnupg2, and gnupg2 is less bad
-			%PackagePurged{name: "gnupg"},
-
 			# Having this installed loads the btrfs kernel module and slows down
 			# the boot with a scan for btrfs volumes.
 			%Assert{unit: %PackagePurged{name: "btrfs-tools"}},
@@ -177,6 +174,8 @@ defmodule BaseSystem.Configure do
 				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{}, ctx) end,
 			},
 			%PackagesMarkedManualInstalled{names: ["converge-desired-packages"]},
+			# apt will use either gnupg or gnupg2, and gnupg2 is less bad
+			%PackagePurged{name: "gnupg"},
 			%DanglingPackagesPurged{},
 
 			%Sysfs{variables: %{
