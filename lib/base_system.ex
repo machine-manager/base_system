@@ -13,7 +13,11 @@ defmodule BaseSystem.Configure do
 	useful Ubuntu system.
 
 	Requires that these packages are already installed:
-	erlang-base-hipe erlang-crypto curl
+	`erlang-base-hipe erlang-crypto curl binutils`
+
+	`curl` is needed for `Util.get_country`.
+
+	`binutils`'s `ar` is needed for `MetaPackageInstalled`.
 	"""
 	require Util
 	Util.declare_external_resources("files")
@@ -70,12 +74,12 @@ defmodule BaseSystem.Configure do
 		base_packages = ~w(
 			netbase ifupdown isc-dhcp-client rsyslog cron net-tools sudo openssh-server
 			libpam-systemd apt gnupg2 chrony sysfsutils zsh psmisc acl apparmor
-			apparmor-profiles)
+			apparmor-profiles curl binutils rsync)
 		# dnsutils       - for dig
 		human_admin_needs = ~w(
-			molly-guard iputils-ping less strace htop dstat tmux git tig wget curl
-			nano mtr-tiny nethogs iftop lsof software-properties-common ppa-purge
-			rsync pv tree dnsutils whois)
+			molly-guard iputils-ping less strace htop dstat tmux git tig wget nano
+			mtr-tiny nethogs iftop lsof software-properties-common ppa-purge pv
+			tree dnsutils whois)
 		# If custom-packages is available, assume ubuntils, pinned-git, and ripgrep are desired
 		human_admin_needs = case custom_packages do
 			true  -> ["ubuntils", "pinned-git", "ripgrep"] ++ human_admin_needs
