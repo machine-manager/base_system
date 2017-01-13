@@ -71,6 +71,7 @@ defmodule BaseSystem.Configure do
 		# libpam-systemd - to make ssh server disconnect clients when it shuts down
 		# psmisc         - for killall
 		# sysfsutils     - for Sysfs unit and /sys configuration on boot
+		# binutils       - for ar, required by MetaPackageInstalled
 		base_packages = ~w(
 			netbase ifupdown isc-dhcp-client rsyslog cron net-tools sudo openssh-server
 			libpam-systemd apt gnupg2 chrony sysfsutils zsh psmisc acl apparmor
