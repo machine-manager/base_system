@@ -321,7 +321,11 @@ defmodule BaseSystem.Configure do
 			},
 
 			# Make sure root's shell is zsh
-			%UserPresent{name: "root", home: "/root", shell: "/bin/zsh"},
+			%BeforeMeet{
+				unit:    %UserPresent{name: "root", home: "/root", shell: "/bin/zsh"},
+				# Make sure zsh actually works before setting root's shell to zsh
+				trigger: fn -> {_, 0} = System.cmd("/bin/zsh", ["-c", "true"]) end
+			},
 
 			# TODO: min_free_kbytes
 			%Sysctl{parameters: Map.merge(%{
