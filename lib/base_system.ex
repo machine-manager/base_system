@@ -126,6 +126,11 @@ defmodule BaseSystem.Configure do
 
 			# apt will use either gnupg or gnupg2, and gnupg2 is less bad
 			"gnupg",
+
+			# Container technology that works until it doesn't
+			"lxd",
+			"lxcfs",
+			"lxc-common",
 		]
 		generally_undesirable_packages = case outside_boot do
 			# linux-zygote creates an install where linux-image-generic and grub-pc
