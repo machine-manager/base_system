@@ -4,7 +4,8 @@ alias Converge.{
 	DirectoryPresent, DirectoryEmpty, EtcCommitted, PackageIndexUpdated,
 	MetaPackageInstalled, DanglingPackagesPurged, PackagesMarkedAutoInstalled,
 	PackagesMarkedManualInstalled, PackagePurged, Fstab, FstabEntry, AfterMeet,
-	BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring, SystemdUnitStopped
+	BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring, SystemdUnitStopped,
+	UserPresent
 }
 
 defmodule BaseSystem.Configure do
@@ -318,6 +319,9 @@ defmodule BaseSystem.Configure do
 				},
 				trigger: fn -> {_, 0} = System.cmd("service", ["chrony", "restart"]) end
 			},
+
+			# Make sure root's shell is zsh
+			%UserPresent{name: "root", home: "/root", shell: "/bin/zsh"},
 
 			# TODO: min_free_kbytes
 			%Sysctl{parameters: Map.merge(%{
