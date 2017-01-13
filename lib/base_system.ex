@@ -156,7 +156,7 @@ defmodule BaseSystem.Configure do
 			# Make sure etckeeper is installed, as it is required for the EtcCommitted units here
 			%BeforeMeet{
 				unit:    %MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper"]},
-				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{max_age: 0}, ctx) end
+				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{max_age: 30}, ctx) end
 			},
 			%PackagesMarkedAutoInstalled{names: ["converge-desired-packages-early"]},
 			%EtcCommitted{message: "converge (early)"},
@@ -191,11 +191,17 @@ defmodule BaseSystem.Configure do
 			fstab_unit(),
 
 			%BeforeMeet{
-				unit: %MetaPackageInstalled{
-					name:    "converge-desired-packages",
-					depends: ["converge-desired-packages-early"] ++ all_desired_packages
+				unit: %AfterMeet{
+					unit: %MetaPackageInstalled{
+						name:    "converge-desired-packages",
+						depends: ["converge-desired-packages-early"] ++ all_desired_packages
+					},
+					# /lib/systemd/system/systemd-timesyncd.service.d/disable-with-time-daemon.conf
+					# stops systemd-timesyncd from starting if chrony is installed, but systemd-timesyncd
+					# may still be running if the system hasn't been rebooted.
+					trigger: fn -> {"", 0} = System.cmd("systemctl", ["stop", "--", "systemd-timesyncd.service"]) end,
 				},
-				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{max_age: 0}, ctx) end,
+				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{max_age: 30}, ctx) end,
 			},
 			%PackagesMarkedManualInstalled{names: ["converge-desired-packages"]},
 			# This comes after MetaPackageInstalled because the undesired gnupg
