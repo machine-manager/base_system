@@ -96,14 +96,13 @@ defmodule BaseSystem.Configure do
 			# complaining about relative paths
 			"ureadahead",
 
-			# Make sure no time managers besides chrony are installed
+			# Time managers that should be purged because we want just chrony
 			"ntpdate",
 			"adjtimex",
 			"ntp",
 			"openntpd",
 
-			# Make sure that we don't have superfluous stuff that we would find
-			# on a non-minbase install
+			# Superfluous stuff that we would find on a non-minbase install
 			"snapd",
 			"unattended-upgrades",
 			"libnss-mdns",
