@@ -73,10 +73,12 @@ defmodule BaseSystem.Configure do
 		# psmisc         - for killall
 		# sysfsutils     - for Sysfs unit and /sys configuration on boot
 		# binutils       - for ar, required by MetaPackageInstalled
+		# pollinate      - for seeding RNG the very first time
+		# vim-common     - https://bugs.launchpad.net/ubuntu/+source/pollinate/+bug/1656484
 		base_packages = ~w(
 			netbase ifupdown isc-dhcp-client rsyslog cron net-tools sudo openssh-server
-			libpam-systemd apt gnupg2 chrony sysfsutils zsh psmisc acl apparmor
-			apparmor-profiles curl binutils rsync)
+			libpam-systemd apt gnupg2 pollinate vim-common chrony sysfsutils zsh psmisc
+			acl apparmor apparmor-profiles curl binutils rsync)
 		# dnsutils       - for dig
 		human_admin_needs = ~w(
 			molly-guard iputils-ping less strace htop dstat tmux git tig wget nano
