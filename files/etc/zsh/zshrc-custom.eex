@@ -150,7 +150,7 @@ alias tree='tree -F'
 alias grep='grep --color=auto'
 alias egrep='egrep --color=auto'
 alias fgrep='fgrep --color=auto'
-alias pgrep='pgrep --color=auto'
+alias rgrep='rgrep --color=auto'
 
 <%= if custom_packages do %>alias git=pinned-git<% end %>
 alias gpr='git pull --rebase'
