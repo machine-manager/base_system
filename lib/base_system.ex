@@ -379,7 +379,7 @@ defmodule BaseSystem.Configure do
 				options:          "hidepid=2",
 				fsck_pass_number: 0
 			}
-		] |> Enum.filter(&(&1 != nil))
+		] |> Enum.reject(&is_nil/1)
 		fstab_trigger = fn ->
 			{_, 0} = System.cmd("mount", ["-o", "remount", "/proc"])
 		end
