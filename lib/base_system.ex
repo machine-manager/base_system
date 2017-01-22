@@ -49,6 +49,7 @@ defmodule BaseSystem.Configure do
 		])
 
 		repositories                   = Keyword.get(opts, :repositories,                   default_repositories)
+		tools_for_filesystems          = Keyword.get(opts, :tools_for_filesystems,          [:xfs])
 		extra_packages                 = Keyword.get(opts, :extra_packages,                 [])
 		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files, false)
 		extra_sysctl_parameters        = Keyword.get(opts, :extra_sysctl_parameters,        %{})
@@ -102,7 +103,16 @@ defmodule BaseSystem.Configure do
 			"pciutils",         # for lspci, (todo) used to determine whether we have an NVIDIA card
 			"erlang-base-hipe", # for converge escripts
 			"erlang-crypto",    # for converge escripts
-		]
+		] ++ case :xfs in tools_for_filesystems do
+			true ->  ["xfsprogs"]
+			false -> []
+		end ++ case :zfs in tools_for_filesystems do
+			true ->  ["zfsutils-linux"]
+			false -> []
+		end ++ case :ext4 in tools_for_filesystems do
+			true ->  ["e2fsprogs"]
+			false -> []
+		end
 		human_admin_needs = [
 			"molly-guard",
 			"lshw",
