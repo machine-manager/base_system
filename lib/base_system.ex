@@ -78,23 +78,23 @@ defmodule BaseSystem.Configure do
 			"net-tools",
 			"sudo",
 			"openssh-server",
-			"libpam-systemd", # to make ssh server disconnect clients when it shuts down
+			"libpam-systemd",   # to make ssh server disconnect clients when it shuts down
 			"ca-certificates",
 			"apt",
 			"gnupg2",
-			"pollinate",  # for seeding RNG the very first time
-			"vim-common", # https://bugs.launchpad.net/ubuntu/+source/pollinate/+bug/1656484
+			"pollinate",        # for seeding RNG the very first time
+			"vim-common",       # https://bugs.launchpad.net/ubuntu/+source/pollinate/+bug/1656484
 			"chrony",
-			"sysfsutils", # for Sysfs unit and /sys configuration on boot
-			"zsh",        # root's default shell
-			"psmisc",     # for killall
+			"sysfsutils",       # for Sysfs unit and /sys configuration on boot
+			"zsh",              # root's default shell
+			"psmisc",           # for killall
 			"acl",
 			"apparmor",
 			"apparmor-profiles",
-			"curl",       # for Converge.Util.get_country
-			"binutils",   # for ar, required by MetaPackageInstalled
+			"curl",             # for Converge.Util.get_country
+			"binutils",         # for ar, required by MetaPackageInstalled
 			"rsync",
-			"pciutils",   # (todo) used to determine whether we have an NVIDIA card
+			"pciutils",         # (todo) used to determine whether we have an NVIDIA card
 			"erlang-base-hipe", # for converge escripts
 			"erlang-crypto",    # for converge escripts
 		]
