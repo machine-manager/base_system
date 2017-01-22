@@ -84,6 +84,7 @@ defmodule BaseSystem.Configure do
 			"net-tools",
 			"sudo",
 			"openssh-server",
+			"openssh-client",
 			"libpam-systemd",   # to make ssh server disconnect clients when it shuts down
 			"ca-certificates",
 			"apt",
