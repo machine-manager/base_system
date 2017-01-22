@@ -128,9 +128,9 @@ defmodule BaseSystem.Configure do
 			"dnsutils",     # dig
 			"whois",
 		]
-		# If custom-packages is available, assume ubuntils, pinned-git, and ripgrep are desired
+		# If custom-packages is available, assume that some additional packages are also desired
 		human_admin_needs = case custom_packages do
-			true  -> ["ubuntils", "pinned-git", "ripgrep"] ++ human_admin_needs
+			true  -> ["ubuntils", "quickmunge", "pinned-git", "ripgrep"] ++ human_admin_needs
 			false -> human_admin_needs
 		end
 		all_desired_packages = boot_packages ++ base_packages ++ human_admin_needs ++ extra_packages
