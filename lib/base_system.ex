@@ -78,6 +78,7 @@ defmodule BaseSystem.Configure do
 			"ifupdown",
 			"isc-dhcp-client",
 			"rsyslog",
+			"logrotate",
 			"cron",
 			"net-tools",
 			"sudo",
