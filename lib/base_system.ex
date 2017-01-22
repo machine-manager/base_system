@@ -58,8 +58,8 @@ defmodule BaseSystem.Configure do
 		outside_boot                   = Keyword.get(opts, :outside_boot,                   false)
 
 		custom_packages = \
-			MapSet.member?(repositories, :custom_packages_local) or
-			MapSet.member?(repositories, :custom_packages_remote)
+			:custom_packages_local  in repositories or
+			:custom_packages_remote in repositories
 
 		apt_trusted_gpg_keys = for repo <- repositories |> MapSet.put(:ubuntu) do
 			apt_keys[repo]
