@@ -94,7 +94,7 @@ defmodule BaseSystem.Configure do
 			"curl",       # for Converge.Util.get_country
 			"binutils",   # for ar, required by MetaPackageInstalled
 			"rsync",
-			"pciutils",
+			"pciutils",   # (todo) used to determine whether we have an NVIDIA card
 			"erlang-base-hipe", # for converge escripts
 			"erlang-crypto",    # for converge escripts
 		]
