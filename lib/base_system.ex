@@ -106,6 +106,7 @@ defmodule BaseSystem.Configure do
 		human_admin_needs = [
 			"molly-guard",
 			"lshw",
+			"net-tools",
 			"iputils-ping",
 			"less",
 			"strace",
