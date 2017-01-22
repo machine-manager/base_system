@@ -77,11 +77,12 @@ defmodule BaseSystem.Configure do
 		# vim-common     - https://bugs.launchpad.net/ubuntu/+source/pollinate/+bug/1656484
 		base_packages = ~w(
 			netbase ifupdown isc-dhcp-client rsyslog cron net-tools sudo openssh-server
-			libpam-systemd apt gnupg2 pollinate vim-common chrony sysfsutils zsh psmisc
-			acl apparmor apparmor-profiles curl binutils rsync)
+			libpam-systemd ca-certificates apt gnupg2 pollinate vim-common chrony
+			sysfsutils zsh psmisc acl apparmor apparmor-profiles curl binutils rsync
+			pciutils)
 		# dnsutils       - for dig
 		human_admin_needs = ~w(
-			molly-guard iputils-ping less strace htop dstat tmux git tig wget nano
+			molly-guard lshw iputils-ping less strace htop dstat tmux git tig wget nano
 			mtr-tiny nethogs iftop lsof software-properties-common pv tree dnsutils whois)
 		# If custom-packages is available, assume ubuntils, pinned-git, and ripgrep are desired
 		human_admin_needs = case custom_packages do
