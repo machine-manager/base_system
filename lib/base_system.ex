@@ -70,6 +70,7 @@ defmodule BaseSystem.Configure do
 		end
 		base_packages = [
 			"util-linux",
+			"nocache",
 			"gdisk",
 			"hdparm",
 			"intel-microcode",
