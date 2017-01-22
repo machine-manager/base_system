@@ -44,11 +44,11 @@ defmodule BaseSystem.Configure do
 			:nodesource_node_7      => content("files/apt_keys/68576280 NodeSource.txt"),
 		}
 
-		default_extra_repositories = MapSet.new([
+		default_repositories = MapSet.new([
 			:custom_packages_remote,
 		])
 
-		extra_repositories             = Keyword.get(opts, :extra_repositories,             default_extra_repositories)
+		repositories                   = Keyword.get(opts, :repositories,                   default_repositories)
 		extra_packages                 = Keyword.get(opts, :extra_packages,                 [])
 		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files, false)
 		extra_sysctl_parameters        = Keyword.get(opts, :extra_sysctl_parameters,        %{})
@@ -57,10 +57,10 @@ defmodule BaseSystem.Configure do
 		outside_boot                   = Keyword.get(opts, :outside_boot,                   false)
 
 		custom_packages = \
-			MapSet.member?(extra_repositories, :custom_packages_local) or
-			MapSet.member?(extra_repositories, :custom_packages_remote)
+			MapSet.member?(repositories, :custom_packages_local) or
+			MapSet.member?(repositories, :custom_packages_remote)
 
-		apt_trusted_gpg_keys = for repo <- extra_repositories |> MapSet.put(:ubuntu) do
+		apt_trusted_gpg_keys = for repo <- repositories |> MapSet.put(:ubuntu) do
 			apt_keys[repo]
 		end
 
@@ -168,8 +168,8 @@ defmodule BaseSystem.Configure do
 					%FilePresent{
 						path:    "/etc/apt/sources.list",
 						content: EEx.eval_string(content("files/etc/apt/sources.list.eex"),
-						                         [country:             Util.get_country(),
-						                          extra_repositories:  extra_repositories])
+						                         [country:      Util.get_country(),
+						                          repositories: repositories])
 						         |> StringUtil.remove_empty_lines,
 						# TODO: after we have _apt in a group, use 0o640 and group: ...
 						mode:    0o644,
