@@ -101,7 +101,7 @@ defmodule BaseSystem.Configure do
 		# dnsutils       - for dig
 		human_admin_needs = ~w(
 			molly-guard lshw iputils-ping less strace htop dstat tmux git tig wget nano
-			mtr-tiny nethogs iftop lsof software-properties-common pv tree dnsutils whois)
+			mtr-tiny nethogs iftop lsof pv tree dnsutils whois)
 		# If custom-packages is available, assume ubuntils, pinned-git, and ripgrep are desired
 		human_admin_needs = case custom_packages do
 			true  -> ["ubuntils", "pinned-git", "ripgrep"] ++ human_admin_needs
