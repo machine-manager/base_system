@@ -70,11 +70,11 @@ defmodule BaseSystem.Configure do
 			true  -> []
 		end
 		base_packages = [
+			"intel-microcode",
 			"util-linux",
 			"nocache",
 			"gdisk",
 			"hdparm",
-			"intel-microcode",
 			"netbase",
 			"ifupdown",
 			"isc-dhcp-client",
