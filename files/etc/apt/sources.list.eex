@@ -3,30 +3,30 @@
 # our linux-meta packages came from (because they have the same versions)
 # and go into a "downgrade" loop.
 %>
-<%= if MapSet.member?(repositories, :custom_packages_local) do %>
+<%= if :custom_packages_local in repositories do %>
 deb [lang="none"] file:/var/custom-packages ./
 <% end %>
-<%= if MapSet.member?(repositories, :custom_packages_remote) do %>
+<%= if :custom_packages_remote in repositories do %>
 deb [lang="none"] http://packages:mTzCZMfxDYj59LJHbWLWXQ@127.0.0.1:28000/ ./
 <% end %>
 deb http://<%= country %>.archive.ubuntu.com/ubuntu xenial           main restricted universe multiverse
 deb http://<%= country %>.archive.ubuntu.com/ubuntu xenial-updates   main restricted universe multiverse
 deb http://<%= country %>.archive.ubuntu.com/ubuntu xenial-security  main restricted universe multiverse
-<%= if MapSet.member?(repositories, :google_chrome) do %>
+<%= if :google_chrome in repositories do %>
 deb [arch=amd64] http://dl.google.com/linux/chrome/deb/  stable main
 <% end %>
-<%= if MapSet.member?(repositories, :oracle_virtualbox) do %>
+<%= if :oracle_virtualbox in repositories do %>
 deb http://download.virtualbox.org/virtualbox/debian     xenial contrib
 <% end %>
-<%= if MapSet.member?(repositories, :graphics_drivers_ppa) do %>
+<%= if :graphics_drivers_ppa in repositories do %>
 deb http://ppa.launchpad.net/graphics-drivers/ppa/ubuntu xenial main
 <% end %>
-<%= if MapSet.member?(repositories, :wine_ppa) do %>
+<%= if :wine_ppa in repositories do %>
 deb http://ppa.launchpad.net/wine/wine-builds/ubuntu     xenial main
 <% end %>
-<%= if MapSet.member?(repositories, :nodesource_node_6) do %>
+<%= if :nodesource_node_6 in repositories do %>
 deb https://deb.nodesource.com/node_6.x                  xenial main
 <% end %>
-<%= if MapSet.member?(repositories, :nodesource_node_7) do %>
+<%= if :nodesource_node_7 in repositories do %>
 deb https://deb.nodesource.com/node_7.x                  xenial main
 <% end %>
