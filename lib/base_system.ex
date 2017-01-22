@@ -85,6 +85,7 @@ defmodule BaseSystem.Configure do
 			"sudo",
 			"openssh-server",
 			"openssh-client",
+			"rsync",
 			"libpam-systemd",   # to make ssh server disconnect clients when it shuts down
 			"ca-certificates",
 			"apt",
@@ -100,7 +101,6 @@ defmodule BaseSystem.Configure do
 			"apparmor-profiles",
 			"curl",             # for Converge.Util.get_country
 			"binutils",         # for ar, required by MetaPackageInstalled
-			"rsync",
 			"pciutils",         # for lspci, (todo) used to determine whether we have an NVIDIA card
 			"erlang-base-hipe", # for converge escripts
 			"erlang-crypto",    # for converge escripts
