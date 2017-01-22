@@ -69,17 +69,20 @@ defmodule BaseSystem.Configure do
 			true  -> []
 		end
 		# Notes:
-		# libpam-systemd - to make ssh server disconnect clients when it shuts down
-		# psmisc         - for killall
-		# sysfsutils     - for Sysfs unit and /sys configuration on boot
-		# binutils       - for ar, required by MetaPackageInstalled
-		# pollinate      - for seeding RNG the very first time
-		# vim-common     - https://bugs.launchpad.net/ubuntu/+source/pollinate/+bug/1656484
+		# libpam-systemd   - to make ssh server disconnect clients when it shuts down
+		# psmisc           - for killall
+		# sysfsutils       - for Sysfs unit and /sys configuration on boot
+		# pollinate        - for seeding RNG the very first time
+		# vim-common       - https://bugs.launchpad.net/ubuntu/+source/pollinate/+bug/1656484
+		# binutils         - for ar, required by MetaPackageInstalled
+		# curl             - for Converge.Util.get_country
+		# erlang-base-hipe - for converge escripts
+		# erlang-crypto    - for converge escripts
 		base_packages = ~w(
 			netbase ifupdown isc-dhcp-client rsyslog cron net-tools sudo openssh-server
 			libpam-systemd ca-certificates apt gnupg2 pollinate vim-common chrony
 			sysfsutils zsh psmisc acl apparmor apparmor-profiles curl binutils rsync
-			pciutils)
+			pciutils erlang-base-hipe erlang-crypto)
 		# dnsutils       - for dig
 		human_admin_needs = ~w(
 			molly-guard lshw iputils-ping less strace htop dstat tmux git tig wget nano
