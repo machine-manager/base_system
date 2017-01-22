@@ -97,14 +97,33 @@ defmodule BaseSystem.Configure do
 			"curl",             # for Converge.Util.get_country
 			"binutils",         # for ar, required by MetaPackageInstalled
 			"rsync",
-			"pciutils",         # (todo) used to determine whether we have an NVIDIA card
+			"pciutils",         # for lspci, (todo) used to determine whether we have an NVIDIA card
 			"erlang-base-hipe", # for converge escripts
 			"erlang-crypto",    # for converge escripts
 		]
-		# dnsutils       - for dig
-		human_admin_needs = ~w(
-			molly-guard lshw iputils-ping less strace htop itop dstat tmux git tig
-			wget nano mtr-tiny nethogs iftop lsof pv tree dnsutils whois)
+		human_admin_needs = [
+			"molly-guard",
+			"lshw",
+			"iputils-ping",
+			"less",
+			"strace",
+			"htop",
+			"iotop",
+			"dstat",
+			"tmux",
+			"git",
+			"tig",
+			"wget",
+			"nano",
+			"mtr-tiny",
+			"nethogs",
+			"iftop",
+			"lsof",
+			"pv",
+			"tree",
+			"dnsutils", # for dig
+			"whois",
+		]
 		# If custom-packages is available, assume ubuntils, pinned-git, and ripgrep are desired
 		human_admin_needs = case custom_packages do
 			true  -> ["ubuntils", "pinned-git", "ripgrep"] ++ human_admin_needs
