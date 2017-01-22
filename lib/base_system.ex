@@ -106,8 +106,9 @@ defmodule BaseSystem.Configure do
 		human_admin_needs = [
 			"molly-guard",
 			"lshw",
-			"net-tools",
+			"net-tools",    # ifconfig, route, netstat
 			"iputils-ping",
+			"netcat-openbsd",
 			"less",
 			"strace",
 			"htop",
@@ -124,7 +125,7 @@ defmodule BaseSystem.Configure do
 			"lsof",
 			"pv",
 			"tree",
-			"dnsutils", # for dig
+			"dnsutils",     # dig
 			"whois",
 		]
 		# If custom-packages is available, assume ubuntils, pinned-git, and ripgrep are desired
