@@ -70,6 +70,7 @@ defmodule BaseSystem.Configure do
 			true  -> []
 		end
 		base_packages = [
+			"aptitude",         # used by ObsoletePackagesPurged
 			"intel-microcode",
 			"util-linux",
 			"nocache",
