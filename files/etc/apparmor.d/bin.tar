@@ -9,6 +9,8 @@
 
 /bin/tar {
 	file,
+	# tar -p uses chown
+	capability chown,
 
 	# tar tries to use these, and even though it seems to work fine without
 	# them, allow both because they're not related to the rmt problem.
