@@ -104,14 +104,22 @@ defmodule BaseSystem.Configure do
 			"pciutils",         # for lspci, (todo) used to determine whether we have an NVIDIA card
 			"erlang-base-hipe", # for converge escripts
 			"erlang-crypto",    # for converge escripts
-		] ++ case :xfs in tools_for_filesystems do
-			true ->  ["xfsprogs"]
+		] ++ \
+		case :xfs in tools_for_filesystems do
+			true  -> ["xfsprogs"]
 			false -> []
-		end ++ case :zfs in tools_for_filesystems do
-			true ->  ["zfsutils-linux"]
+		end ++ \
+		case :zfs in tools_for_filesystems do
+			true  -> ["zfsutils-linux"]
 			false -> []
-		end ++ case :ext4 in tools_for_filesystems do
-			true ->  ["e2fsprogs"]
+		end ++ \
+		case :ext4 in tools_for_filesystems do
+			true  -> ["e2fsprogs"]
+			false -> []
+		end ++ \
+		# If using custom_packages_remote, assume custom-packages-client should be installed
+		case :custom_packages_remote in repositories do
+			true  -> ["custom-packages-client"]
 			false -> []
 		end
 		human_admin_needs = [
@@ -138,11 +146,11 @@ defmodule BaseSystem.Configure do
 			"tree",
 			"dnsutils",     # dig
 			"whois",
-		]
+		] ++ \
 		# If custom-packages is available, assume that some additional packages are also desired
-		human_admin_needs = case custom_packages do
-			true  -> ["ubuntils", "quickmunge", "pinned-git", "ripgrep"] ++ human_admin_needs
-			false -> human_admin_needs
+		case custom_packages do
+			true  -> ["ubuntils", "quickmunge", "pinned-git", "ripgrep"]
+			false -> []
 		end
 		all_desired_packages = boot_packages ++ base_packages ++ human_admin_needs ++ extra_packages
 		# Packages to be purged, unless listed in all_desired_packages.  None of this
