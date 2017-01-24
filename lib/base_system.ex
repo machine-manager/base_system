@@ -23,7 +23,7 @@ defmodule BaseSystem.Configure do
 	require Util
 	Util.declare_external_resources("files")
 
-	defmacro content(filename) do
+	defmacrop content(filename) do
 		File.read!(filename)
 	end
 
@@ -53,6 +53,7 @@ defmodule BaseSystem.Configure do
 		extra_packages                 = Keyword.get(opts, :extra_packages,                 [])
 		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files, false)
 		extra_sysctl_parameters        = Keyword.get(opts, :extra_sysctl_parameters,        %{})
+		extra_configuration            = Keyword.get(opts, :extra_configuration,            %All{units: []})
 		# Is our boot fully managed by the host, to the point where we don't have
 		# to install a linux kernel and bootloader?  Use `true` for scaleway machines.
 		outside_boot                   = Keyword.get(opts, :outside_boot,                   false)
@@ -443,6 +444,8 @@ defmodule BaseSystem.Configure do
 				"vm.dirty_bytes"                     => dirty_settings.dirty_bytes,
 				"vm.dirty_expire_centisecs"          => dirty_settings.dirty_expire_centisecs,
 			}, extra_sysctl_parameters)},
+
+			extra_configuration,
 
 			%EtcCommitted{message: "converge"}
 		]}
