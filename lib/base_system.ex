@@ -4,8 +4,8 @@ alias Converge.{
 	DirectoryPresent, DirectoryEmpty, EtcCommitted, PackageIndexUpdated,
 	MetaPackageInstalled, DanglingPackagesPurged, PackagesMarkedAutoInstalled,
 	PackagesMarkedManualInstalled, PackagePurged, Fstab, FstabEntry, AfterMeet,
-	BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring, SystemdUnitStopped,
-	UserPresent
+	BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring, SystemdUnitStarted,
+	SystemdUnitStopped, UserPresent
 }
 
 defmodule BaseSystem.Configure do
@@ -329,6 +329,7 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> {_, 0} = System.cmd("systemctl", ["daemon-reload"]) end
 			},
 
+			%SystemdUnitStarted{name: "apparmor.service"},
 			%AfterMeet{
 				unit: %FilePresent{
 					path:    "/etc/apparmor.d/bin.tar",
