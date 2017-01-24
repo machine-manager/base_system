@@ -54,6 +54,7 @@ defmodule BaseSystem.Configure do
 		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files, false)
 		extra_sysctl_parameters        = Keyword.get(opts, :extra_sysctl_parameters,        %{})
 		extra_configuration            = Keyword.get(opts, :extra_configuration,            %All{units: []})
+		extra_undesired_packages       = Keyword.get(opts, :extra_undesired_packages,       [])
 		# Is our boot fully managed by the host, to the point where we don't have
 		# to install a linux kernel and bootloader?  Use `true` for scaleway machines.
 		outside_boot                   = Keyword.get(opts, :outside_boot,                   false)
@@ -71,6 +72,7 @@ defmodule BaseSystem.Configure do
 			true  -> []
 		end
 		base_packages = [
+			"apt",
 			"aptitude",         # used by ObsoletePackagesPurged
 			"intel-microcode",
 			"util-linux",
@@ -90,7 +92,6 @@ defmodule BaseSystem.Configure do
 			"rsync",
 			"libpam-systemd",   # to make ssh server disconnect clients when it shuts down
 			"ca-certificates",
-			"apt",
 			"gnupg2",
 			"pollinate",        # for seeding RNG the very first time
 			"vim-common",       # https://bugs.launchpad.net/ubuntu/+source/pollinate/+bug/1656484
@@ -159,7 +160,7 @@ defmodule BaseSystem.Configure do
 		# should be necessary on a minbase system, but we keep this here
 		# 1) in case a package listed here ends up installed by accident or because it is depended-on
 		# 2) to make base_system more useful on non-minbase systems
-		generally_undesirable_packages = [
+		undesired_packages = [
 			# ureadahead has some very suspect code and spews messages to syslog
 			# complaining about relative paths
 			"ureadahead",
@@ -199,15 +200,17 @@ defmodule BaseSystem.Configure do
 			"lxd",
 			"lxcfs",
 			"lxc-common",
-		]
-		generally_undesirable_packages = case outside_boot do
+		] ++ \
+		case outside_boot do
 			# linux-zygote creates an install where linux-image-generic and grub-pc
 			# are marked manual-installed, so we might need to purge these packages
 			# for machines with `outside_boot`
-			true  -> generally_undesirable_packages ++ ["linux-image-generic", "grub-pc", "grub-efi-amd64"]
-			false -> generally_undesirable_packages
-		end
-		packages_to_purge = MapSet.difference(MapSet.new(generally_undesirable_packages), MapSet.new(all_desired_packages))
+			true  -> ["linux-image-generic", "grub-pc", "grub-efi-amd64"]
+			false -> []
+		end ++ \
+		extra_undesired_packages
+
+		packages_to_purge = MapSet.difference(MapSet.new(undesired_packages), MapSet.new(all_desired_packages))
 
 		dirty_settings = get_dirty_settings(optimize_for_short_lived_files: optimize_for_short_lived_files)
 
