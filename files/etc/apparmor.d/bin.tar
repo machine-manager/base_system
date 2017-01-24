@@ -17,6 +17,7 @@
 	capability dac_override,
 	capability dac_read_search,
 	capability fowner,
+	capability fsetid,
 
 	# tar tries to use these, and even though it seems to work fine without
 	# them, allow both because they're not related to the rmt problem.
