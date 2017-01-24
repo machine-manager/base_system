@@ -372,6 +372,14 @@ defmodule BaseSystem.Configure do
 				mode:    0o644
 			},
 
+			# We don't use bash for the interactive shell, so there's no point in
+			# dropping these files into every user's $HOME
+			%FileMissing{path: "/etc/skel/.bashrc"},
+			%FileMissing{path: "/etc/skel/.bash_logout"},
+			%FileMissing{path: "/etc/skel/.profile"},
+
+			%FilePresent{path: "/etc/skel/.zshrc",                  content: content("files/etc/skel/.zshrc"),                  mode: 0o644},
+
 			%FilePresent{path: "/etc/issue",                        content: content("files/etc/issue"),                        mode: 0o644},
 			%FilePresent{path: "/etc/tmux.conf",                    content: content("files/etc/tmux.conf"),                    mode: 0o644},
 			%FilePresent{path: "/etc/nanorc",                       content: content("files/etc/nanorc"),                       mode: 0o644},
