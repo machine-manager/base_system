@@ -9,8 +9,14 @@
 
 /bin/tar {
 	file,
-	# tar -p uses chown
+
+	# needed by tar -p
 	capability chown,
+
+	# needed for tar to work when run from apt (e.g. in a postinst script)
+	capability dac_override,
+	capability dac_read_search,
+	capability fowner,
 
 	# tar tries to use these, and even though it seems to work fine without
 	# them, allow both because they're not related to the rmt problem.
