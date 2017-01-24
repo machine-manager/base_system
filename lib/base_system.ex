@@ -280,6 +280,9 @@ defmodule BaseSystem.Configure do
 			%All{units: packages_to_purge |> Enum.map(fn name -> %PackagePurged{name: name} end)},
 			%DanglingPackagesPurged{},
 
+			# Make sure this is cleared out after a google-chrome-* install drops a file here
+			%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
+
 			# /lib/systemd/system/systemd-timesyncd.service.d/disable-with-time-daemon.conf
 			# stops systemd-timesyncd from starting if chrony is installed, but systemd-timesyncd
 			# may still be running if the system hasn't been rebooted.
