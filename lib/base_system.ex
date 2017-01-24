@@ -211,6 +211,16 @@ defmodule BaseSystem.Configure do
 		dirty_settings = get_dirty_settings(optimize_for_short_lived_files: optimize_for_short_lived_files)
 
 		all = %All{units: [
+			# Set up locale early to avoid complaints from programs
+			%AfterMeet{
+				unit: %FilePresent{
+					path:    "/etc/locale.gen",
+					content: content("files/etc/locale.gen"),
+					mode:    0o644
+				},
+				trigger: fn -> {_, 0} = System.cmd("locale-gen", []) end
+			},
+
 			# We need a git config with a name and email for etckeeper to work
 			%DirectoryPresent{path: "/root/.config",     mode: 0o700},
 			%DirectoryPresent{path: "/root/.config/git", mode: 0o700},
