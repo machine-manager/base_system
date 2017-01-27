@@ -273,6 +273,19 @@ defmodule BaseSystem.Configure do
 
 			fstab_unit(),
 
+			# Google Chrome installs symlinks at /etc/cron.daily/google-chrome*;
+			# these scripts function as a little configuration manager that re-adds
+			# apt keys and apt sources if they are missing (e.g. after an Ubuntu
+			# upgrade).  Make these scripts no-ops to prevent them from re-adding
+			# the obsolete 7FAC5991 key to apt's trusted keys, and to stop them
+			# from mucking with /etc/apt/sources.list.d/
+			#
+			# Do this before installing Chrome, to prevent the cron.daily scripts
+			# from being run at install time.
+			%FilePresent{path: "/etc/default/google-chrome",          content: "exit 0\n", mode: 0o644},
+			%FilePresent{path: "/etc/default/google-chrome-beta",     content: "exit 0\n", mode: 0o644},
+			%FilePresent{path: "/etc/default/google-chrome-unstable", content: "exit 0\n", mode: 0o644},
+
 			%BeforeMeet{
 				unit: %MetaPackageInstalled{
 					name:    "converge-desired-packages",
@@ -313,16 +326,7 @@ defmodule BaseSystem.Configure do
 				# See also https://www.kernel.org/doc/Documentation/vm/transhuge.txt
 			}},
 
-			# Google Chrome installs symlinks at /etc/cron.daily/google-chrome*;
-			# these scripts function as a little configuration manager that re-adds
-			# apt keys and apt sources if they are missing (e.g. after an Ubuntu
-			# upgrade).  Make these scripts no-ops to prevent them from re-adding
-			# the obsolete 7FAC5991 key to apt's trusted keys, and to stop them
-			# from mucking with /etc/apt/sources.list.d/
-			%FilePresent{path: "/etc/default/google-chrome",          content: "exit 0\n", mode: 0o644},
-			%FilePresent{path: "/etc/default/google-chrome-beta",     content: "exit 0\n", mode: 0o644},
-			%FilePresent{path: "/etc/default/google-chrome-unstable", content: "exit 0\n", mode: 0o644},
-			# The scripts in /etc/cron.daily/ are already no-op'ed by the /etc/default/
+			# The scripts in /etc/cron.daily/ are already no-op'ed by the /etc/default/google-chrome-*
 			# files, but delete them anyway because we don't need them.  Note that
 			# they will re-appear after every Chrome upgrade.  (We can't set them to
 			# blank chattr +i'ed files because that breaks upgrades.)
