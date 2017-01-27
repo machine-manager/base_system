@@ -42,6 +42,7 @@ defmodule BaseSystem.Configure do
 			:wine_ppa               => content("files/apt_keys/77C899CB Launchpad PPA for Wine.txt"),
 			:nodesource_node_6      => content("files/apt_keys/68576280 NodeSource.txt"),
 			:nodesource_node_7      => content("files/apt_keys/68576280 NodeSource.txt"),
+			:gitlab                 => content("files/apt_keys/E15E78F4 GitLab B.V. (package repository signing key).txt"),
 		}
 
 		default_repositories = MapSet.new([
