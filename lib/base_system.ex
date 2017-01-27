@@ -317,9 +317,16 @@ defmodule BaseSystem.Configure do
 			# upgrade).  Make these scripts no-ops to prevent them from re-adding
 			# the obsolete 7FAC5991 key to apt's trusted keys, and to stop them
 			# from mucking with /etc/apt/sources.list.d/
-			%FilePresent{path: "/etc/cron.daily/google-chrome",          content: "", mode: 0o644, immutable: true},
-			%FilePresent{path: "/etc/cron.daily/google-chrome-beta",     content: "", mode: 0o644, immutable: true},
-			%FilePresent{path: "/etc/cron.daily/google-chrome-unstable", content: "", mode: 0o644, immutable: true},
+			%FilePresent{path: "/etc/default/google-chrome",          content: "exit 0\n", mode: 0o644},
+			%FilePresent{path: "/etc/default/google-chrome-beta",     content: "exit 0\n", mode: 0o644},
+			%FilePresent{path: "/etc/default/google-chrome-unstable", content: "exit 0\n", mode: 0o644},
+			# The scripts in /etc/cron.daily/ are already no-op'ed by the /etc/default/
+			# files, but delete them anyway because we don't need them.  Note that
+			# they will re-appear after every Chrome upgrade.  (We can't set them to
+			# blank chattr +i'ed files because that breaks upgrades.)
+			%FileMissing{path: "/etc/cron.daily/google-chrome"},
+			%FileMissing{path: "/etc/cron.daily/google-chrome-beta"},
+			%FileMissing{path: "/etc/cron.daily/google-chrome-unstable"},
 
 			# zfsutils-linux drops a file to do a scrub on the second Sunday of every month
 			%FileMissing{path: "/etc/cron.d/zfsutils-linux"},
