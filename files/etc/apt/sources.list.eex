@@ -9,9 +9,9 @@ deb [lang="none"] file:/var/custom-packages              ./
 <%= if :custom_packages_remote in repositories do %>
 deb [lang="none"] http://packages:mTzCZMfxDYj59LJHbWLWXQ@127.0.0.1:28000/ ./
 <% end %>
-deb http://<%= country %>.archive.ubuntu.com/ubuntu      xenial           main restricted universe multiverse
-deb http://<%= country %>.archive.ubuntu.com/ubuntu      xenial-updates   main restricted universe multiverse
-deb http://<%= country %>.archive.ubuntu.com/ubuntu      xenial-security  main restricted universe multiverse
+deb http://<%= country %>.archive.ubuntu.com/ubuntu                  xenial          main restricted universe multiverse
+deb http://<%= country %>.archive.ubuntu.com/ubuntu                  xenial-updates  main restricted universe multiverse
+deb http://<%= country %>.archive.ubuntu.com/ubuntu                  xenial-security main restricted universe multiverse
 <%= if :google_chrome in repositories do %>
 deb [arch=amd64] http://dl.google.com/linux/chrome/deb/  stable main
 <% end %>
