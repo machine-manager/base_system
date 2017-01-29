@@ -343,10 +343,15 @@ defmodule BaseSystem.Configure do
 			# other time.
 			%FileMissing{path: "/etc/cron.weekly/fstrim"},
 
-			# Disable systemd's atrocious "one ctrl-alt-del reboots the system" feature.
-			# This does not affect the 7x ctrl-alt-del force reboot feature.
 			%AfterMeet{
-				unit:    %SymlinkPresent{path: "/etc/systemd/system/ctrl-alt-del.target", target: "/dev/null"},
+				unit:    %All{units: [
+					# Use a lower value for DefaultTimeoutStopSec and a higher value for DefaultRestartSec.
+					%FilePresent{path: "/etc/systemd/system.conf",    content: content("files/etc/systemd/system.conf"),          mode: 0o644},
+
+					# Disable systemd's atrocious "one ctrl-alt-del reboots the system" feature.
+					# This does not affect the 7x ctrl-alt-del force reboot feature.
+					%SymlinkPresent{path: "/etc/systemd/system/ctrl-alt-del.target", target: "/dev/null"},
+				]},
 				trigger: fn -> {_, 0} = System.cmd("systemctl", ["daemon-reload"]) end
 			},
 
