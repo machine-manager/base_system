@@ -452,6 +452,12 @@ defmodule BaseSystem.Configure do
 				# http://blog.wpkg.org/2013/06/11/lxc-restricting-container-view-of-dmesg/
 				"kernel.dmesg_restrict"              => 1,
 
+				# Disable the magic SysRq key completely for improved security on servers
+				# not under our physical control.  Magic SysRq is allegedly useful, but
+				# I've never run into a situation where I could use it to fix a wedged
+				# system.
+				"kernel.sysrq"                       => 0,
+
 				# Use the canonical IPv6 address instead of using the privacy extensions.
 				# Servers generally are expected to use the canonical address.
 				# https://bugs.launchpad.net/ubuntu/+source/procps/+bug/1068756
