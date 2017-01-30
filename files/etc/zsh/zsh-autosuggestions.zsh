@@ -26,16 +26,6 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 #--------------------------------------------------------------------#
-# Setup                                                              #
-#--------------------------------------------------------------------#
-
-# Precmd hooks for initializing the library and starting pty's
-autoload -Uz add-zsh-hook
-
-# Asynchronous suggestions are generated in a pty
-zmodload zsh/zpty
-
-#--------------------------------------------------------------------#
 # Global Configuration Variables                                     #
 #--------------------------------------------------------------------#
 
@@ -46,9 +36,6 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
 
 # Prefix to use when saving original versions of bound widgets
 ZSH_AUTOSUGGEST_ORIGINAL_WIDGET_PREFIX=autosuggest-orig-
-
-# Pty name for calculating autosuggestions asynchronously
-ZSH_AUTOSUGGEST_PTY_NAME=zsh_autosuggest_pty
 
 ZSH_AUTOSUGGEST_STRATEGY=default
 
@@ -99,39 +86,6 @@ ZSH_AUTOSUGGEST_IGNORE_WIDGETS=(
 
 # Max size of buffer to trigger autosuggestion. Leave undefined for no upper bound.
 ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=
-
-# Use asynchronous mode by default. Unset this variable to use sync mode.
-ZSH_AUTOSUGGEST_USE_ASYNC=
-
-#--------------------------------------------------------------------#
-# Utility Functions                                                  #
-#--------------------------------------------------------------------#
-
-_zsh_autosuggest_escape_command() {
-	setopt localoptions EXTENDED_GLOB
-
-	# Escape special chars in the string (requires EXTENDED_GLOB)
-	echo -E "${1//(#m)[\"\'\\()\[\]|*?~]/\\$MATCH}"
-}
-
-#--------------------------------------------------------------------#
-# Feature Detection                                                  #
-#--------------------------------------------------------------------#
-
-_zsh_autosuggest_feature_detect() {
-	typeset -g _ZSH_AUTOSUGGEST_ZPTY_RETURNS_FD
-	typeset -h REPLY
-
-	zpty $ZSH_AUTOSUGGEST_PTY_NAME :
-
-	if (( REPLY )); then
-		_ZSH_AUTOSUGGEST_ZPTY_RETURNS_FD=1
-	else
-		_ZSH_AUTOSUGGEST_ZPTY_RETURNS_FD=0
-	fi
-
-	zpty -d $ZSH_AUTOSUGGEST_PTY_NAME
-}
 
 #--------------------------------------------------------------------#
 # Handle Deprecated Variables/Widgets                                #
@@ -306,23 +260,12 @@ _zsh_autosuggest_modify() {
 	local orig_buffer="$BUFFER"
 	local orig_postdisplay="$POSTDISPLAY"
 
-	# Clear suggestion while waiting for next one
+	# Clear suggestion while original widget runs
 	unset POSTDISPLAY
 
 	# Original widget may modify the buffer
 	_zsh_autosuggest_invoke_original_widget $@
 	retval=$?
-
-	# Optimize if manually typing in the suggestion
-	if [ $#BUFFER -gt $#orig_buffer ]; then
-		local added=${BUFFER#$orig_buffer}
-
-		# If the string added matches the beginning of the postdisplay
-		if [ "$added" = "${orig_postdisplay:0:$#added}" ]; then
-			POSTDISPLAY="${orig_postdisplay:$#added}"
-			return $retval
-		fi
-	fi
 
 	# Don't fetch a new suggestion if the buffer hasn't changed
 	if [ "$BUFFER" = "$orig_buffer" ]; then
@@ -331,35 +274,19 @@ _zsh_autosuggest_modify() {
 	fi
 
 	# Get a new suggestion if the buffer is not empty after modification
+	local suggestion
 	if [ $#BUFFER -gt 0 ]; then
 		if [ -z "$ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE" -o $#BUFFER -lt "$ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE" ]; then
-			_zsh_autosuggest_fetch
+			suggestion="$(_zsh_autosuggest_suggestion "$BUFFER")"
 		fi
 	fi
 
-	return $retval
-}
-
-# Fetch a new suggestion based on what's currently in the buffer
-_zsh_autosuggest_fetch() {
-	if zpty -t "$ZSH_AUTOSUGGEST_PTY_NAME" &>/dev/null; then
-		_zsh_autosuggest_async_request "$BUFFER"
-	else
-		local suggestion
-		_zsh_autosuggest_strategy_$ZSH_AUTOSUGGEST_STRATEGY "$BUFFER"
-		_zsh_autosuggest_suggest "$suggestion"
-	fi
-}
-
-# Offer a suggestion
-_zsh_autosuggest_suggest() {
-	local suggestion="$1"
-
+	# Add the suggestion to the POSTDISPLAY
 	if [ -n "$suggestion" ]; then
 		POSTDISPLAY="${suggestion#$BUFFER}"
-	else
-		unset POSTDISPLAY
 	fi
+
+	return $retval
 }
 
 # Accept the entire suggestion
@@ -429,7 +356,7 @@ _zsh_autosuggest_partial_accept() {
 	return $retval
 }
 
-for action in clear modify fetch suggest accept partial_accept execute; do
+for action in clear modify accept partial_accept execute; do
 	eval "_zsh_autosuggest_widget_$action() {
 		local -i retval
 
@@ -440,17 +367,34 @@ for action in clear modify fetch suggest accept partial_accept execute; do
 
 		_zsh_autosuggest_highlight_apply
 
-		zle -R
-
 		return \$retval
 	}"
 done
 
-zle -N autosuggest-fetch _zsh_autosuggest_widget_fetch
-zle -N autosuggest-suggest _zsh_autosuggest_widget_suggest
 zle -N autosuggest-accept _zsh_autosuggest_widget_accept
 zle -N autosuggest-clear _zsh_autosuggest_widget_clear
 zle -N autosuggest-execute _zsh_autosuggest_widget_execute
+
+#--------------------------------------------------------------------#
+# Suggestion                                                         #
+#--------------------------------------------------------------------#
+
+# Delegate to the selected strategy to determine a suggestion
+_zsh_autosuggest_suggestion() {
+	local escaped_prefix="$(_zsh_autosuggest_escape_command "$1")"
+	local strategy_function="_zsh_autosuggest_strategy_$ZSH_AUTOSUGGEST_STRATEGY"
+
+	if [ -n "$functions[$strategy_function]" ]; then
+		echo -E "$($strategy_function "$escaped_prefix")"
+	fi
+}
+
+_zsh_autosuggest_escape_command() {
+	setopt localoptions EXTENDED_GLOB
+
+	# Escape special chars in the string (requires EXTENDED_GLOB)
+	echo -E "${1//(#m)[\\()\[\]|*?~]/\\$MATCH}"
+}
 
 #--------------------------------------------------------------------#
 # Default Suggestion Strategy                                        #
@@ -460,16 +404,7 @@ zle -N autosuggest-execute _zsh_autosuggest_widget_execute
 #
 
 _zsh_autosuggest_strategy_default() {
-	setopt localoptions EXTENDED_GLOB
-
-	local prefix="${1//(#m)[\\()\[\]|*?~]/\\$MATCH}"
-
-	# Get the keys of the history items that match
-	local -a histkeys
-	histkeys=(${(k)history[(r)$prefix*]})
-
-	# Give back the value of the first key
-	suggestion="${history[$histkeys[1]]}"
+	fc -lnrm "$1*" 1 2>/dev/null | head -n 1
 }
 
 #--------------------------------------------------------------------#
@@ -494,7 +429,7 @@ _zsh_autosuggest_strategy_default() {
 # `HIST_EXPIRE_DUPS_FIRST`.
 
 _zsh_autosuggest_strategy_match_prev_cmd() {
-	local prefix="${1//(#m)[\\()\[\]|*?~]/\\$MATCH}"
+	local prefix="$1"
 
 	# Get all history event numbers that correspond to history
 	# entries that match pattern $prefix*
@@ -520,101 +455,8 @@ _zsh_autosuggest_strategy_match_prev_cmd() {
 		fi
 	done
 
-	# Give back the matched history entry
-	suggestion="$history[$histkey]"
-}
-
-#--------------------------------------------------------------------#
-# Async                                                              #
-#--------------------------------------------------------------------#
-
-# Pty is spawned running this function
-_zsh_autosuggest_async_server() {
-	emulate -R zsh
-
-	# Output only newlines (not carriage return + newline)
-	stty -onlcr
-
-	local strategy=$1
-	local last_pid
-
-	while IFS='' read -r -d $'\0' query; do
-		# Kill last bg process
-		kill -KILL $last_pid &>/dev/null
-
-		# Run suggestion search in the background
-		(
-			local suggestion
-			_zsh_autosuggest_strategy_$ZSH_AUTOSUGGEST_STRATEGY "$query"
-			echo -n -E "$suggestion"$'\0'
-		) &
-
-		last_pid=$!
-	done
-}
-
-_zsh_autosuggest_async_request() {
-	# Send the query to the pty to fetch a suggestion
-	zpty -w -n $ZSH_AUTOSUGGEST_PTY_NAME "${1}"$'\0'
-}
-
-# Called when new data is ready to be read from the pty
-# First arg will be fd ready for reading
-# Second arg will be passed in case of error
-_zsh_autosuggest_async_response() {
-	local suggestion
-
-	zpty -rt $ZSH_AUTOSUGGEST_PTY_NAME suggestion '*'$'\0' 2>/dev/null
-	zle autosuggest-suggest "${suggestion%$'\0'}"
-}
-
-_zsh_autosuggest_async_pty_create() {
-	# With newer versions of zsh, REPLY stores the fd to read from
-	typeset -h REPLY
-
-	# If we won't get a fd back from zpty, try to guess it
-	if [ $_ZSH_AUTOSUGGEST_ZPTY_RETURNS_FD -eq 0 ]; then
-		integer -l zptyfd
-		exec {zptyfd}>&1  # Open a new file descriptor (above 10).
-		exec {zptyfd}>&-  # Close it so it's free to be used by zpty.
-	fi
-
-	# Start a new pty running the server function
-	zpty -b $ZSH_AUTOSUGGEST_PTY_NAME "_zsh_autosuggest_async_server _zsh_autosuggest_strategy_$ZSH_AUTOSUGGEST_STRATEGY"
-
-	# Store the fd so we can remove the handler later
-	if (( REPLY )); then
-		_ZSH_AUTOSUGGEST_PTY_FD=$REPLY
-	else
-		_ZSH_AUTOSUGGEST_PTY_FD=$zptyfd
-	fi
-
-	# Set up input handler from the pty
-	zle -F $_ZSH_AUTOSUGGEST_PTY_FD _zsh_autosuggest_async_response
-}
-
-_zsh_autosuggest_async_pty_destroy() {
-	if [ -n "$_ZSH_AUTOSUGGEST_PTY_FD" ]; then
-		# Remove the input handler
-		zle -F $_ZSH_AUTOSUGGEST_PTY_FD
-
-		# Destroy the pty
-		zpty -d $ZSH_AUTOSUGGEST_PTY_NAME &>/dev/null
-	fi
-}
-
-_zsh_autosuggest_async_pty_recreate() {
-	_zsh_autosuggest_async_pty_destroy
-	_zsh_autosuggest_async_pty_create
-}
-
-_zsh_autosuggest_async_start() {
-	typeset -g _ZSH_AUTOSUGGEST_PTY_FD
-
-	_zsh_autosuggest_async_pty_create
-
-	# We recreate the pty to get a fresh list of history events
-	add-zsh-hook precmd _zsh_autosuggest_async_pty_recreate
+	# Echo the matched history entry
+	echo -E "$history[$histkey]"
 }
 
 #--------------------------------------------------------------------#
@@ -623,16 +465,9 @@ _zsh_autosuggest_async_start() {
 
 # Start the autosuggestion widgets
 _zsh_autosuggest_start() {
-	add-zsh-hook -d precmd _zsh_autosuggest_start
-
-	_zsh_autosuggest_feature_detect
 	_zsh_autosuggest_check_deprecated_config
 	_zsh_autosuggest_bind_widgets
-
-	if [ -n "${ZSH_AUTOSUGGEST_USE_ASYNC+x}" ]; then
-		_zsh_autosuggest_async_start
-	fi
 }
 
-# Start the autosuggestion widgets on the next precmd
+autoload -Uz add-zsh-hook
 add-zsh-hook precmd _zsh_autosuggest_start
