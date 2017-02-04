@@ -73,7 +73,8 @@ defmodule BaseSystem.Configure do
 		end
 		base_packages = [
 			"apt",
-			"aptitude",         # used by ObsoletePackagesPurged
+			"aptitude",          # used by ObsoletePackagesPurged
+			"apt-show-versions", # to be used by a NoPackagesNewerThanSource
 			"intel-microcode",
 			"util-linux",
 			"nocache",
