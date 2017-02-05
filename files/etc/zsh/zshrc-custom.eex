@@ -83,12 +83,12 @@ preexec() {
 ### Helper functions for prompt
 
 fast-cat() {
-	echo "$(< $1)"
+	echo -E "$(< $1)"
 }
 
 print-git-branch() {
 	if [[ -f ".git/HEAD" ]]; then
-		echo ":${$(fast-cat .git/HEAD)#ref: refs/heads/}"
+		echo -E ":${$(fast-cat .git/HEAD)#ref: refs/heads/}"
 	fi
 }
 
