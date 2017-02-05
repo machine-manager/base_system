@@ -97,7 +97,7 @@ print-git-branch() {
 
 setopt promptsubst # needed for \$ evaluation
 # PS1=USER@HOST:PWD:GIT_BRANCH#
-export PS1="\
+PS1="\
 $(print '%{\e[1;31m%}')%n\
 $(print '%{\e[0;37m%}')@\
 $(print '%{\e[0;36m%}')%m\
@@ -229,9 +229,9 @@ restarter() {
 . /etc/zsh/zsh-autosuggestions.zsh
 
 # https://github.com/zsh-users/zsh-autosuggestions#configuration
-export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE=fg=6
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE=fg=6
 # "Chooses the most recent match whose preceding history item matches the most
 # recently executed command (more info). Note that this strategy won't work as
 # expected with ZSH options that don't preserve the history order such as
 # HIST_IGNORE_ALL_DUPS or HIST_EXPIRE_DUPS_FIRST"
-export ZSH_AUTOSUGGEST_STRATEGY=match_prev_cmd
+ZSH_AUTOSUGGEST_STRATEGY=match_prev_cmd
