@@ -24,9 +24,3 @@ deb http://ppa.launchpad.net/graphics-drivers/ppa/ubuntu xenial main
 <%= if :wine_ppa in repositories do %>
 deb http://ppa.launchpad.net/wine/wine-builds/ubuntu     xenial main
 <% end %>
-<%= if :nodesource_node_6 in repositories do %>
-deb https://deb.nodesource.com/node_6.x                  xenial main
-<% end %>
-<%= if :nodesource_node_7 in repositories do %>
-deb https://deb.nodesource.com/node_7.x                  xenial main
-<% end %>
