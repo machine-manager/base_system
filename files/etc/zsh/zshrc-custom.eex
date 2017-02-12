@@ -178,7 +178,15 @@ alias Sort=sort
 paged-with-color() {
 	program=$1
 	# Assume `l` and `ll` are ls
-	if [[ $program = "ls" || $program = "l" || $program = "ll" ]]; then
+	if [[ \
+	$program = "ls"    ||\
+	$program = "l"     ||\
+	$program = "ll"    ||\
+	$program = "grep"  ||\
+	$program = "fgrep" ||\
+	$program = "egrep" ||\
+	$program = "rgrep"
+	]]; then
 		extra=("--color=always")
 	elif [[ $program = "tree" ]]; then
 		extra=("-C")
