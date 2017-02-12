@@ -108,7 +108,7 @@ defmodule BaseSystem.Configure do
 			"erlang-crypto",    # for converge escripts
 		] ++ \
 		case :xfs in tools_for_filesystems do
-			true  -> ["xfsprogs"]
+			true  -> ["xfsprogs", "xfsdump"]
 			false -> []
 		end ++ \
 		case :zfs in tools_for_filesystems do
