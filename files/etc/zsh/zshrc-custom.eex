@@ -136,10 +136,10 @@ alias mv='mv -i'
 alias du="du --block-size=\'1"
 alias df="df -T --block-size=\'1"
 
-# Use LC_COLLATE=C to fix the sort order of .dotfiles (they should appear
+# LC_COLLATE=C fixes the sort order of .dotfiles (they should appear
 # before any non-.dotfiles.)
 #
-# Use --block-size=\'1 to show commas at thousands places in file sizes
+# --block-size=\'1 shows commas at thousands places in file sizes
 #
 # -A / --almost-all shows hidden files except '.' and '..'
 #
