@@ -185,7 +185,9 @@ paged-with-color() {
 	$program = "grep"  ||\
 	$program = "fgrep" ||\
 	$program = "egrep" ||\
-	$program = "rgrep"
+	$program = "rgrep" ||\
+	$program = "rustc" ||\
+	$program = "cargo"
 	]]; then
 		extra=("--color=always")
 	elif [[ $program = "tree" ]]; then
