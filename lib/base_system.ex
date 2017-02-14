@@ -136,7 +136,6 @@ defmodule BaseSystem.Configure do
 			"iotop",
 			"dstat",
 			"tmux",
-			"dtach",
 			"git",
 			"tig",
 			"wget",
