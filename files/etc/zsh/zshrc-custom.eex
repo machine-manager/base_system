@@ -109,10 +109,6 @@ $(print '%{\e[0m%}')\$(print-git-branch)\
 # Need to be in a comma locale for sort -n to properly sort numbers with commas
 export LANG=en_US.UTF-8
 
-# Keep these files out of HOME
-export ICEAUTHORITY="$XDG_RUNTIME_DIR"/ICEauthority
-export XAUTHORITY="$XDG_RUNTIME_DIR"/Xauthority
-
 export EDITOR=nano
 export PAGER=less
 
