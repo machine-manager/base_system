@@ -48,7 +48,7 @@ defmodule BaseSystem.Configure do
 
 		repositories                   = Keyword.get(opts, :repositories,                   default_repositories)
 		tools_for_filesystems          = Keyword.get(opts, :tools_for_filesystems,          [:xfs])
-		extra_packages                 = Keyword.get(opts, :extra_packages,                 [])
+		extra_desired_packages         = Keyword.get(opts, :extra_desired_packages,         [])
 		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files, false)
 		extra_sysctl_parameters        = Keyword.get(opts, :extra_sysctl_parameters,        %{})
 		extra_configuration            = Keyword.get(opts, :extra_configuration,            %All{units: []})
@@ -154,7 +154,7 @@ defmodule BaseSystem.Configure do
 			true  -> ["ubuntils", "quickmunge", "pinned-git", "ripgrep"]
 			false -> []
 		end
-		all_desired_packages = boot_packages ++ base_packages ++ human_admin_needs ++ extra_packages
+		all_desired_packages = boot_packages ++ base_packages ++ human_admin_needs ++ extra_desired_packages
 		# Packages to be purged, unless listed in all_desired_packages.  None of this
 		# should be necessary on a minbase system, but we keep this here
 		# 1) in case a package listed here ends up installed by accident or because it is depended-on
