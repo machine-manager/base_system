@@ -65,6 +65,31 @@ defmodule BaseSystem.Configure do
 			apt_keys[repo]
 		end
 
+		transparent_hugepage_variables = case File.exists?("/sys/kernel/mm/transparent_hugepage") do
+			true -> %{
+				# WARNING: removing a variable here will *not* reset it to the
+				# Linux default until a reboot.
+
+				# According to https://goo.gl/Ep8iM6 system stalls are not caused by
+				# transparent hugepages but by synchronous defrag, so leave THP enabled.
+				"kernel/mm/transparent_hugepage/enabled" => "always",
+
+				# Linux 4.4 has default "always", so set to "madvise" to reduce
+				# stalls caused by defrag.  Linux 4.6+ has default "madvise"; see
+				# https://github.com/torvalds/linux/commit/444eb2a449ef36fe115431ed7b71467c4563c7f1
+				"kernel/mm/transparent_hugepage/defrag"  => "madvise",
+
+				# Note: high-memory systems will need a much lower scan_sleep_millisecs
+				# to increase hugepage availability.
+
+				# See also https://www.kernel.org/doc/Documentation/vm/transhuge.txt
+			}
+			false -> %{}
+		end
+
+		sysfs_variables = %{}
+			|> Map.merge(transparent_hugepage_variables)
+
 		boot_packages = case outside_boot do
 			false -> ["linux-image-generic", "grub-pc | grub-efi-amd64"]
 			true  -> []
@@ -213,7 +238,7 @@ defmodule BaseSystem.Configure do
 
 		dirty_settings = get_dirty_settings(optimize_for_short_lived_files: optimize_for_short_lived_files)
 
-		all = %All{units: [
+		units = [
 			# Set up locale early to avoid complaints from programs
 			%AfterMeet{
 				unit: %FilePresent{
@@ -306,24 +331,7 @@ defmodule BaseSystem.Configure do
 			# may still be running if the system hasn't been rebooted.
 			%SystemdUnitStopped{name: "systemd-timesyncd.service"},
 
-			%Sysfs{variables: %{
-				# WARNING: removing a variable here will *not* reset it to the
-				# Linux default until a reboot.
-
-				# According to https://goo.gl/Ep8iM6 system stalls are not caused by
-				# transparent hugepages but by synchronous defrag, so leave THP enabled.
-				"kernel/mm/transparent_hugepage/enabled" => "always",
-
-				# Linux 4.4 has default "always", so set to "madvise" to reduce
-				# stalls caused by defrag.  Linux 4.6+ has default "madvise"; see
-				# https://github.com/torvalds/linux/commit/444eb2a449ef36fe115431ed7b71467c4563c7f1
-				"kernel/mm/transparent_hugepage/defrag"  => "madvise",
-
-				# Note: high-memory systems will need a much lower scan_sleep_millisecs
-				# to increase hugepage availability.
-
-				# See also https://www.kernel.org/doc/Documentation/vm/transhuge.txt
-			}},
+			%Sysfs{variables: sysfs_variables},
 
 			# The scripts in /etc/cron.daily/ are already no-op'ed by the /etc/default/google-chrome-*
 			# files, but delete them anyway because we don't need them.  Note that
@@ -470,13 +478,11 @@ defmodule BaseSystem.Configure do
 				"vm.dirty_bytes"                     => dirty_settings.dirty_bytes,
 				"vm.dirty_expire_centisecs"          => dirty_settings.dirty_expire_centisecs,
 			}, extra_sysctl_parameters)},
-		] ++ \
-			post_install_units ++ \
-		[
-			%EtcCommitted{message: "converge"}
-		]}
+			%All{units: post_install_units},
+			%EtcCommitted{message: "converge"},
+		]
 		ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}
-		Runner.converge(all, ctx)
+		Runner.converge(%All{units: units}, ctx)
 	end
 
 	defp fstab_unit() do
