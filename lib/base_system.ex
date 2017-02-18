@@ -65,6 +65,7 @@ defmodule BaseSystem.Configure do
 			apt_keys[repo]
 		end
 
+		# Check for transparent_hugepage because it is missing on scaleway kernels
 		transparent_hugepage_variables = case File.exists?("/sys/kernel/mm/transparent_hugepage") do
 			true -> %{
 				# WARNING: removing a variable here will *not* reset it to the
