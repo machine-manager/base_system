@@ -1,4 +1,3 @@
-alias Gears.StringUtil
 alias Converge.{
 	Runner, Context, TerminalReporter, FilePresent, FileMissing, SymlinkPresent,
 	DirectoryPresent, DirectoryEmpty, EtcCommitted, PackageIndexUpdated,
@@ -21,49 +20,38 @@ defmodule BaseSystem.Configure do
 	`binutils`'s `ar` is needed for `MetaPackageInstalled`.
 	"""
 	require Util
+	import Util, only: [content: 1]
 	Util.declare_external_resources("files")
-
-	defmacrop content(filename) do
-		File.read!(filename)
-	end
 
 	def main(_args) do
 		configure()
 	end
 
 	def configure(opts \\ []) do
-		apt_keys = %{
-			:ubuntu                 => content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).txt"),
-			:custom_packages_local  => content("files/apt_keys/2AAA29C8 Custom Packages.txt"),
-			:custom_packages_remote => content("files/apt_keys/2AAA29C8 Custom Packages.txt"),
-			:google_chrome          => content("files/apt_keys/D38B4796 Google Inc. (Linux Packages Signing Authority).txt"),
-			:oracle_virtualbox      => content("files/apt_keys/2980AECF Oracle Corporation (VirtualBox archive signing key).txt"),
-			:graphics_drivers_ppa   => content("files/apt_keys/1118213C Launchpad PPA for Graphics Drivers Team.txt"),
-			:wine_ppa               => content("files/apt_keys/77C899CB Launchpad PPA for Wine.txt"),
-		}
-
-		default_repositories = MapSet.new([
-			:custom_packages_remote,
-		])
-
-		repositories                   = Keyword.get(opts, :repositories,                   default_repositories)
+		extra_apt_keys                 = Keyword.get(opts, :extra_apt_keys,                 [])
+		extra_apt_sources              = Keyword.get(opts, :extra_apt_sources,              [])
 		tools_for_filesystems          = Keyword.get(opts, :tools_for_filesystems,          [:xfs])
 		extra_desired_packages         = Keyword.get(opts, :extra_desired_packages,         [])
 		extra_undesired_packages       = Keyword.get(opts, :extra_undesired_packages,       [])
-		post_install_units             = Keyword.get(opts, :post_install_units,             [])
+		extra_pre_install_units        = Keyword.get(opts, :extra_pre_install_units,        [])
+		extra_post_install_units       = Keyword.get(opts, :extra_post_install_units,       [])
 		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files, false)
 		extra_sysctl_parameters        = Keyword.get(opts, :extra_sysctl_parameters,        %{})
 		# Is our boot fully managed by the host, to the point where we don't have
 		# to install a linux kernel and bootloader?  Use `true` for scaleway machines.
 		outside_boot                   = Keyword.get(opts, :outside_boot,                   false)
 
-		custom_packages = \
-			:custom_packages_local  in repositories or
-			:custom_packages_remote in repositories
-
-		apt_trusted_gpg_keys = for repo <- repositories |> MapSet.put(:ubuntu) do
-			apt_keys[repo]
-		end
+		base_keys = [
+			content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).txt"),
+		]
+		country      = Util.get_country()
+		base_sources = [
+			"deb http://#{country}.archive.ubuntu.com/ubuntu xenial          main restricted universe multiverse",
+			"deb http://#{country}.archive.ubuntu.com/ubuntu xenial-updates  main restricted universe multiverse",
+			"deb http://#{country}.archive.ubuntu.com/ubuntu xenial-security main restricted universe multiverse",
+		]
+		apt_keys     = base_keys    ++ extra_apt_keys
+		apt_sources  = base_sources ++ extra_apt_sources
 
 		# Check for transparent_hugepage because it is missing on scaleway kernels
 		transparent_hugepage_variables = case File.exists?("/sys/kernel/mm/transparent_hugepage") do
@@ -144,11 +132,6 @@ defmodule BaseSystem.Configure do
 		case :ext4 in tools_for_filesystems do
 			true  -> ["e2fsprogs"]
 			false -> []
-		end ++ \
-		# If using custom_packages_remote, assume custom-packages-client should be installed
-		case :custom_packages_remote in repositories do
-			true  -> ["custom-packages-client"]
-			false -> []
 		end
 		human_admin_needs = [
 			"molly-guard",
@@ -174,12 +157,7 @@ defmodule BaseSystem.Configure do
 			"tree",
 			"dnsutils",     # dig
 			"whois",
-		] ++ \
-		# If custom-packages is available, assume that some additional packages are also desired
-		case custom_packages do
-			true  -> ["ubuntils", "quickmunge", "pinned-git", "ripgrep"]
-			false -> []
-		end
+		]
 		all_desired_packages = boot_packages ++ base_packages ++ human_admin_needs ++ extra_desired_packages
 		# Packages to be purged, unless listed in all_desired_packages.  None of this
 		# should be necessary on a minbase system, but we keep this here
@@ -271,11 +249,8 @@ defmodule BaseSystem.Configure do
 				unit: %All{units: [
 					%FilePresent{
 						path:      "/etc/apt/sources.list",
-						content:   EEx.eval_string(content("files/etc/apt/sources.list.eex"),
-						                           [country:      Util.get_country(),
-						                            repositories: repositories])
-						           |> StringUtil.remove_empty_lines,
-						# TODO: after we have _apt in a group, use 0o640 and group: ...
+						content:   apt_sources ++ [""] |> Enum.join("\n"),
+						# TODO: after we have _apt in a group, use 0o640 and group: ... to hide the custom-packages password
 						mode:      0o644,
 						user:      "root",
 						#group:     "_apt",
@@ -284,11 +259,11 @@ defmodule BaseSystem.Configure do
 
 					# We centralize management of our apt sources in /etc/apt/sources.list,
 					# so remove anything that may be in /etc/apt/sources.list.d/
-					%DirectoryPresent{path: "/etc/apt/sources.list.d",                          mode: 0o755, immutable: true},
+					%DirectoryPresent{path: "/etc/apt/sources.list.d",              mode: 0o755, immutable: true},
 					%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
 
-					%GPGSimpleKeyring{path: "/etc/apt/trusted.gpg", keys: apt_trusted_gpg_keys, mode: 0o644, immutable: true},
-					%DirectoryPresent{path: "/etc/apt/trusted.gpg.d",                           mode: 0o755, immutable: true},
+					%GPGSimpleKeyring{path: "/etc/apt/trusted.gpg", keys: apt_keys, mode: 0o644, immutable: true},
+					%DirectoryPresent{path: "/etc/apt/trusted.gpg.d",               mode: 0o755, immutable: true},
 					# We centralize management of our apt sources in /etc/apt/trusted.gpg,
 					# so remove anything that may be in /etc/apt/trusted.gpg.d/
 					%DirectoryEmpty{path: "/etc/apt/trusted.gpg.d"},
@@ -298,18 +273,7 @@ defmodule BaseSystem.Configure do
 
 			fstab_unit(),
 
-			# Google Chrome installs symlinks at /etc/cron.daily/google-chrome*;
-			# these scripts function as a little configuration manager that re-adds
-			# apt keys and apt sources if they are missing (e.g. after an Ubuntu
-			# upgrade).  Make these scripts no-ops to prevent them from re-adding
-			# the obsolete 7FAC5991 key to apt's trusted keys, and to stop them
-			# from mucking with /etc/apt/sources.list.d/
-			#
-			# Do this before installing Chrome, to prevent the cron.daily scripts
-			# from being run at install time.
-			%FilePresent{path: "/etc/default/google-chrome",          content: "exit 0\n", mode: 0o644},
-			%FilePresent{path: "/etc/default/google-chrome-beta",     content: "exit 0\n", mode: 0o644},
-			%FilePresent{path: "/etc/default/google-chrome-unstable", content: "exit 0\n", mode: 0o644},
+			%All{units: extra_pre_install_units},
 
 			%BeforeMeet{
 				unit: %MetaPackageInstalled{
@@ -333,14 +297,6 @@ defmodule BaseSystem.Configure do
 			%SystemdUnitStopped{name: "systemd-timesyncd.service"},
 
 			%Sysfs{variables: sysfs_variables},
-
-			# The scripts in /etc/cron.daily/ are already no-op'ed by the /etc/default/google-chrome-*
-			# files, but delete them anyway because we don't need them.  Note that
-			# they will re-appear after every Chrome upgrade.  (We can't set them to
-			# blank chattr +i'ed files because that breaks upgrades.)
-			%FileMissing{path: "/etc/cron.daily/google-chrome"},
-			%FileMissing{path: "/etc/cron.daily/google-chrome-beta"},
-			%FileMissing{path: "/etc/cron.daily/google-chrome-unstable"},
 
 			# zfsutils-linux drops a file to do a scrub on the second Sunday of every month
 			%FileMissing{path: "/etc/cron.d/zfsutils-linux"},
@@ -418,11 +374,7 @@ defmodule BaseSystem.Configure do
 			%FilePresent{path: "/etc/nano.d/git-commit-msg.nanorc", content: content("files/etc/nano.d/git-commit-msg.nanorc"), mode: 0o644},
 
 			%FilePresent{path: "/etc/zsh/zsh-autosuggestions.zsh",  content: content("files/etc/zsh/zsh-autosuggestions.zsh"),  mode: 0o644},
-			%FilePresent{
-				path:    "/etc/zsh/zshrc-custom",
-				content: EEx.eval_string(content("files/etc/zsh/zshrc-custom.eex"), [custom_packages: custom_packages]),
-				mode:    0o644
-			},
+			%FilePresent{path: "/etc/zsh/zshrc-custom",             content: content("files/etc/zsh/zshrc-custom"),             mode: 0o644},
 			%FilePresent{
 				path:    "/etc/zsh/zshrc",
 				content: content("files/etc/zsh/zshrc.factory") <> "\n\n" <> "source /etc/zsh/zshrc-custom",
@@ -479,7 +431,7 @@ defmodule BaseSystem.Configure do
 				"vm.dirty_bytes"                     => dirty_settings.dirty_bytes,
 				"vm.dirty_expire_centisecs"          => dirty_settings.dirty_expire_centisecs,
 			}, extra_sysctl_parameters)},
-			%All{units: post_install_units},
+			%All{units: extra_post_install_units},
 			%EtcCommitted{message: "converge"},
 		]
 		ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}

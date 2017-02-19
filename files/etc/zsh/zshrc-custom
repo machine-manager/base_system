@@ -154,7 +154,9 @@ alias egrep='egrep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias rgrep='rgrep --color=auto'
 
-<%= if custom_packages do %>alias git=pinned-git<% end %>
+if [ -f /usr/bin/pinned-git ]; then
+	alias git=pinned-git
+fi
 alias gpr='git pull --rebase'
 alias gb='git branch'
 alias aggro='git gc --aggressive'
