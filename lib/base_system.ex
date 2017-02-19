@@ -20,7 +20,7 @@ defmodule BaseSystem.Configure do
 	`binutils`'s `ar` is needed for `MetaPackageInstalled`.
 	"""
 	require Util
-	import Util, only: [content: 1, conf_file: 1, conf_file: 2, conf_file: 3, conf_dir: 1, conf_dir: 2, conf_dir: 3]
+	import Util, only: [content: 1, conf_file: 1, conf_file: 3, conf_dir: 1, conf_dir: 2]
 	Util.declare_external_resources("files")
 
 	def configure(tags, opts) do
