@@ -20,7 +20,7 @@ defmodule BaseSystem.Configure do
 	`binutils`'s `ar` is needed for `MetaPackageInstalled`.
 	"""
 	require Util
-	import Util, only: [content: 1]
+	import Util, only: [content: 1, conf_file: 1, conf_file: 2, conf_file: 3, conf_dir: 1, conf_dir: 2, conf_dir: 3]
 	Util.declare_external_resources("files")
 
 	def configure(tags, opts) do
@@ -203,11 +203,7 @@ defmodule BaseSystem.Configure do
 		units = [
 			# Set up locale early to avoid complaints from programs
 			%AfterMeet{
-				unit: %FilePresent{
-					path:    "/etc/locale.gen",
-					content: content("files/etc/locale.gen"),
-					mode:    0o644
-				},
+				unit:    conf_file("/etc/locale.gen"),
 				trigger: fn -> {_, 0} = System.cmd("locale-gen", []) end
 			},
 
@@ -289,7 +285,7 @@ defmodule BaseSystem.Configure do
 			%AfterMeet{
 				unit:    %All{units: [
 					# Use a lower value for DefaultTimeoutStopSec and a higher value for DefaultRestartSec.
-					%FilePresent{path: "/etc/systemd/system.conf",    content: content("files/etc/systemd/system.conf"),          mode: 0o644},
+					conf_file("/etc/systemd/system.conf"),
 
 					# Disable systemd's atrocious "one ctrl-alt-del reboots the system" feature.
 					# This does not affect the 7x ctrl-alt-del force reboot feature.
@@ -300,43 +296,35 @@ defmodule BaseSystem.Configure do
 
 			%SystemdUnitStarted{name: "apparmor.service"},
 			%AfterMeet{
-				unit: %FilePresent{
-					path:    "/etc/apparmor.d/bin.tar",
-					content: content("files/etc/apparmor.d/bin.tar"),
-					mode:    0o644
-				},
+				unit:    conf_file("/etc/apparmor.d/bin.tar"),
 				trigger: fn -> {_, 0} = System.cmd("service", ["apparmor", "reload"]) end
 			},
 
 			# Disable the Intel Management Engine Interface driver, which we do not need
 			# and may introduce network attack vectors.
-			%FilePresent{path: "/etc/modprobe.d/no-mei.conf",       content: content("files/etc/modprobe.d/no-mei.conf"),       mode: 0o644},
+			conf_file("/etc/modprobe.d/no-mei.conf"),
 
 			# Disable Firewire, which we do not use and may introduce physical attack vectors.
-			%FilePresent{path: "/etc/modprobe.d/no-firewire.conf",  content: content("files/etc/modprobe.d/no-firewire.conf"),  mode: 0o644},
+			conf_file("/etc/modprobe.d/no-firewire.conf"),
 
 			# UTC timezone everywhere to avoid confusion and timezone-handling bugs
-			%FilePresent{path: "/etc/timezone",                     content: content("files/etc/timezone"),                     mode: 0o644},
+			conf_file("/etc/timezone"),
 
 			# Prevent sudo from caching credentials, because otherwise programs
 			# in the same terminal may be able to unexpectedly `sudo` without asking.
-			%FilePresent{path: "/etc/sudoers.d/no-cred-caching",    content: content("files/etc/sudoers.d/no-cred-caching"),    mode: 0o644},
+			conf_file("files/etc/sudoers.d/no-cred-caching"),
 
 			# Lock /etc/resolv.conf to Google DNS servers and without any search domain
-			%FilePresent{path: "/etc/resolv.conf",                  content: content("files/etc/resolv.conf"),                  mode: 0o644, immutable: true},
+			conf_file("/etc/resolv.conf", 0o644, immutable: true),
 
 			# Prevent non-root users from restarting or shutting down the system using the GUI.
 			# This is mostly to prevent accidental restarts; the "Log Out" and "Restart" buttons
 			# are right next to each other and "Restart" does not require confirmation.
 			# http://askubuntu.com/questions/453479/how-to-disable-shutdown-reboot-from-lightdm-in-14-04/454230#454230
-			%DirectoryPresent{path: "/etc/polkit-1",                                                                            mode: 0o755},
-			%DirectoryPresent{path: "/etc/polkit-1/localauthority",                                                             mode: 0o700}, # it ships as 0700
-			%DirectoryPresent{path: "/etc/polkit-1/localauthority/50-local.d",                                                  mode: 0o755},
-			%FilePresent{
-				path:    "/etc/polkit-1/localauthority/50-local.d/restrict-login-powermgmt.pkla",
-				content: content("files/etc/polkit-1/localauthority/50-local.d/restrict-login-powermgmt.pkla"),
-				mode:    0o644
-			},
+			conf_dir("/etc/polkit-1"),
+			conf_dir("/etc/polkit-1/localauthority", 0o700),
+			conf_dir("/etc/polkit-1/localauthority/50-local.d"),
+			conf_file("/etc/polkit-1/localauthority/50-local.d/restrict-login-powermgmt.pkla"),
 
 			# We don't use bash for the interactive shell, so there's no point in
 			# dropping these files into every user's $HOME
@@ -344,17 +332,17 @@ defmodule BaseSystem.Configure do
 			%FileMissing{path: "/etc/skel/.bash_logout"},
 			%FileMissing{path: "/etc/skel/.profile"},
 
-			%FilePresent{path: "/etc/skel/.zshrc",                  content: content("files/etc/skel/.zshrc"),                  mode: 0o644},
+			conf_file("/etc/skel/.zshrc"),
+			conf_file("/etc/issue"),
+			conf_file("/etc/tmux.conf"),
+			conf_file("/etc/nanorc"),
+			conf_dir("/etc/nano.d"),
+			conf_file("/etc/nano.d/elixir.nanorc"),
+			conf_file("/etc/nano.d/git-commit-msg.nanorc"),
 
-			%FilePresent{path: "/etc/issue",                        content: content("files/etc/issue"),                        mode: 0o644},
-			%FilePresent{path: "/etc/tmux.conf",                    content: content("files/etc/tmux.conf"),                    mode: 0o644},
-			%FilePresent{path: "/etc/nanorc",                       content: content("files/etc/nanorc"),                       mode: 0o644},
-			%DirectoryPresent{path: "/etc/nano.d",                                                                              mode: 0o755},
-			%FilePresent{path: "/etc/nano.d/elixir.nanorc",         content: content("files/etc/nano.d/elixir.nanorc"),         mode: 0o644},
-			%FilePresent{path: "/etc/nano.d/git-commit-msg.nanorc", content: content("files/etc/nano.d/git-commit-msg.nanorc"), mode: 0o644},
+			conf_file("/etc/zsh/zsh-autosuggestions.zsh"),
+			conf_file("/etc/zsh/zshrc-custom"),
 
-			%FilePresent{path: "/etc/zsh/zsh-autosuggestions.zsh",  content: content("files/etc/zsh/zsh-autosuggestions.zsh"),  mode: 0o644},
-			%FilePresent{path: "/etc/zsh/zshrc-custom",             content: content("files/etc/zsh/zshrc-custom"),             mode: 0o644},
 			%FilePresent{
 				path:    "/etc/zsh/zshrc",
 				content: content("files/etc/zsh/zshrc.factory") <> "\n\n" <> "source /etc/zsh/zshrc-custom",
