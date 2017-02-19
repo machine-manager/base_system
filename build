@@ -1,8 +1,0 @@
-#!/bin/sh
-
-set -e
-
-export MIX_ENV=prod
-
-mix deps.compile
-mix escript.build --no-deps-check

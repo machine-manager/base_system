@@ -23,23 +23,18 @@ defmodule BaseSystem.Configure do
 	import Util, only: [content: 1]
 	Util.declare_external_resources("files")
 
-	def main(_args) do
-		configure()
-	end
-
-	def configure(opts \\ []) do
-		extra_apt_keys                 = Keyword.get(opts, :extra_apt_keys,                 [])
-		extra_apt_sources              = Keyword.get(opts, :extra_apt_sources,              [])
-		tools_for_filesystems          = Keyword.get(opts, :tools_for_filesystems,          [:xfs])
-		extra_desired_packages         = Keyword.get(opts, :extra_desired_packages,         [])
-		extra_undesired_packages       = Keyword.get(opts, :extra_undesired_packages,       [])
-		extra_pre_install_units        = Keyword.get(opts, :extra_pre_install_units,        [])
-		extra_post_install_units       = Keyword.get(opts, :extra_post_install_units,       [])
-		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files, false)
-		extra_sysctl_parameters        = Keyword.get(opts, :extra_sysctl_parameters,        %{})
+	def configure(tags, opts) do
+		extra_apt_keys                 = opts[:extra_apt_keys]           || []
+		extra_apt_sources              = opts[:extra_apt_sources]        || []
+		extra_desired_packages         = opts[:extra_desired_packages]   || []
+		extra_undesired_packages       = opts[:extra_undesired_packages] || []
+		extra_pre_install_units        = opts[:extra_pre_install_units]  || []
+		extra_post_install_units       = opts[:extra_post_install_units] || []
+		extra_sysctl_parameters        = opts[:extra_sysctl_parameters]  || %{}
+		optimize_for_short_lived_files = "optimize_for_short_lived_files" in tags
 		# Is our boot fully managed by the host, to the point where we don't have
-		# to install a linux kernel and bootloader?  Use `true` for scaleway machines.
-		outside_boot                   = Keyword.get(opts, :outside_boot,                   false)
+		# to install a linux kernel and bootloader?
+		boot_outside                   = "boot:outside" in tags
 
 		base_keys = [
 			content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).txt"),
@@ -79,7 +74,7 @@ defmodule BaseSystem.Configure do
 		sysfs_variables = %{}
 			|> Map.merge(transparent_hugepage_variables)
 
-		boot_packages = case outside_boot do
+		boot_packages = case boot_outside do
 			false -> ["linux-image-generic", "grub-pc | grub-efi-amd64"]
 			true  -> []
 		end
@@ -120,19 +115,7 @@ defmodule BaseSystem.Configure do
 			"pciutils",         # for lspci, (todo) used to determine whether we have an NVIDIA card
 			"erlang-base-hipe", # for converge escripts
 			"erlang-crypto",    # for converge escripts
-		] ++ \
-		case :xfs in tools_for_filesystems do
-			true  -> ["xfsprogs", "xfsdump"]
-			false -> []
-		end ++ \
-		case :zfs in tools_for_filesystems do
-			true  -> ["zfsutils-linux"]
-			false -> []
-		end ++ \
-		case :ext4 in tools_for_filesystems do
-			true  -> ["e2fsprogs"]
-			false -> []
-		end
+		]
 		human_admin_needs = [
 			"molly-guard",
 			"lshw",
@@ -204,10 +187,10 @@ defmodule BaseSystem.Configure do
 			"lxcfs",
 			"lxc-common",
 		] ++ \
-		case outside_boot do
+		case boot_outside do
 			# linux-zygote creates an install where linux-image-generic and grub-pc
 			# are marked manual-installed, so we might need to purge these packages
-			# for machines with `outside_boot`
+			# for machines with `boot_outside`
 			true  -> ["linux-image-generic", "grub-pc", "grub-efi-amd64"]
 			false -> []
 		end ++ \
@@ -297,9 +280,6 @@ defmodule BaseSystem.Configure do
 			%SystemdUnitStopped{name: "systemd-timesyncd.service"},
 
 			%Sysfs{variables: sysfs_variables},
-
-			# zfsutils-linux drops a file to do a scrub on the second Sunday of every month
-			%FileMissing{path: "/etc/cron.d/zfsutils-linux"},
 
 			# util-linux drops a file to do a TRIM every week.  If we have servers
 			# with SSDs that benefit from TRIM, we should probably do this some
