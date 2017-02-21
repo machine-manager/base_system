@@ -171,6 +171,7 @@ defmodule BaseSystem.Configure do
 			"net-tools",    # ifconfig, route, netstat
 			"iputils-ping",
 			"netcat-openbsd",
+			"rlwrap",       # for use with netcat
 			"less",
 			"strace",
 			"htop",
