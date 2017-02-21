@@ -7,6 +7,10 @@ alias Converge.{
 	SystemdUnitStopped, UserPresent
 }
 
+defmodule BaseSystem.BadRoleDescriptorError do
+	defexception [:message]
+end
+
 defmodule BaseSystem.Configure do
 	@moduledoc """
 	Converts a `debootstrap --variant=minbase` install of Ubuntu LTS into a
@@ -19,9 +23,54 @@ defmodule BaseSystem.Configure do
 
 	`binutils`'s `ar` is needed for `MetaPackageInstalled`.
 	"""
+	alias BaseSystem.BadRoleDescriptorError
 	require Util
 	import Util, only: [content: 1, conf_file: 1, conf_file: 3, conf_dir: 1, conf_dir: 2]
 	Util.declare_external_resources("files")
+
+	@spec configure_with_roles([String.t], [module]) :: nil
+	def configure_with_roles(tags, role_modules) do
+		role_modules = get_all_role_modules(tags, role_modules |> MapSet.new)
+		descriptors  = role_modules |> Enum.map(fn mod -> apply(mod, :role, [tags]) end)
+
+		# Ensure that some easy-to-typo keys are not present
+		for desc <- descriptors do
+			if desc[:pre_install_units] != nil do
+				raise BadRoleDescriptorError, message: "Descriptor \#{inspect desc} should have key pre_install_unit, not pre_install_units"
+			end
+			if desc[:post_install_units] != nil do
+				raise BadRoleDescriptorError, message: "Descriptor \#{inspect desc} should have key post_install_unit, not post_install_units"
+			end
+		end
+		desired_packages   = descriptors |> Enum.flat_map(fn desc -> desc[:desired_packages]   || [] end)
+		undesired_packages = descriptors |> Enum.flat_map(fn desc -> desc[:undesired_packages] || [] end)
+		apt_keys           = descriptors |> Enum.flat_map(fn desc -> desc[:apt_keys]           || [] end)
+		apt_sources        = descriptors |> Enum.flat_map(fn desc -> desc[:apt_sources]        || [] end)
+		sysctl_parameters  = descriptors |> Enum.map(fn desc -> desc[:sysctl_parameters] || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end)
+		pre_install_units  = descriptors |> Enum.map(fn desc -> desc[:pre_install_unit] end)         |> Enum.reject(&is_nil/1)
+		post_install_units = descriptors |> Enum.map(fn desc -> desc[:post_install_unit] end)        |> Enum.reject(&is_nil/1)
+		configure(
+			tags,
+			extra_desired_packages:   desired_packages,
+			extra_undesired_packages: undesired_packages,
+			extra_apt_keys:           apt_keys,
+			extra_apt_sources:        apt_sources,
+			extra_pre_install_units:  pre_install_units,
+			extra_post_install_units: post_install_units,
+			extra_sysctl_parameters:  sysctl_parameters,
+		)
+	end
+
+	defp get_all_role_modules(tags, role_modules) do
+		descriptors  = role_modules |> Enum.map(fn mod -> apply(mod, :role, [tags]) end)
+		more_modules = descriptors |> Enum.flat_map(fn desc -> desc[:implied_roles] || [] end) |> MapSet.new
+		# If we already know about every module we just discovered, we're done;
+		# otherwise, recurse with our new list of modules.
+		case MapSet.difference(more_modules, role_modules) |> MapSet.size do
+			0 -> role_modules
+			_ -> get_all_role_modules(tags, MapSet.union(role_modules, more_modules))
+		end
+	end
 
 	def configure(tags, opts) do
 		extra_apt_keys                 = opts[:extra_apt_keys]           || []
