@@ -350,6 +350,10 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> {_, 0} = System.cmd("service", ["apparmor", "reload"]) end
 			},
 
+			# Disable DCCP because we don't use it and it may have more bugs following
+			# https://ma.ttias.be/linux-kernel-cve-2017-6074-local-privilege-escalation-dccp/
+			conf_file("/etc/modprobe.d/no-dccp.conf"),
+
 			# Disable the Intel Management Engine Interface driver, which we do not need
 			# and may introduce network attack vectors.
 			conf_file("/etc/modprobe.d/no-mei.conf"),
