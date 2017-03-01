@@ -19,3 +19,4 @@
 
 [tig]
 	wrap-lines = true
+	ignore-case = true
