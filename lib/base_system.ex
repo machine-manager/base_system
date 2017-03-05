@@ -1,7 +1,7 @@
 alias Converge.{
 	Runner, Context, TerminalReporter, FilePresent, FileMissing, SymlinkPresent,
-	DirectoryPresent, DirectoryEmpty, EtcCommitted, PackageIndexUpdated,
-	MetaPackageInstalled, DanglingPackagesPurged, PackagesMarkedAutoInstalled,
+	DirectoryPresent, DirectoryEmpty, EtcCommitted, MetaPackageInstalled,
+	DanglingPackagesPurged, PackagesMarkedAutoInstalled,
 	PackagesMarkedManualInstalled, PackagePurged, Fstab, FstabEntry, AfterMeet,
 	BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring, SystemdUnitStarted,
 	SystemdUnitStopped, UserPresent
@@ -268,10 +268,7 @@ defmodule BaseSystem.Configure do
 			},
 
 			# Make sure etckeeper is installed, as it is required for the EtcCommitted units here
-			%BeforeMeet{
-				unit:    %MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper"]},
-				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{max_age: 30}, ctx) end
-			},
+			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper"]},
 			%PackagesMarkedAutoInstalled{names: ["converge-desired-packages-early"]},
 			%EtcCommitted{message: "converge (early)"},
 
@@ -305,12 +302,9 @@ defmodule BaseSystem.Configure do
 
 			%All{units: extra_pre_install_units},
 
-			%BeforeMeet{
-				unit: %MetaPackageInstalled{
-					name:    "converge-desired-packages",
-					depends: ["converge-desired-packages-early"] ++ all_desired_packages
-				},
-				trigger: fn ctx -> Runner.converge(%PackageIndexUpdated{max_age: 30}, ctx) end,
+			%MetaPackageInstalled{
+				name:    "converge-desired-packages",
+				depends: ["converge-desired-packages-early"] ++ all_desired_packages
 			},
 			%PackagesMarkedManualInstalled{names: ["converge-desired-packages"]},
 			# This comes after MetaPackageInstalled because the undesired gnupg
