@@ -81,6 +81,7 @@ defmodule BaseSystem.Configure do
 		extra_post_install_units       = opts[:extra_post_install_units] || []
 		extra_sysctl_parameters        = opts[:extra_sysctl_parameters]  || %{}
 		optimize_for_short_lived_files = "optimize_for_short_lived_files" in tags
+		ipv6                           = "ipv6" in tags
 		# Is our boot fully managed by the host, to the point where we don't have
 		# to install a linux kernel and bootloader?
 		boot_outside                   = "boot:outside" in tags
@@ -438,6 +439,11 @@ defmodule BaseSystem.Configure do
 				# I've never run into a situation where I could use it to fix a wedged
 				# system.
 				"kernel.sysrq"                       => 0,
+
+				# Disable IPv6 by default because far too many IPv6 routes announced
+				# to our servers are broken.
+				"net.ipv6.conf.all.disable_ipv6"     => (if ipv6, do: 0, else: 1),
+				"net.ipv6.conf.default.disable_ipv6" => (if ipv6, do: 0, else: 1),
 
 				# Use the canonical IPv6 address instead of using the privacy extensions.
 				# Servers generally are expected to use the canonical address.
