@@ -147,6 +147,11 @@ alias l='ls -lrt'
 # List all files, sorted alphabetically
 alias ll='ls -l'
 
+disable r
+if [ -f /usr/bin/tmux-resume ]; then
+	alias r=tmux-resume
+fi
+
 alias tree='tree -aF'
 
 alias grep='grep --color=auto'
