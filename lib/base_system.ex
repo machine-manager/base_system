@@ -7,6 +7,10 @@ alias Converge.{
 	SystemdUnitStopped, UserPresent
 }
 
+defmodule BaseSystem.NoTagsError do
+	defexception [:message]
+end
+
 defmodule BaseSystem.BadRoleDescriptorError do
 	defexception [:message]
 end
@@ -23,13 +27,17 @@ defmodule BaseSystem.Configure do
 
 	`binutils`'s `ar` is needed for `MetaPackageInstalled`.
 	"""
-	alias BaseSystem.BadRoleDescriptorError
+	alias BaseSystem.{BadRoleDescriptorError, NoTagsError}
 	require Util
 	import Util, only: [content: 1, conf_file: 1, conf_file: 3, conf_dir: 1, conf_dir: 2]
 	Util.declare_external_resources("files")
 
 	@spec configure_with_roles([String.t], [module]) :: nil
 	def configure_with_roles(tags, role_modules) do
+		if length(tags) == 0 do
+			raise NoTagsError, message: "Refusing to configure with 0 tags because this is probably a mistake; pass a dummy tag if not"
+		end
+
 		role_modules = get_all_role_modules(tags, role_modules |> MapSet.new)
 		descriptors  = role_modules |> Enum.map(fn mod -> apply(mod, :role, [tags]) end)
 
