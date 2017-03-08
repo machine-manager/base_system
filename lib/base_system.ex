@@ -124,6 +124,31 @@ defmodule BaseSystem.Configure do
 		sysfs_variables = %{}
 			|> Map.merge(transparent_hugepage_variables)
 
+		blacklisted_kernel_modules = [
+			# Disable the Intel Management Engine Interface driver, which we do not need
+			# and may introduce network attack vectors.
+			"mei",
+			"mei-me",
+			"mei-txe",
+
+			# Disable Firewire, which we do not use and may introduce physical attack vectors.
+			"firewire-core",
+			"firewire-net",
+			"firewire-ohci",
+			"firewire-sbp2",
+
+			# Disable DCCP because we don't use it and it may have more bugs following
+			# https://ma.ttias.be/linux-kernel-cve-2017-6074-local-privilege-escalation-dccp/
+			"dccp",
+			"dccp_ipv6",
+			"dccp_ipv4",
+			"dccp_probe",
+			"dccp_diag",
+
+			# CVE-2017-2636 allows a reliable local privilege escalation in the n_hdlc tty driver
+			"n_hdlc",
+		]
+
 		boot_packages = case boot_outside do
 			false -> ["linux-image-generic", "grub-pc | grub-efi-amd64"]
 			true  -> []
@@ -345,16 +370,18 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> {_, 0} = System.cmd("service", ["apparmor", "reload"]) end
 			},
 
-			# Disable DCCP because we don't use it and it may have more bugs following
-			# https://ma.ttias.be/linux-kernel-cve-2017-6074-local-privilege-escalation-dccp/
-			conf_file("/etc/modprobe.d/no-dccp.conf"),
+			# Delete old configuration files that we previously created
+			%FileMissing{path: "/etc/modprobe.d/no-dccp.conf"},
+			%FileMissing{path: "/etc/modprobe.d/no-mei.conf"},
+			%FileMissing{path: "/etc/modprobe.d/no-firewire.conf"},
 
-			# Disable the Intel Management Engine Interface driver, which we do not need
-			# and may introduce network attack vectors.
-			conf_file("/etc/modprobe.d/no-mei.conf"),
-
-			# Disable Firewire, which we do not use and may introduce physical attack vectors.
-			conf_file("/etc/modprobe.d/no-firewire.conf"),
+			%FilePresent{
+				path:    "/etc/modprobe.d/base_system.conf",
+				mode:    0o644,
+				content: blacklisted_kernel_modules
+				         |> Enum.map(fn module -> "blacklist #{module}\n" end)
+				         |> Enum.join
+			},
 
 			# UTC timezone everywhere to avoid confusion and timezone-handling bugs
 			conf_file("/etc/timezone"),
