@@ -132,6 +132,73 @@ defmodule BaseSystem.Configure do
 		sysfs_variables = %{}
 			|> Map.merge(transparent_hugepage_variables)
 
+		dirty_settings = get_dirty_settings(optimize_for_short_lived_files: optimize_for_short_lived_files)
+
+		# TODO: min_free_kbytes
+		# TODO: optimize network stack based on wikimedia-puppet
+		base_sysctl_parameters = %{
+			# Note that some important settings are already set by the procps package,
+			# which creates .conf files in /etc/sysctl.d/.  Anything we set here will
+			# override those default settings.  (If that is not the case, check
+			# /etc/sysctl.d for a file that sorts after "99-sysctl.conf".)
+			#
+			# WARNING: removing a variable here will not necessarily restore a default
+			# value, until the next reboot!
+
+			# Don't allow non-root users to use dmesg.
+			# http://blog.wpkg.org/2013/06/11/lxc-restricting-container-view-of-dmesg/
+			"kernel.dmesg_restrict"              => 1,
+
+			# Disable the magic SysRq key completely for improved security on servers
+			# not under our physical control.  Magic SysRq is allegedly useful, but
+			# I've never run into a situation where I could use it to fix a wedged
+			# system.
+			"kernel.sysrq"                       => 0,
+
+			# "The perf subsystem has a huge history of privilege escalation vunerabilities"
+			#
+			# TODO: apply grkernsec_perf_harden.patch to our kernels to that setting '3'
+			# actually completely disables access to perf for unprivileged users.
+			"kernel.perf_event_paranoid"         => 3,
+
+			# Disable IPv6 by default because far too many IPv6 routes announced
+			# to our servers are broken.
+			"net.ipv6.conf.all.disable_ipv6"     => (if ipv6, do: 0, else: 1),
+			"net.ipv6.conf.default.disable_ipv6" => (if ipv6, do: 0, else: 1),
+
+			# Use the canonical IPv6 address instead of using the privacy extensions.
+			# Servers generally are expected to use the canonical address.
+			# https://bugs.launchpad.net/ubuntu/+source/procps/+bug/1068756
+			"net.ipv6.conf.all.use_tempaddr"     => 0,
+			"net.ipv6.conf.default.use_tempaddr" => 0,
+
+			# Prefer to retain directory and inode objects.
+			# http://www.beegfs.com/wiki/StorageServerTuning
+			"vm.vfs_cache_pressure"              => 50,
+
+			"vm.dirty_background_bytes"          => dirty_settings.dirty_background_bytes,
+			"vm.dirty_bytes"                     => dirty_settings.dirty_bytes,
+			"vm.dirty_expire_centisecs"          => dirty_settings.dirty_expire_centisecs,
+		}
+
+		unprivileged_bpf_parameters = case File.exists?("/proc/sys/kernel/unprivileged_bpf_disabled") do
+			true -> %{
+				# CVE-2016-4557 allowed for local privilege escalation using unprivileged BPF.
+				#
+				# "only used for things like network profiling in userspace [...]; disabling
+				# the bpf() does not mean disabling all BPF/eBPF. Netfilter still uses BPF,
+				# seccomp still uses BPF, etc. All it means is that userspace network profiling
+				# tools and such will not function."
+				"kernel.unprivileged_bpf_disabled" => 1,
+			}
+			false -> %{}
+		end
+
+		sysctl_parameters =
+			base_sysctl_parameters
+			|> Map.merge(unprivileged_bpf_parameters)
+			|> Map.merge(extra_sysctl_parameters)
+
 		blacklisted_kernel_modules = [
 			# Disable the Intel Management Engine Interface driver, which we do not need
 			# and may introduce network attack vectors.
@@ -291,8 +358,6 @@ defmodule BaseSystem.Configure do
 		extra_undesired_packages
 
 		packages_to_purge = MapSet.difference(MapSet.new(undesired_packages), MapSet.new(all_desired_packages))
-
-		dirty_settings = get_dirty_settings(optimize_for_short_lived_files: optimize_for_short_lived_files)
 
 		units = [
 			# Set up locale early to avoid complaints from programs
@@ -459,60 +524,7 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> {_, 0} = System.cmd("/bin/zsh", ["-c", "true"]) end
 			},
 
-			# TODO: min_free_kbytes
-			# TODO: optimize network stack based on wikimedia-puppet
-			%Sysctl{parameters: Map.merge(%{
-				# Note that some important settings are already set by the procps package,
-				# which creates .conf files in /etc/sysctl.d/.  Anything we set here will
-				# override those default settings.  (If that is not the case, check
-				# /etc/sysctl.d for a file that sorts after "99-sysctl.conf".)
-				#
-				# WARNING: removing a variable here will not necessarily restore a default
-				# value, until the next reboot!
-
-				# Don't allow non-root users to use dmesg.
-				# http://blog.wpkg.org/2013/06/11/lxc-restricting-container-view-of-dmesg/
-				"kernel.dmesg_restrict"              => 1,
-
-				# Disable the magic SysRq key completely for improved security on servers
-				# not under our physical control.  Magic SysRq is allegedly useful, but
-				# I've never run into a situation where I could use it to fix a wedged
-				# system.
-				"kernel.sysrq"                       => 0,
-
-				# CVE-2016-4557 allowed for local privilege escalation using unprivileged BPF.
-				#
-				# "only used for things like network profiling in userspace [...]; disabling
-				# the bpf() does not mean disabling all BPF/eBPF. Netfilter still uses BPF,
-				# seccomp still uses BPF, etc. All it means is that userspace network profiling
-				# tools and such will not function."
-				"kernel.unprivileged_bpf_disabled"   => 1,
-
-				# "The perf subsystem has a huge history of privilege escalation vunerabilities"
-				#
-				# TODO: apply grkernsec_perf_harden.patch to our kernels to that setting '3'
-				# actually completely disables access to perf for unprivileged users.
-				"kernel.perf_event_paranoid"         => 3,
-
-				# Disable IPv6 by default because far too many IPv6 routes announced
-				# to our servers are broken.
-				"net.ipv6.conf.all.disable_ipv6"     => (if ipv6, do: 0, else: 1),
-				"net.ipv6.conf.default.disable_ipv6" => (if ipv6, do: 0, else: 1),
-
-				# Use the canonical IPv6 address instead of using the privacy extensions.
-				# Servers generally are expected to use the canonical address.
-				# https://bugs.launchpad.net/ubuntu/+source/procps/+bug/1068756
-				"net.ipv6.conf.all.use_tempaddr"     => 0,
-				"net.ipv6.conf.default.use_tempaddr" => 0,
-
-				# Prefer to retain directory and inode objects.
-				# http://www.beegfs.com/wiki/StorageServerTuning
-				"vm.vfs_cache_pressure"              => 50,
-
-				"vm.dirty_background_bytes"          => dirty_settings.dirty_background_bytes,
-				"vm.dirty_bytes"                     => dirty_settings.dirty_bytes,
-				"vm.dirty_expire_centisecs"          => dirty_settings.dirty_expire_centisecs,
-			}, extra_sysctl_parameters)},
+			%Sysctl{parameters: sysctl_parameters},
 			%All{units: extra_post_install_units},
 			%EtcCommitted{message: "converge"},
 		]
