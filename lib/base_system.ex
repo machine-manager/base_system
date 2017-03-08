@@ -55,6 +55,7 @@ defmodule BaseSystem.Configure do
 		apt_keys           = descriptors |> Enum.flat_map(fn desc -> desc[:apt_keys]           || [] end)
 		apt_sources        = descriptors |> Enum.flat_map(fn desc -> desc[:apt_sources]        || [] end)
 		sysctl_parameters  = descriptors |> Enum.map(fn desc -> desc[:sysctl_parameters] || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end)
+		sysfs_variables    = descriptors |> Enum.map(fn desc -> desc[:sysfs_variables]   || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end)
 		pre_install_units  = descriptors |> Enum.map(fn desc -> desc[:pre_install_unit] end)         |> Enum.reject(&is_nil/1)
 		post_install_units = descriptors |> Enum.map(fn desc -> desc[:post_install_unit] end)        |> Enum.reject(&is_nil/1)
 		configure(
@@ -66,6 +67,7 @@ defmodule BaseSystem.Configure do
 			extra_pre_install_units:  pre_install_units,
 			extra_post_install_units: post_install_units,
 			extra_sysctl_parameters:  sysctl_parameters,
+			extra_sysfs_variables:    sysfs_variables,
 		)
 	end
 
@@ -88,6 +90,7 @@ defmodule BaseSystem.Configure do
 		extra_pre_install_units        = opts[:extra_pre_install_units]  || []
 		extra_post_install_units       = opts[:extra_post_install_units] || []
 		extra_sysctl_parameters        = opts[:extra_sysctl_parameters]  || %{}
+		extra_sysfs_variables          = opts[:extra_sysfs_variables]    || %{}
 		optimize_for_short_lived_files = "optimize_for_short_lived_files" in tags
 		ipv6                           = "ipv6" in tags
 		# Is our boot fully managed by the host, to the point where we don't have
@@ -131,6 +134,7 @@ defmodule BaseSystem.Configure do
 
 		sysfs_variables = %{}
 			|> Map.merge(transparent_hugepage_variables)
+			|> Map.merge(extra_sysfs_variables)
 
 		dirty_settings = get_dirty_settings(optimize_for_short_lived_files: optimize_for_short_lived_files)
 
