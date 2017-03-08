@@ -488,6 +488,9 @@ defmodule BaseSystem.Configure do
 				# tools and such will not function."
 				"kernel.unprivileged_bpf_disabled"   => 1,
 
+				# "The perf subsystem has a huge history of privilege escalation vunerabilities"
+				"kernel.perf_event_paranoid"         => 3,
+
 				# Disable IPv6 by default because far too many IPv6 routes announced
 				# to our servers are broken.
 				"net.ipv6.conf.all.disable_ipv6"     => (if ipv6, do: 0, else: 1),
