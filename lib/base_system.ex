@@ -235,8 +235,7 @@ defmodule BaseSystem.Configure do
 			# Carries some risk and is obsoleted by overlayfs
 			"aufs",
 
-			# We do not use floppies.  For some reason this is otherwise loaded in
-			# an OVH KVM VPS.
+			# We do not use floppies
 			"floppy",
 
 			# We do not use these filesystems anywhere
@@ -253,6 +252,9 @@ defmodule BaseSystem.Configure do
 			"parport",
 			"parport_pc",
 			"lp",
+
+			# We don't use the FUJITSU Extended Socket network device driver anywhere
+			"fjes",
 
 			# TODO: blacklist overlay and overlayfs once we can whitelist it on sbuild
 		]
