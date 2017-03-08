@@ -248,10 +248,11 @@ defmodule BaseSystem.Configure do
 			"jfs",
 			"minix",
 
-			# We do not use parallel ports anywhere
+			# We do not use parallel ports or lp anywhere
 			"ppdev",
 			"parport",
 			"parport_pc",
+			"lp",
 
 			# TODO: blacklist overlay and overlayfs once we can whitelist it on sbuild
 		]
