@@ -92,7 +92,8 @@ defmodule BaseSystem.Configure do
 		extra_sysctl_parameters        = opts[:extra_sysctl_parameters]  || %{}
 		extra_sysfs_variables          = opts[:extra_sysfs_variables]    || %{}
 		optimize_for_short_lived_files = "optimize_for_short_lived_files" in tags
-		ipv6                           = "ipv6" in tags
+		ipv6                           = "ipv6"         in tags
+		boot_uefi                      = "boot:uefi"    in tags
 		# Is our boot fully managed by the host, to the point where we don't have
 		# to install a linux kernel and bootloader?
 		boot_outside                   = "boot:outside" in tags
@@ -260,7 +261,7 @@ defmodule BaseSystem.Configure do
 		]
 
 		boot_packages = case boot_outside do
-			false -> ["linux-image-generic", "grub-pc | grub-efi-amd64"]
+			false -> ["linux-image-generic", (if boot_uefi, do: "grub-efi-amd64", else: "grub-pc")]
 			true  -> []
 		end
 		base_packages = [
