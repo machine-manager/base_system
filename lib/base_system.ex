@@ -235,6 +235,24 @@ defmodule BaseSystem.Configure do
 			# Carries some risk and is obsoleted by overlayfs
 			"aufs",
 
+			# We do not use floppies.  For some reason this is otherwise loaded in
+			# an OVH KVM VPS.
+			"floppy",
+
+			# We do not use these filesystems anywhere
+			"btrfs",
+			"qnx4",
+			"hfs",
+			"hfsplus",
+			"ufs",
+			"jfs",
+			"minix",
+
+			# We do not use parallel ports anywhere
+			"ppdev",
+			"parport",
+			"parport_pc",
+
 			# TODO: blacklist overlay and overlayfs once we can whitelist it on sbuild
 		]
 
