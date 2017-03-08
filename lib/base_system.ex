@@ -147,6 +147,16 @@ defmodule BaseSystem.Configure do
 
 			# CVE-2017-2636 allows a reliable local privilege escalation in the n_hdlc tty driver
 			"n_hdlc",
+
+			# CVE-2016-3955 allowed out-of-bounds write
+			"usbip-core",
+			"usbip-host",
+			"vhci-hcd",
+
+			# Carries some risk and is obsoleted by overlayfs
+			"aufs",
+
+			# TODO: blacklist overlay and overlayfs once we can whitelist it on sbuild
 		]
 
 		boot_packages = case boot_outside do
