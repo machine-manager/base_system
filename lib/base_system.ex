@@ -460,6 +460,7 @@ defmodule BaseSystem.Configure do
 			},
 
 			# TODO: min_free_kbytes
+			# TODO: optimize network stack based on wikimedia-puppet
 			%Sysctl{parameters: Map.merge(%{
 				# Note that some important settings are already set by the procps package,
 				# which creates .conf files in /etc/sysctl.d/.  Anything we set here will
@@ -478,6 +479,14 @@ defmodule BaseSystem.Configure do
 				# I've never run into a situation where I could use it to fix a wedged
 				# system.
 				"kernel.sysrq"                       => 0,
+
+				# CVE-2016-4557 allowed for local privilege escalation using unprivileged BPF.
+				#
+				# "only used for things like network profiling in userspace [...]; disabling
+				# the bpf() does not mean disabling all BPF/eBPF. Netfilter still uses BPF,
+				# seccomp still uses BPF, etc. All it means is that userspace network profiling
+				# tools and such will not function."
+				"kernel.unprivileged_bpf_disabled"   => 1,
 
 				# Disable IPv6 by default because far too many IPv6 routes announced
 				# to our servers are broken.
