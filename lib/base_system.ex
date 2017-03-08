@@ -489,6 +489,8 @@ defmodule BaseSystem.Configure do
 				"kernel.unprivileged_bpf_disabled"   => 1,
 
 				# "The perf subsystem has a huge history of privilege escalation vunerabilities"
+				# TODO: apply grkernsec_perf_harden.patch to our kernels to that setting '3'
+				# actually completely disables access to perf for unprivileged users.
 				"kernel.perf_event_paranoid"         => 3,
 
 				# Disable IPv6 by default because far too many IPv6 routes announced
