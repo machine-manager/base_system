@@ -1,10 +1,9 @@
 alias Converge.{
 	Runner, Context, TerminalReporter, FilePresent, FileMissing, SymlinkPresent,
 	DirectoryPresent, DirectoryEmpty, EtcCommitted, MetaPackageInstalled,
-	DanglingPackagesPurged, PackagesMarkedAutoInstalled,
-	PackagesMarkedManualInstalled, PackagePurged, Fstab, FstabEntry, AfterMeet,
-	BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring, SystemdUnitStarted,
-	SystemdUnitStopped, UserPresent
+	DanglingPackagesPurged, PackageRoots, PackagePurged, Fstab, FstabEntry,
+	AfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring,
+	SystemdUnitStarted, SystemdUnitStopped, UserPresent
 }
 
 defmodule BaseSystem.NoTagsError do
@@ -403,7 +402,6 @@ defmodule BaseSystem.Configure do
 
 			# Make sure etckeeper is installed, as it is required for the EtcCommitted units here
 			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper"]},
-			%PackagesMarkedAutoInstalled{names: ["converge-desired-packages-early"]},
 			%EtcCommitted{message: "converge (early)"},
 
 			%AfterMeet{
@@ -440,11 +438,11 @@ defmodule BaseSystem.Configure do
 				name:    "converge-desired-packages",
 				depends: ["converge-desired-packages-early"] ++ all_desired_packages
 			},
-			%PackagesMarkedManualInstalled{names: ["converge-desired-packages"]},
+			%PackageRoots{names: ["converge-desired-packages"]},
 			# This comes after MetaPackageInstalled because the undesired gnupg
 			# must be purged *after* installing gnupg2.
 			%All{units: packages_to_purge |> Enum.map(fn name -> %PackagePurged{name: name} end)},
-			%DanglingPackagesPurged{},
+			#%DanglingPackagesPurged{},
 
 			# Make sure this is cleared out after a google-chrome-* install drops a file here
 			%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
