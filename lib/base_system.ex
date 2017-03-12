@@ -326,6 +326,7 @@ defmodule BaseSystem.Configure do
 			"pv",
 			"tree",
 			"dnsutils",     # dig
+			"nmap",
 			"whois",
 		]
 		all_desired_packages = boot_packages ++ base_packages ++ human_admin_needs ++ extra_desired_packages
