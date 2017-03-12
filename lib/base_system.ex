@@ -1,7 +1,7 @@
 alias Converge.{
 	Runner, Context, TerminalReporter, FilePresent, FileMissing, SymlinkPresent,
 	DirectoryPresent, DirectoryEmpty, EtcCommitted, MetaPackageInstalled,
-	DanglingPackagesPurged, PackageRoots, PackagePurged, Fstab, FstabEntry,
+	PackageRoots, PackagePurged, Fstab, FstabEntry,
 	AfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring,
 	SystemdUnitStarted, SystemdUnitStopped, UserPresent
 }
