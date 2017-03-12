@@ -268,6 +268,7 @@ defmodule BaseSystem.Configure do
 			"aptitude",          # used by ObsoletePackagesPurged
 			"apt-show-versions", # to be used by a NoPackagesNewerThanInSource
 			"intel-microcode",
+			"console-setup",     # needed to change console font and not make keyboard-configuration error out on boot
 			"cryptsetup",
 			"util-linux",
 			"nocache",
