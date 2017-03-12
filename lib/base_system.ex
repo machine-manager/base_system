@@ -268,6 +268,7 @@ defmodule BaseSystem.Configure do
 			"aptitude",          # used by ObsoletePackagesPurged
 			"apt-show-versions", # to be used by a NoPackagesNewerThanInSource
 			"intel-microcode",
+			"cryptsetup",
 			"util-linux",
 			"nocache",
 			"gdisk",
