@@ -1,7 +1,7 @@
 alias Converge.{
 	Runner, Context, TerminalReporter, FilePresent, FileMissing, SymlinkPresent,
 	DirectoryPresent, DirectoryEmpty, EtcCommitted, MetaPackageInstalled,
-	PackageRoots, PackagePurged, Fstab, FstabEntry,
+	PackageRoots, DanglingPackagesPurged, PackagePurged, Fstab, FstabEntry,
 	AfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring,
 	SystemdUnitStarted, SystemdUnitStopped, UserPresent
 }
@@ -451,7 +451,7 @@ defmodule BaseSystem.Configure do
 			# This comes after MetaPackageInstalled because the undesired gnupg
 			# must be purged *after* installing gnupg2.
 			%All{units: packages_to_purge |> Enum.map(fn name -> %PackagePurged{name: name} end)},
-			#%DanglingPackagesPurged{},
+			%DanglingPackagesPurged{},
 
 			# Make sure this is cleared out after a google-chrome-* install drops a file here
 			%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
