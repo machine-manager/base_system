@@ -394,6 +394,7 @@ defmodule BaseSystem.Configure do
 				unit:    conf_file("/etc/locale.gen"),
 				trigger: fn -> {_, 0} = System.cmd("locale-gen", []) end
 			},
+			conf_file("/etc/default/locale"),
 
 			# We need a git config with a name and email for etckeeper to work
 			%DirectoryPresent{path: "/root/.config",     mode: 0o700},
