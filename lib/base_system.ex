@@ -502,6 +502,9 @@ defmodule BaseSystem.Configure do
 			# UTC timezone everywhere to avoid confusion and timezone-handling bugs
 			conf_file("/etc/timezone"),
 
+			# Install default /etc/environment to fix servers that may have an ancient/broken one
+			conf_file("/etc/environment"),
+
 			# Prevent sudo from caching credentials, because otherwise programs
 			# in the same terminal may be able to unexpectedly `sudo` without asking.
 			conf_file("/etc/sudoers.d/no-cred-caching"),
