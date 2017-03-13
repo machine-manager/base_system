@@ -410,6 +410,11 @@ defmodule BaseSystem.Configure do
 
 			%AfterMeet{
 				unit: %All{units: [
+					# Fix this annoying warning:
+					# N: Ignoring file '50unattended-upgrades.ucf-dist' in directory '/etc/apt/apt.conf.d/'
+					# as it has an invalid filename extension
+					%FileMissing{path: "/etc/apt/apt.conf.d/50unattended-upgrades.ucf-dist"},
+
 					%FilePresent{
 						path:      "/etc/apt/sources.list",
 						content:   apt_sources ++ [""] |> Enum.join("\n"),
