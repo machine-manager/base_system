@@ -565,6 +565,7 @@ defmodule BaseSystem.Configure do
 	defp boot_packages("outside"),            do: []
 	defp boot_packages(_),                    do: ["linux-image-generic", "grub-pc"]
 
+	defp grub_units("outside", _),            do: []
 	defp grub_units("mbr", _),                do: [%Grub{}]
 	defp grub_units("uefi", boot_resolution), do: [%Grub{gfxpayload: boot_resolution}]
 	# On a 1-core QEMU VM at Ablenet, our default-BFQ kernel hangs early in the boot unless we set the IO scheduler to deadline
