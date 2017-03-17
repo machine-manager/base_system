@@ -3,7 +3,7 @@ alias Converge.{
 	DirectoryPresent, DirectoryEmpty, EtcCommitted, MetaPackageInstalled,
 	PackageRoots, DanglingPackagesPurged, PackagePurged, Fstab, FstabEntry,
 	AfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring,
-	SystemdUnitStarted, SystemdUnitStopped, UserPresent
+	SystemdUnitStarted, SystemdUnitStopped, UserPresent, Grub
 }
 
 defmodule BaseSystem.NoTagsError do
@@ -92,10 +92,6 @@ defmodule BaseSystem.Configure do
 		extra_sysfs_variables          = opts[:extra_sysfs_variables]    || %{}
 		optimize_for_short_lived_files = "optimize_for_short_lived_files" in tags
 		ipv6                           = "ipv6"         in tags
-		boot_uefi                      = "boot:uefi"    in tags
-		# Is our boot fully managed by the host, to the point where we don't have
-		# to install a linux kernel and bootloader?
-		boot_outside                   = "boot:outside" in tags
 
 		base_keys = [
 			content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).txt"),
@@ -259,10 +255,6 @@ defmodule BaseSystem.Configure do
 			# TODO: blacklist overlay and overlayfs once we can whitelist it on sbuild
 		]
 
-		boot_packages = case boot_outside do
-			false -> ["linux-image-generic", (if boot_uefi, do: "grub-efi-amd64", else: "grub-pc")]
-			true  -> []
-		end
 		base_packages = [
 			"apt",
 			"aptitude",          # used by ObsoletePackagesPurged
@@ -331,7 +323,11 @@ defmodule BaseSystem.Configure do
 			"nmap",
 			"whois",
 		]
-		all_desired_packages = boot_packages ++ base_packages ++ human_admin_needs ++ extra_desired_packages
+		all_desired_packages =
+			boot_packages(get_boot_type(tags)) ++
+			base_packages ++
+			human_admin_needs ++
+			extra_desired_packages
 		# Packages to be purged, unless listed in all_desired_packages.  None of this
 		# should be necessary on a minbase system, but we keep this here
 		# 1) in case a package listed here ends up installed by accident or because it is depended-on
@@ -377,13 +373,6 @@ defmodule BaseSystem.Configure do
 			"lxcfs",
 			"lxc-common",
 		] ++ \
-		case boot_outside do
-			# linux-zygote creates an install where linux-image-generic and grub-pc
-			# are marked manual-installed, so we might need to purge these packages
-			# for machines with `boot_outside`
-			true  -> ["linux-image-generic", "grub-pc", "grub-efi-amd64"]
-			false -> []
-		end ++ \
 		extra_undesired_packages
 
 		packages_to_purge = MapSet.difference(MapSet.new(undesired_packages), MapSet.new(all_desired_packages))
@@ -562,11 +551,45 @@ defmodule BaseSystem.Configure do
 			},
 
 			%Sysctl{parameters: sysctl_parameters},
+			%All{units: grub_units(get_boot_type(tags), get_boot_resolution(tags))},
 			%All{units: extra_post_install_units},
 			%EtcCommitted{message: "converge"},
 		]
 		ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}
 		Runner.converge(%All{units: units}, ctx)
+	end
+
+	defp boot_packages("uefi"),               do: ["linux-image-generic", "grub-efi-amd64"]
+	# outside = our boot fully managed by the host, to the point where we don't
+	# have to install a linux kernel and bootloader.  Use this on scaleway.
+	defp boot_packages("outside"),            do: []
+	defp boot_packages(_),                    do: ["linux-image-generic", "grub-pc"]
+
+	defp grub_units("mbr", _),                do: [%Grub{}]
+	defp grub_units("uefi", boot_resolution), do: [%Grub{gfxpayload: boot_resolution}]
+	# On a 1-core QEMU VM at Ablenet, our default-BFQ kernel hangs early in the boot unless we set the IO scheduler to deadline
+	defp grub_units("ablenet_vps", _),        do: [%Grub{cmdline_normal_and_recovery: "elevator=deadline"}]
+	defp grub_units("ovh_vps", _),            do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
+	defp grub_units("do_vps", _),             do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
+	defp grub_units("do_vps_2016", _),        do: [%Grub{cmdline_normal_and_recovery: "console=tty1 root=LABEL=DOROOT notsc clocksource=kvm-clock net.ifnames=0"}]
+
+	defp get_boot_type(tags) do
+		tags
+		|> Enum.find(fn tag -> tag |> String.starts_with?("boot:") end)
+		|> String.split(":", parts: 2)
+		|> tl
+	end
+
+	defp get_boot_resolution(tags) do
+		match = tags
+			|> Enum.find(fn tag -> tag |> String.starts_with?("boot_resolution:") end)
+		case match do
+			nil -> nil
+			res ->
+				res
+				|> String.split(":", parts: 2)
+				|> tl
+		end
 	end
 
 	defp fstab_unit() do
