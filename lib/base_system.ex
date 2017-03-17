@@ -574,10 +574,9 @@ defmodule BaseSystem.Configure do
 	defp grub_units("do_vps_2016", _),        do: [%Grub{cmdline_normal_and_recovery: "console=tty1 root=LABEL=DOROOT notsc clocksource=kvm-clock net.ifnames=0"}]
 
 	defp get_boot_type(tags) do
-		tags
-		|> Enum.find(fn tag -> tag |> String.starts_with?("boot:") end)
-		|> String.split(":", parts: 2)
-		|> tl
+		match = Enum.find(tags, fn tag -> tag |> String.starts_with?("boot:") end)
+		[_, boot_type] = String.split(match, ":", parts: 2)
+		boot_type
 	end
 
 	defp get_boot_resolution(tags) do
@@ -586,9 +585,8 @@ defmodule BaseSystem.Configure do
 		case match do
 			nil -> nil
 			res ->
-				res
-				|> String.split(":", parts: 2)
-				|> tl
+				[_, boot_resolution] = String.split(res, ":", parts: 2)
+				boot_resolution
 		end
 	end
 
