@@ -56,7 +56,8 @@ defmodule BaseSystem.Configure do
 			descriptor_keys  = desc |> Map.keys |> MapSet.new
 			unsupported_keys = MapSet.difference(descriptor_keys, @allowed_descriptor_keys)
 			if unsupported_keys |> MapSet.size > 0 do
-				raise BadRoleDescriptorError, message: "Descriptor for role #{inspect module} has unsupported keys #{inspect unsupported_keys}"
+				raise BadRoleDescriptorError, message:
+					"Descriptor for #{inspect module} has unsupported keys #{inspect(unsupported_keys |> MapSet.to_list)}"
 			end
 		end
 		descriptors        = role_modules_and_descriptors |> Enum.map(fn {_module, desc} -> desc end)
