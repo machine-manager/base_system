@@ -31,24 +31,35 @@ defmodule BaseSystem.Configure do
 	import Util, only: [content: 1, conf_file: 1, conf_file: 3, conf_dir: 1, conf_dir: 2]
 	Util.declare_external_resources("files")
 
+	@allowed_descriptor_keys MapSet.new([
+		:desired_packages,
+		:undesired_packages,
+		:apt_keys,
+		:apt_sources,
+		:sysctl_parameters,
+		:sysfs_variables,
+		:pre_install_unit,
+		:post_install_unit,
+		:implied_roles,
+	])
+
 	@spec configure_with_roles([String.t], [module]) :: nil
 	def configure_with_roles(tags, role_modules) do
 		if length(tags) == 0 do
 			raise NoTagsError, message: "Refusing to configure with 0 tags because this is probably a mistake; pass a dummy tag if not"
 		end
 
-		role_modules = get_all_role_modules(tags, role_modules |> MapSet.new)
-		descriptors  = role_modules |> Enum.map(fn mod -> apply(mod, :role, [tags]) end)
+		role_modules                 = get_all_role_modules(tags, role_modules |> MapSet.new)
+		role_modules_and_descriptors = role_modules |> Enum.map(fn mod -> {mod, apply(mod, :role, [tags])} end)
 
-		# Ensure that some easy-to-typo keys are not present
-		for desc <- descriptors do
-			if desc[:pre_install_units] != nil do
-				raise BadRoleDescriptorError, message: "Descriptor \#{inspect desc} should have key pre_install_unit, not pre_install_units"
-			end
-			if desc[:post_install_units] != nil do
-				raise BadRoleDescriptorError, message: "Descriptor \#{inspect desc} should have key post_install_unit, not post_install_units"
+		for {module, desc} <- role_modules_and_descriptors do
+			descriptor_keys  = desc |> Map.keys |> MapSet.new
+			unsupported_keys = MapSet.difference(descriptor_keys, @allowed_descriptor_keys)
+			if unsupported_keys |> MapSet.size > 0 do
+				raise BadRoleDescriptorError, message: "Descriptor for role #{inspect module} has unsupported keys #{inspect unsupported_keys}"
 			end
 		end
+		descriptors        = role_modules_and_descriptors |> Enum.map(fn {_module, desc} -> desc end)
 		desired_packages   = descriptors |> Enum.flat_map(fn desc -> desc[:desired_packages]   || [] end)
 		undesired_packages = descriptors |> Enum.flat_map(fn desc -> desc[:undesired_packages] || [] end)
 		apt_keys           = descriptors |> Enum.flat_map(fn desc -> desc[:apt_keys]           || [] end)
@@ -580,7 +591,7 @@ defmodule BaseSystem.Configure do
 		boot_type
 	end
 
-	defp get_boot_resolution(tags) do
+	def get_boot_resolution(tags) do
 		match = tags
 			|> Enum.find(fn tag -> tag |> String.starts_with?("boot_resolution:") end)
 		case match do
