@@ -124,8 +124,6 @@ export LESSHISTFILE=-
 ### System-wide aliases
 
 alias cp='cp -a'
-# preserve extended attributes (-X is not included in -a)
-alias rsync='rsync -X'
 
 alias mv='mv -i'
 # Make du and df report sizes in bytes, with commas, like our ls
