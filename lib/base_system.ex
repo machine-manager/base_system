@@ -454,6 +454,11 @@ defmodule BaseSystem.Configure do
 			# must be purged *after* installing gnupg2.
 			%All{units: packages_to_purge |> Enum.map(fn name -> %PackagePurged{name: name} end)},
 			%DanglingPackagesPurged{},
+			# Purging can cause some packages to be set to manually-installed,
+			# so repeat the PackageRoots unit, then the DanglingPackagesPurged unit.
+			%PackageRoots{names: ["converge-desired-packages"]},
+			%DanglingPackagesPurged{},
+			# Hopefully it doesn't need to be run a third time...
 
 			# Make sure this is cleared out after a google-chrome-* install drops a file here
 			%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
