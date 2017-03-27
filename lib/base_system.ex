@@ -578,11 +578,13 @@ defmodule BaseSystem.Configure do
 
 	defp boot_packages("uefi"),               do: ["linux-image-generic", "grub-efi-amd64"]
 	# outside = our boot is fully managed by the host, to the point where we don't
-	# have to install a linux kernel and bootloader.  Use this on scaleway.
+	# have to install a linux kernel and bootloader.  You can use this on scaleway.
 	defp boot_packages("outside"),            do: []
+	defp boot_packages("scaleway_kexec"),     do: ["linux-image-generic", "scaleway-ubuntu-kernel"]
 	defp boot_packages(_),                    do: ["linux-image-generic", "grub-pc"]
 
 	defp grub_units("outside", _),            do: []
+	defp grub_units("scaleway_kexec", _),     do: []
 	defp grub_units("mbr", _),                do: [%Grub{}]
 	defp grub_units("uefi", boot_resolution), do: [%Grub{gfxpayload: boot_resolution}]
 	# On a 1-core QEMU VM at Ablenet, our default-BFQ kernel hangs early in the boot unless we set the IO scheduler to deadline
