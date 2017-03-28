@@ -214,7 +214,8 @@ defmodule BaseSystem.Configure do
 
 		undesired_upgrades = [
 			# A downgrade from our -69 kernel
-			%{name: "linux-image-generic", version: "4.4.0.70.76"}
+			%{name: "linux-image-generic",   version: "4.4.0.70.76"},
+			%{name: "linux-headers-generic", version: "4.4.0.70.76"},
 		]
 
 		blacklisted_kernel_modules = [
