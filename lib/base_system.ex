@@ -216,6 +216,7 @@ defmodule BaseSystem.Configure do
 			# A downgrade from our -69 kernel
 			%{name: "linux-image-generic",   version: "4.4.0.70.76"},
 			%{name: "linux-headers-generic", version: "4.4.0.70.76"},
+			%{name: "linux-libc-dev",        version: "4.4.0-70.91"},
 		]
 
 		blacklisted_kernel_modules = [
