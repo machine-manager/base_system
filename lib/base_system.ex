@@ -212,6 +212,11 @@ defmodule BaseSystem.Configure do
 			|> Map.merge(unprivileged_bpf_parameters)
 			|> Map.merge(extra_sysctl_parameters)
 
+		undesired_upgrades = [
+			# A downgrade from our -69 kernel
+			%{name: "linux-image-generic", version: "4.4.0.70.76"}
+		]
+
 		blacklisted_kernel_modules = [
 			# Disable the Intel Management Engine Interface driver, which we do not need
 			# and may introduce network attack vectors.
@@ -411,36 +416,37 @@ defmodule BaseSystem.Configure do
 			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper"]},
 			%EtcCommitted{message: "converge (early)"},
 
-			%AfterMeet{
-				unit: %All{units: [
-					# Fix this annoying warning:
-					# N: Ignoring file '50unattended-upgrades.ucf-dist' in directory '/etc/apt/apt.conf.d/'
-					# as it has an invalid filename extension
-					%FileMissing{path: "/etc/apt/apt.conf.d/50unattended-upgrades.ucf-dist"},
+			# Fix this annoying warning:
+			# N: Ignoring file '50unattended-upgrades.ucf-dist' in directory '/etc/apt/apt.conf.d/'
+			# as it has an invalid filename extension
+			%FileMissing{path: "/etc/apt/apt.conf.d/50unattended-upgrades.ucf-dist"},
 
-					%FilePresent{
-						path:      "/etc/apt/sources.list",
-						content:   apt_sources ++ [""] |> Enum.join("\n"),
-						# TODO: after we have _apt in a group, use 0o640 and group: ... to hide the custom-packages password
-						mode:      0o644,
-						user:      "root",
-						#group:     "_apt",
-						immutable: true
-					},
-
-					# We centralize management of our apt sources in /etc/apt/sources.list,
-					# so remove anything that may be in /etc/apt/sources.list.d/
-					%DirectoryPresent{path: "/etc/apt/sources.list.d",              mode: 0o755, immutable: true},
-					%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
-
-					%GPGSimpleKeyring{path: "/etc/apt/trusted.gpg", keys: apt_keys, mode: 0o644, immutable: true},
-					%DirectoryPresent{path: "/etc/apt/trusted.gpg.d",               mode: 0o755, immutable: true},
-					# We centralize management of our apt sources in /etc/apt/trusted.gpg,
-					# so remove anything that may be in /etc/apt/trusted.gpg.d/
-					%DirectoryEmpty{path: "/etc/apt/trusted.gpg.d"},
-				]},
-				trigger: fn -> Util.remove_cached_package_index() end
+			%FilePresent{
+				path:      "/etc/apt/sources.list",
+				content:   apt_sources ++ [""] |> Enum.join("\n"),
+				# TODO: after we have _apt in a group, use 0o640 and group: ... to hide the custom-packages password
+				mode:      0o644,
+				user:      "root",
+				#group:     "_apt",
+				immutable: true
 			},
+
+			# We centralize management of our apt sources in /etc/apt/sources.list,
+			# so remove anything that may be in /etc/apt/sources.list.d/
+			%DirectoryPresent{path: "/etc/apt/sources.list.d",              mode: 0o755, immutable: true},
+			%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
+
+			%GPGSimpleKeyring{path: "/etc/apt/trusted.gpg", keys: apt_keys, mode: 0o644, immutable: true},
+			%DirectoryPresent{path: "/etc/apt/trusted.gpg.d",               mode: 0o755, immutable: true},
+			# We centralize management of our apt sources in /etc/apt/trusted.gpg,
+			# so remove anything that may be in /etc/apt/trusted.gpg.d/
+			%DirectoryEmpty{path: "/etc/apt/trusted.gpg.d"},
+
+			%FilePresent{path: "/etc/apt/preferences",        mode: 0o644, content: make_apt_preferences(undesired_upgrades)},
+			%DirectoryPresent{path: "/etc/apt/preferences.d", mode: 0o755, immutable: true},
+			# We centralize management of our apt preferences in /etc/apt/preferences,
+			# so remove anything that may be in /etc/apt/preferences.d/
+			%DirectoryEmpty{path: "/etc/apt/preferences.d"},
 
 			fstab_unit(),
 
@@ -679,5 +685,16 @@ defmodule BaseSystem.Configure do
 				}
 			end
 		end
+	end
+
+	def make_apt_preferences(undesired_upgrades) do
+		for upgrade <- undesired_upgrades do
+			"""
+			Package: #{upgrade.name}
+			Pin: version #{upgrade.version}
+			Pin-Priority: -1
+			"""
+		end
+		|> Enum.join("\n")
 	end
 end
