@@ -35,6 +35,7 @@ defmodule BaseSystem.Configure do
 	@allowed_descriptor_keys MapSet.new([
 		:desired_packages,
 		:undesired_packages,
+		:undesired_upgrades,
 		:apt_keys,
 		:apt_sources,
 		:sysctl_parameters,
@@ -64,6 +65,7 @@ defmodule BaseSystem.Configure do
 		descriptors        = role_modules_and_descriptors |> Enum.map(fn {_module, desc} -> desc end)
 		desired_packages   = descriptors |> Enum.flat_map(fn desc -> desc[:desired_packages]   || [] end)
 		undesired_packages = descriptors |> Enum.flat_map(fn desc -> desc[:undesired_packages] || [] end)
+		undesired_upgrades = descriptors |> Enum.flat_map(fn desc -> desc[:undesired_upgrades] || [] end)
 		apt_keys           = descriptors |> Enum.flat_map(fn desc -> desc[:apt_keys]           || [] end)
 		apt_sources        = descriptors |> Enum.flat_map(fn desc -> desc[:apt_sources]        || [] end)
 		sysctl_parameters  = descriptors |> Enum.map(fn desc -> desc[:sysctl_parameters] || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end)
@@ -74,6 +76,7 @@ defmodule BaseSystem.Configure do
 			tags,
 			extra_desired_packages:   desired_packages,
 			extra_undesired_packages: undesired_packages,
+			extra_undesired_upgrades: undesired_upgrades,
 			extra_apt_keys:           apt_keys,
 			extra_apt_sources:        apt_sources,
 			extra_pre_install_units:  pre_install_units,
@@ -99,12 +102,13 @@ defmodule BaseSystem.Configure do
 		extra_apt_sources              = opts[:extra_apt_sources]        || []
 		extra_desired_packages         = opts[:extra_desired_packages]   || []
 		extra_undesired_packages       = opts[:extra_undesired_packages] || []
+		extra_undesired_upgrades       = opts[:extra_undesired_upgrades] || []
 		extra_pre_install_units        = opts[:extra_pre_install_units]  || []
 		extra_post_install_units       = opts[:extra_post_install_units] || []
 		extra_sysctl_parameters        = opts[:extra_sysctl_parameters]  || %{}
 		extra_sysfs_variables          = opts[:extra_sysfs_variables]    || %{}
 		optimize_for_short_lived_files = "optimize_for_short_lived_files" in tags
-		ipv6                           = "ipv6"         in tags
+		ipv6                           = "ipv6"                           in tags
 
 		base_keys = [
 			content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).txt"),
@@ -211,13 +215,6 @@ defmodule BaseSystem.Configure do
 			base_sysctl_parameters
 			|> Map.merge(unprivileged_bpf_parameters)
 			|> Map.merge(extra_sysctl_parameters)
-
-		undesired_upgrades = [
-			# A downgrade from our -69 kernel
-			%{name: "linux-image-generic",   version: "4.4.0.70.76"},
-			%{name: "linux-headers-generic", version: "4.4.0.70.76"},
-			%{name: "linux-libc-dev",        version: "4.4.0-70.91"},
-		]
 
 		blacklisted_kernel_modules = [
 			# Disable the Intel Management Engine Interface driver, which we do not need
@@ -444,7 +441,7 @@ defmodule BaseSystem.Configure do
 			# so remove anything that may be in /etc/apt/trusted.gpg.d/
 			%DirectoryEmpty{path: "/etc/apt/trusted.gpg.d"},
 
-			%FilePresent{path: "/etc/apt/preferences",        mode: 0o644, content: make_apt_preferences(undesired_upgrades)},
+			%FilePresent{path: "/etc/apt/preferences",        mode: 0o644, content: make_apt_preferences(extra_undesired_upgrades)},
 			%DirectoryPresent{path: "/etc/apt/preferences.d", mode: 0o755, immutable: true},
 			# We centralize management of our apt preferences in /etc/apt/preferences,
 			# so remove anything that may be in /etc/apt/preferences.d/
@@ -691,11 +688,26 @@ defmodule BaseSystem.Configure do
 
 	def make_apt_preferences(undesired_upgrades) do
 		for upgrade <- undesired_upgrades do
-			"""
-			Package: #{upgrade.name}
-			Pin: version #{upgrade.version}
-			Pin-Priority: -1
-			"""
+			cond do
+				upgrade[:version] != nil -> 
+					"""
+					Package: #{upgrade.name}
+					Pin: version #{upgrade.version}
+					Pin-Priority: -1
+					"""
+				upgrade[:distribution_codename] != nil ->
+					"""
+					Package: #{upgrade.name}
+					Pin: release n=#{upgrade.distribution_codename}
+					Pin-Priority: -1
+					"""
+				true ->
+					raise ArgumentError, message:
+						"""
+						Undesired upgrade descriptor #{inspect upgrade} had neither \
+						a :version or :distribution_codename key.\
+						"""
+			end
 		end
 		|> Enum.join("\n")
 	end
