@@ -389,6 +389,10 @@ defmodule BaseSystem.Configure do
 			"lxd",
 			"lxcfs",
 			"lxc-common",
+
+			# Gave us names like em0 and em1 for network devices, but we don't want
+			# this anywhere; we want systemd's predictable network interface names.
+			"biosdevname",
 		] ++ \
 		extra_undesired_packages
 
