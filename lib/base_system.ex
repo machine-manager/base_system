@@ -503,11 +503,6 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> {_, 0} = System.cmd("service", ["apparmor", "reload"]) end
 			},
 
-			# Delete old configuration files that we previously created
-			%FileMissing{path: "/etc/modprobe.d/no-dccp.conf"},
-			%FileMissing{path: "/etc/modprobe.d/no-mei.conf"},
-			%FileMissing{path: "/etc/modprobe.d/no-firewire.conf"},
-
 			%FilePresent{
 				path:    "/etc/modprobe.d/base_system.conf",
 				mode:    0o644,
