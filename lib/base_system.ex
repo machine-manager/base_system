@@ -499,7 +499,8 @@ defmodule BaseSystem.Configure do
 
 			%SystemdUnitStarted{name: "apparmor.service"},
 			%AfterMeet{
-				unit:    conf_file("/etc/apparmor.d/bin.tar"),
+				# Remove old file we installed
+				unit:    %FileMissing{path: "/etc/apparmor.d/bin.tar"},
 				trigger: fn -> {_, 0} = System.cmd("service", ["apparmor", "reload"]) end
 			},
 
