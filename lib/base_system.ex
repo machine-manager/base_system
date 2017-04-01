@@ -48,7 +48,7 @@ defmodule BaseSystem.Configure do
 	@spec configure_with_roles([String.t], [module]) :: nil
 	def configure_with_roles(tags, role_modules) do
 		if length(tags) == 0 do
-			raise NoTagsError, message: "Refusing to configure with 0 tags because this is probably a mistake; pass a dummy tag if not"
+			raise(NoTagsError, "Refusing to configure with 0 tags because this is probably a mistake; pass a dummy tag if not")
 		end
 
 		role_modules                 = get_all_role_modules(tags, role_modules |> MapSet.new)
@@ -58,8 +58,8 @@ defmodule BaseSystem.Configure do
 			descriptor_keys  = desc |> Map.keys |> MapSet.new
 			unsupported_keys = MapSet.difference(descriptor_keys, @allowed_descriptor_keys)
 			if unsupported_keys |> MapSet.size > 0 do
-				raise BadRoleDescriptorError, message:
-					"Descriptor for #{inspect module} has unsupported keys #{inspect(unsupported_keys |> MapSet.to_list)}"
+				raise(BadRoleDescriptorError,
+					"Descriptor for #{inspect module} has unsupported keys #{inspect(unsupported_keys |> MapSet.to_list)}")
 			end
 		end
 		descriptors        = role_modules_and_descriptors |> Enum.map(fn {_module, desc} -> desc end)
@@ -702,11 +702,11 @@ defmodule BaseSystem.Configure do
 					Pin-Priority: -1
 					"""
 				true ->
-					raise ArgumentError, message:
+					raise(ArgumentError,
 						"""
 						Undesired upgrade descriptor #{inspect upgrade} had neither \
 						a :version or :distribution_codename key.\
-						"""
+						""")
 			end
 		end
 		|> Enum.join("\n")
