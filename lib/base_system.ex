@@ -4,7 +4,7 @@ alias Converge.{
 	PackageRoots, DanglingPackagesPurged, PackagePurged, Fstab, FstabEntry,
 	AfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring,
 	SystemdUnitStarted, SystemdUnitStopped, SystemdUnitEnabled, SystemdUnitDisabled,
-	UserPresent, Grub
+	EtcSystemdUnitFiles, UserPresent, Grub
 }
 
 defmodule BaseSystem.NoTagsError do
@@ -38,6 +38,7 @@ defmodule BaseSystem.Configure do
 		:undesired_upgrades,
 		:apt_keys,
 		:apt_sources,
+		:etc_systemd_unit_files,
 		:sysctl_parameters,
 		:sysfs_variables,
 		:pre_install_unit,
@@ -62,27 +63,21 @@ defmodule BaseSystem.Configure do
 					"Descriptor for #{inspect module} has unsupported keys #{inspect(unsupported_keys |> MapSet.to_list)}")
 			end
 		end
-		descriptors        = role_modules_and_descriptors |> Enum.map(fn {_module, desc} -> desc end)
-		desired_packages   = descriptors |> Enum.flat_map(fn desc -> desc[:desired_packages]   || [] end)
-		undesired_packages = descriptors |> Enum.flat_map(fn desc -> desc[:undesired_packages] || [] end)
-		undesired_upgrades = descriptors |> Enum.flat_map(fn desc -> desc[:undesired_upgrades] || [] end)
-		apt_keys           = descriptors |> Enum.flat_map(fn desc -> desc[:apt_keys]           || [] end)
-		apt_sources        = descriptors |> Enum.flat_map(fn desc -> desc[:apt_sources]        || [] end)
-		sysctl_parameters  = descriptors |> Enum.map(fn desc -> desc[:sysctl_parameters] || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end)
-		sysfs_variables    = descriptors |> Enum.map(fn desc -> desc[:sysfs_variables]   || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end)
-		pre_install_units  = descriptors |> Enum.map(fn desc -> desc[:pre_install_unit] end)         |> Enum.reject(&is_nil/1)
-		post_install_units = descriptors |> Enum.map(fn desc -> desc[:post_install_unit] end)        |> Enum.reject(&is_nil/1)
+		descriptors =
+			role_modules_and_descriptors
+			|> Enum.map(fn {_module, desc} -> desc end)
 		configure(
 			tags,
-			extra_desired_packages:   desired_packages,
-			extra_undesired_packages: undesired_packages,
-			extra_undesired_upgrades: undesired_upgrades,
-			extra_apt_keys:           apt_keys,
-			extra_apt_sources:        apt_sources,
-			extra_pre_install_units:  pre_install_units,
-			extra_post_install_units: post_install_units,
-			extra_sysctl_parameters:  sysctl_parameters,
-			extra_sysfs_variables:    sysfs_variables,
+			extra_desired_packages:       descriptors |> Enum.flat_map(fn desc -> desc[:desired_packages]       || [] end),
+			extra_undesired_packages:     descriptors |> Enum.flat_map(fn desc -> desc[:undesired_packages]     || [] end),
+			extra_undesired_upgrades:     descriptors |> Enum.flat_map(fn desc -> desc[:undesired_upgrades]     || [] end),
+			extra_apt_keys:               descriptors |> Enum.flat_map(fn desc -> desc[:apt_keys]               || [] end),
+			extra_apt_sources:            descriptors |> Enum.flat_map(fn desc -> desc[:apt_sources]            || [] end),
+			extra_etc_systemd_unit_files: descriptors |> Enum.flat_map(fn desc -> desc[:etc_systemd_unit_files] || [] end),
+			extra_pre_install_units:      descriptors |> Enum.map(fn desc -> desc[:pre_install_unit] end)         |> Enum.reject(&is_nil/1),
+			extra_post_install_units:     descriptors |> Enum.map(fn desc -> desc[:post_install_unit] end)        |> Enum.reject(&is_nil/1),
+			extra_sysctl_parameters:      descriptors |> Enum.map(fn desc -> desc[:sysctl_parameters] || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end),
+			extra_sysfs_variables:        descriptors |> Enum.map(fn desc -> desc[:sysfs_variables]   || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end),
 		)
 	end
 
@@ -98,15 +93,16 @@ defmodule BaseSystem.Configure do
 	end
 
 	def configure(tags, opts) do
-		extra_apt_keys                 = opts[:extra_apt_keys]           || []
-		extra_apt_sources              = opts[:extra_apt_sources]        || []
-		extra_desired_packages         = opts[:extra_desired_packages]   || []
-		extra_undesired_packages       = opts[:extra_undesired_packages] || []
-		extra_undesired_upgrades       = opts[:extra_undesired_upgrades] || []
-		extra_pre_install_units        = opts[:extra_pre_install_units]  || []
-		extra_post_install_units       = opts[:extra_post_install_units] || []
-		extra_sysctl_parameters        = opts[:extra_sysctl_parameters]  || %{}
-		extra_sysfs_variables          = opts[:extra_sysfs_variables]    || %{}
+		extra_desired_packages         = opts[:extra_desired_packages]       || []
+		extra_undesired_packages       = opts[:extra_undesired_packages]     || []
+		extra_undesired_upgrades       = opts[:extra_undesired_upgrades]     || []
+		extra_apt_keys                 = opts[:extra_apt_keys]               || []
+		extra_apt_sources              = opts[:extra_apt_sources]            || []
+		extra_etc_systemd_unit_files   = opts[:extra_etc_systemd_unit_files] || []
+		extra_pre_install_units        = opts[:extra_pre_install_units]      || []
+		extra_post_install_units       = opts[:extra_post_install_units]     || []
+		extra_sysctl_parameters        = opts[:extra_sysctl_parameters]      || %{}
+		extra_sysfs_variables          = opts[:extra_sysfs_variables]        || %{}
 		optimize_for_short_lived_files = "optimize_for_short_lived_files" in tags
 		ipv6                           = "ipv6"                           in tags
 
@@ -575,6 +571,7 @@ defmodule BaseSystem.Configure do
 
 			%Sysctl{parameters: sysctl_parameters},
 			%All{units: boot_units(get_boot_type(tags), get_boot_resolution(tags))},
+			%EtcSystemdUnitFiles{units: extra_etc_systemd_unit_files},
 			%All{units: extra_post_install_units},
 			%EtcCommitted{message: "converge"},
 		]
