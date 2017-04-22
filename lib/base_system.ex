@@ -288,6 +288,7 @@ defmodule BaseSystem.Configure do
 			"cron",
 			"net-tools",
 			"sudo",
+			"ferm",
 			"openssh-server",
 			"openssh-client",
 			"rsync",
@@ -448,6 +449,8 @@ defmodule BaseSystem.Configure do
 			%DirectoryEmpty{path: "/etc/apt/preferences.d"},
 
 			fstab_unit(),
+
+			conf_file("/etc/default/ferm"),
 
 			%All{units: extra_pre_install_units},
 
