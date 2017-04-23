@@ -46,6 +46,7 @@ defmodule BaseSystem.Configure do
 		:implied_roles,
 		:ferm_input_chain,
 		:ferm_output_chain,
+		:ferm_postrouting_chain,
 	])
 
 	@spec configure_with_roles([String.t], [module]) :: nil
@@ -80,6 +81,7 @@ defmodule BaseSystem.Configure do
 			extra_post_install_units:     descriptors |> Enum.map(fn desc -> desc[:post_install_unit] end)        |> Enum.reject(&is_nil/1),
 			extra_ferm_input_chain:       descriptors |> Enum.map(fn desc -> desc[:ferm_input_chain] end)         |> Enum.reject(&is_nil/1),
 			extra_ferm_output_chain:      descriptors |> Enum.map(fn desc -> desc[:ferm_output_chain] end)        |> Enum.reject(&is_nil/1),
+			extra_ferm_postrouting_chain: descriptors |> Enum.map(fn desc -> desc[:ferm_postrouting_chain] end)   |> Enum.reject(&is_nil/1),
 			extra_sysctl_parameters:      descriptors |> Enum.map(fn desc -> desc[:sysctl_parameters] || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end),
 			extra_sysfs_variables:        descriptors |> Enum.map(fn desc -> desc[:sysfs_variables]   || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end),
 		)
@@ -107,6 +109,7 @@ defmodule BaseSystem.Configure do
 		extra_post_install_units       = opts[:extra_post_install_units]     || []
 		extra_ferm_input_chain         = opts[:extra_ferm_input_chain]       || []
 		extra_ferm_output_chain        = opts[:extra_ferm_output_chain]      || []
+		extra_ferm_postrouting_chain   = opts[:extra_ferm_postrouting_chain] || []
 		extra_sysctl_parameters        = opts[:extra_sysctl_parameters]      || %{}
 		extra_sysfs_variables          = opts[:extra_sysfs_variables]        || %{}
 		optimize_for_short_lived_files = "optimize_for_short_lived_files" in tags
@@ -426,7 +429,11 @@ defmodule BaseSystem.Configure do
 			%AfterMeet{unit:
 				%All{units: [
 					%DirectoryPresent{path: "/etc/ferm",      mode: 0o700},
-					%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600, content: make_ferm_config(extra_ferm_input_chain, extra_ferm_output_chain)},
+					%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600,
+					             content: make_ferm_config(
+					               extra_ferm_input_chain,
+					               extra_ferm_output_chain,
+					               extra_ferm_postrouting_chain)},
 					conf_file("/etc/default/ferm"),
 				]},
 				trigger: fn -> {_, 0} = System.cmd("service", ["ferm", "reload"]) end
@@ -727,7 +734,7 @@ defmodule BaseSystem.Configure do
 		|> Enum.join("\n")
 	end
 
-	def make_ferm_config(input_chain, output_chain) do
+	def make_ferm_config(input_chain, output_chain, postrouting_chain) do
 		interface_names     = File.ls!("/sys/class/net")
 		# eno, ens, enp, enx, eth: https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
 		ethernet_interfaces = interface_names |> Enum.filter(fn name -> name |> String.starts_with?("e")   end)
@@ -775,6 +782,12 @@ defmodule BaseSystem.Configure do
 
 				mod state state ESTABLISHED ACCEPT;
 				mod state state RELATED proto icmp ACCEPT;
+			}
+		}
+
+		table nat {
+			chain POSTROUTING {
+		#{postrouting_chain |> Enum.join("\n") |> indent |> indent}
 			}
 		}
 		"""
