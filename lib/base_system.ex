@@ -728,7 +728,14 @@ defmodule BaseSystem.Configure do
 	end
 
 	def make_ferm_config(input_chain, output_chain) do
+		interface_names     = File.ls!("/sys/class/net")
+		# eno, ens, enp, enx, eth: https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
+		ethernet_interfaces = interface_names |> Enum.filter(fn name -> name |> String.starts_with?("e")   end)
+		wifi_interfaces     = interface_names |> Enum.filter(fn name -> name |> String.starts_with?("wlo") end)
 		"""
+		@def $ethernet_interfaces = (#{ethernet_interfaces |> Enum.join(" ")});
+		@def $wifi_interfaces     = (#{wifi_interfaces     |> Enum.join(" ")});
+
 		table filter {
 			chain INPUT {
 				policy DROP;
