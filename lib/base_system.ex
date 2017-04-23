@@ -765,6 +765,7 @@ defmodule BaseSystem.Configure do
 
 			chain FORWARD {
 				policy DROP;
+
 				mod state state ESTABLISHED ACCEPT;
 				mod state state RELATED proto icmp ACCEPT;
 			}
