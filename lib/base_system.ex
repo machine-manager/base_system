@@ -419,8 +419,21 @@ defmodule BaseSystem.Configure do
 			},
 
 			# Make sure etckeeper is installed, as it is required for the EtcCommitted units here
-			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper"]},
+			# Make sure ferm is installed before we install a bunch of other packages
+			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper", "ferm"]},
 			%EtcCommitted{message: "converge (early)"},
+
+			%AfterMeet{unit:
+				%All{
+					units: [
+						%DirectoryPresent{path: "/etc/ferm",      mode: 0o700},
+						%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600, content: make_ferm_config(ferm_input_chain, ferm_output_chain)},
+						conf_file("/etc/default/ferm"),
+					],
+					trigger: fn -> {_, 0} = System.cmd("service", ["ferm", "reload"]) end
+				}
+			},
+			%SystemdUnitStarted{name: "ferm.service"},
 
 			# Fix this annoying warning:
 			# N: Ignoring file '50unattended-upgrades.ucf-dist' in directory '/etc/apt/apt.conf.d/'
@@ -455,10 +468,6 @@ defmodule BaseSystem.Configure do
 			%DirectoryEmpty{path: "/etc/apt/preferences.d"},
 
 			fstab_unit(),
-
-			%DirectoryPresent{path: "/etc/ferm",      mode: 0o700},
-			%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600, content: make_ferm_config(ferm_input_chain, ferm_output_chain)},
-			conf_file("/etc/default/ferm"),
 
 			%All{units: extra_pre_install_units},
 
