@@ -773,6 +773,11 @@ defmodule BaseSystem.Configure do
 
 		#{output_chain |> Enum.join("\n") |> indent |> indent}
 
+				# To suppress this rule, add your own with REJECT to the output chain
+				outerface ($ethernet_interfaces $wifi_interfaces) {
+					ACCEPT;
+				}
+
 				LOG log-prefix "Dropped outbound packet: " log-level debug log-uid;
 				REJECT reject-with icmp-port-unreachable;
 			}
