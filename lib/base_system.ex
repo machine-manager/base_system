@@ -44,6 +44,8 @@ defmodule BaseSystem.Configure do
 		:pre_install_unit,
 		:post_install_unit,
 		:implied_roles,
+		:ferm_input_chain,
+		:ferm_output_chain,
 	])
 
 	@spec configure_with_roles([String.t], [module]) :: nil
@@ -76,6 +78,8 @@ defmodule BaseSystem.Configure do
 			extra_etc_systemd_unit_files: descriptors |> Enum.flat_map(fn desc -> desc[:etc_systemd_unit_files] || [] end),
 			extra_pre_install_units:      descriptors |> Enum.map(fn desc -> desc[:pre_install_unit] end)         |> Enum.reject(&is_nil/1),
 			extra_post_install_units:     descriptors |> Enum.map(fn desc -> desc[:post_install_unit] end)        |> Enum.reject(&is_nil/1),
+			extra_ferm_input_chain:       descriptors |> Enum.map(fn desc -> desc[:ferm_input_chain] end)         |> Enum.reject(&is_nil/1),
+			extra_ferm_output_chain:      descriptors |> Enum.map(fn desc -> desc[:ferm_output_chain] end)        |> Enum.reject(&is_nil/1),
 			extra_sysctl_parameters:      descriptors |> Enum.map(fn desc -> desc[:sysctl_parameters] || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end),
 			extra_sysfs_variables:        descriptors |> Enum.map(fn desc -> desc[:sysfs_variables]   || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end),
 		)
@@ -101,6 +105,8 @@ defmodule BaseSystem.Configure do
 		extra_etc_systemd_unit_files   = opts[:extra_etc_systemd_unit_files] || []
 		extra_pre_install_units        = opts[:extra_pre_install_units]      || []
 		extra_post_install_units       = opts[:extra_post_install_units]     || []
+		extra_ferm_input_chain         = opts[:extra_ferm_input_chain]       || []
+		extra_ferm_output_chain        = opts[:extra_ferm_output_chain]      || []
 		extra_sysctl_parameters        = opts[:extra_sysctl_parameters]      || %{}
 		extra_sysfs_variables          = opts[:extra_sysfs_variables]        || %{}
 		optimize_for_short_lived_files = "optimize_for_short_lived_files" in tags
@@ -450,6 +456,8 @@ defmodule BaseSystem.Configure do
 
 			fstab_unit(),
 
+			%DirectoryPresent{path: "/etc/ferm",      mode: 0o700},
+			%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600, content: make_ferm_config(ferm_input_chain, ferm_output_chain)},
 			conf_file("/etc/default/ferm"),
 
 			%All{units: extra_pre_install_units},
@@ -710,5 +718,50 @@ defmodule BaseSystem.Configure do
 			end
 		end
 		|> Enum.join("\n")
+	end
+
+	def make_ferm_config(input_chain, output_chain) do
+		"""
+		table filter {
+			chain INPUT {
+				policy DROP;
+
+				mod state state ESTABLISHED ACCEPT;
+				mod state state RELATED proto icmp ACCEPT;
+
+				# allow local packet
+				interface lo ACCEPT;
+
+				# respond to ping
+				proto icmp ACCEPT; 
+
+				# allow SSH connections
+				proto tcp syn dport ssh ACCEPT;
+
+				#{input_chain |> Enum.join("\n")}
+
+				#LOG log-prefix "Dropped inbound packet: " log-level debug log-uid;
+				#REJECT reject-with icmp-port-unreachable;
+			}
+
+			chain OUTPUT {
+				policy DROP;
+
+				mod state state ESTABLISHED ACCEPT;
+				mod state state RELATED proto icmp ACCEPT;
+
+				#{output_chain |> Enum.join("\n")}
+
+				LOG log-prefix "Dropped outbound packet: " log-level debug log-uid;
+				REJECT reject-with icmp-port-unreachable;
+			}
+
+			chain FORWARD {
+				policy DROP;
+				mod state state ESTABLISHED ACCEPT;
+				mod state state RELATED proto icmp ACCEPT;
+			}
+		}
+		"""
 	end
 end
