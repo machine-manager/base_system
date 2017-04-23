@@ -761,7 +761,7 @@ defmodule BaseSystem.Configure do
 				proto icmp ACCEPT; 
 
 				# allow SSH connections
-				proto tcp syn dport ssh ACCEPT;
+				proto tcp syn dport 22 ACCEPT;
 
 		#{input_chain |> Enum.join("\n") |> indent |> indent}
 
@@ -774,6 +774,13 @@ defmodule BaseSystem.Configure do
 
 				mod state state ESTABLISHED ACCEPT;
 				mod state state RELATED proto icmp ACCEPT;
+
+				outerface lo {
+					# No `daddr` to allow access to ssh even when using the LAN IP instead of 127.0.0.1
+					proto tcp syn dport 22 {
+						mod owner uid-owner root ACCEPT;
+					}
+				}
 
 		#{output_chain |> Enum.join("\n") |> indent |> indent}
 
