@@ -752,7 +752,7 @@ defmodule BaseSystem.Configure do
 				# allow SSH connections
 				proto tcp syn dport ssh ACCEPT;
 
-				#{input_chain |> Enum.join("\n") |> indent |> indent}
+		#{input_chain |> Enum.join("\n") |> indent |> indent}
 
 				#LOG log-prefix "Dropped inbound packet: " log-level debug log-uid;
 				#REJECT reject-with icmp-port-unreachable;
@@ -764,7 +764,7 @@ defmodule BaseSystem.Configure do
 				mod state state ESTABLISHED ACCEPT;
 				mod state state RELATED proto icmp ACCEPT;
 
-				#{output_chain |> Enum.join("\n") |> indent |> indent}
+		#{output_chain |> Enum.join("\n") |> indent |> indent}
 
 				LOG log-prefix "Dropped outbound packet: " log-level debug log-uid;
 				REJECT reject-with icmp-port-unreachable;
