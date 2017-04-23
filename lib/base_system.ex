@@ -424,14 +424,12 @@ defmodule BaseSystem.Configure do
 			%EtcCommitted{message: "converge (early)"},
 
 			%AfterMeet{unit:
-				%All{
-					units: [
-						%DirectoryPresent{path: "/etc/ferm",      mode: 0o700},
-						%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600, content: make_ferm_config(extra_ferm_input_chain, extra_ferm_output_chain)},
-						conf_file("/etc/default/ferm"),
-					],
-					trigger: fn -> {_, 0} = System.cmd("service", ["ferm", "reload"]) end
-				}
+				%All{units: [
+					%DirectoryPresent{path: "/etc/ferm",      mode: 0o700},
+					%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600, content: make_ferm_config(extra_ferm_input_chain, extra_ferm_output_chain)},
+					conf_file("/etc/default/ferm"),
+				]},
+				trigger: fn -> {_, 0} = System.cmd("service", ["ferm", "reload"]) end
 			},
 			%SystemdUnitStarted{name: "ferm.service"},
 
