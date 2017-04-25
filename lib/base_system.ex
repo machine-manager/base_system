@@ -317,7 +317,7 @@ defmodule BaseSystem.Configure do
 			"apparmor-profiles",
 			"curl",             # for Converge.Util.get_country
 			"binutils",         # for ar, required by MetaPackageInstalled
-			"pciutils",         # for lspci, (todo) used to determine whether we have an NVIDIA card
+			"pciutils",         # for lspci
 			"erlang-base-hipe", # for converge escripts
 			"erlang-crypto",    # for converge escripts
 		]
