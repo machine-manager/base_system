@@ -628,19 +628,14 @@ defmodule BaseSystem.Configure do
 	defp boot_units("do_vps_2016", _),        do: [%Grub{cmdline_normal_and_recovery: "console=tty1 root=LABEL=DOROOT notsc clocksource=kvm-clock net.ifnames=0"}]
 
 	defp get_boot_type(tags) do
-		match = Enum.find(tags, fn tag -> tag |> String.starts_with?("boot:") end)
-		[_, boot_type] = String.split(match, ":", parts: 2)
+		[boot_type] = Util.tag_values(tags, "boot")
 		boot_type
 	end
 
 	def get_boot_resolution(tags) do
-		match = tags
-			|> Enum.find(fn tag -> tag |> String.starts_with?("boot_resolution:") end)
-		case match do
-			nil -> nil
-			res ->
-				[_, boot_resolution] = String.split(res, ":", parts: 2)
-				boot_resolution
+		case Util.tag_values(tags, "boot_resolution") do
+			[]                -> nil
+			[boot_resolution] -> boot_resolution
 		end
 	end
 
