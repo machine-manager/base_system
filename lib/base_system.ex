@@ -282,7 +282,7 @@ defmodule BaseSystem.Configure do
 
 		base_packages = [
 			"apt",
-			"aptitude",          # used by ObsoletePackagesPurged
+			"aptitude",          # to be used by a ObsoletePackagesPurged
 			"apt-show-versions", # to be used by a NoPackagesNewerThanInSource
 			"intel-microcode",
 			"locales",           # needed for locale-gen below
