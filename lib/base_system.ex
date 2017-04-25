@@ -308,7 +308,6 @@ defmodule BaseSystem.Configure do
 			"ca-certificates",
 			"gnupg2",
 			"pollinate",        # for seeding RNG the very first time
-			"vim-common",       # https://bugs.launchpad.net/ubuntu/+source/pollinate/+bug/1656484
 			"chrony",
 			"sysfsutils",       # for Sysfs unit and /sys configuration on boot
 			"zsh",              # root's default shell
