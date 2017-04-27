@@ -762,6 +762,11 @@ defmodule BaseSystem.Configure do
 					proto tcp syn dport 22 {
 						mod owner uid-owner root ACCEPT;
 					}
+
+					# Necessary for chrony to work properly, also for `chronyc tracking`
+					daddr 127.0.0.1 proto udp dport 323 {
+						mod owner uid-owner (root _chrony) ACCEPT;
+					}
 				}
 
 		#{output_chain |> Enum.join("\n") |> indent |> indent}
