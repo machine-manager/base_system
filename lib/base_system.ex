@@ -349,7 +349,7 @@ defmodule BaseSystem.Configure do
 			"whois",
 		]
 		all_desired_packages =
-			boot_packages(get_boot_type(tags)) ++
+			boot_packages(Util.tag_value!(tags, "boot")) ++
 			base_packages ++
 			human_admin_needs ++
 			extra_desired_packages
@@ -598,7 +598,7 @@ defmodule BaseSystem.Configure do
 			},
 
 			%Sysctl{parameters: sysctl_parameters},
-			%All{units: boot_units(get_boot_type(tags), get_boot_resolution(tags))},
+			%All{units: boot_units(Util.tag_value!(tags, "boot"), Util.tag_value(tags, "boot_resolution"))},
 			%EtcSystemdUnitFiles{units: extra_etc_systemd_unit_files},
 			%All{units: extra_post_install_units},
 			%EtcCommitted{message: "converge"},
@@ -626,18 +626,6 @@ defmodule BaseSystem.Configure do
 	defp boot_units("ovh_vps", _),            do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
 	defp boot_units("do_vps", _),             do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
 	defp boot_units("do_vps_2016", _),        do: [%Grub{cmdline_normal_and_recovery: "console=tty1 root=LABEL=DOROOT notsc clocksource=kvm-clock net.ifnames=0"}]
-
-	defp get_boot_type(tags) do
-		[boot_type] = Util.tag_values(tags, "boot")
-		boot_type
-	end
-
-	def get_boot_resolution(tags) do
-		case Util.tag_values(tags, "boot_resolution") do
-			[]                -> nil
-			[boot_resolution] -> boot_resolution
-		end
-	end
 
 	defp fstab_unit() do
 		fstab_existing_entries = Fstab.get_entries()
