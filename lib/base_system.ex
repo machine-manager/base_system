@@ -745,6 +745,11 @@ defmodule BaseSystem.Configure do
 				# allow SSH connections
 				proto tcp syn dport 22 ACCEPT;
 
+				# allow WireGuard traffic
+				interface ($ethernet_interfaces $wifi_interfaces) {
+					proto udp dport 51820 ACCEPT;
+				}
+
 		#{input_chain |> Enum.join("\n") |> indent |> indent}
 
 				#LOG log-prefix "Dropped inbound packet: " log-level debug log-uid;
