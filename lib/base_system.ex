@@ -774,6 +774,13 @@ defmodule BaseSystem.Configure do
 					}
 				}
 
+				outerface wg0 {
+					# Allow root to ping anyone over the WireGuard interface
+					proto icmp {
+						mod owner uid-owner root ACCEPT;
+					}
+				}
+
 		#{output_chain |> Enum.join("\n") |> indent |> indent}
 
 				# To suppress this rule, add your own with REJECT to the output chain
