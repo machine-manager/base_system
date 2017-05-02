@@ -607,25 +607,27 @@ defmodule BaseSystem.Configure do
 		Runner.converge(%All{units: units}, ctx)
 	end
 
-	defp boot_packages("uefi"),               do: ["linux-image-generic", "grub-efi-amd64"]
+	defp boot_packages("uefi"),                  do: ["linux-image-generic", "grub-efi-amd64"]
 	# outside = our boot is fully managed by the host, to the point where we don't
 	# have to install a Linux kernel and bootloader.  You can use this on scaleway.
-	defp boot_packages("outside"),            do: []
-	defp boot_packages("scaleway_kexec"),     do: ["linux-image-generic", "scaleway-ubuntu-kernel"]
-	defp boot_packages(_),                    do: ["linux-image-generic", "grub-pc"]
+	defp boot_packages("outside"),               do: []
+	defp boot_packages("scaleway_kexec"),        do: ["linux-image-generic", "scaleway-ubuntu-kernel"]
+	defp boot_packages(_),                       do: ["linux-image-generic", "grub-pc"]
 
-	defp boot_units("outside", _),            do: []
+	defp boot_units("outside", _),               do: []
 	# disabling kexec.service is "required as Ubuntu will kexec too early and leave a dirty filesystem"
 	# https://github.com/stuffo/scaleway-ubuntukernel/tree/28f17d8231ad114034d8bbc684fc5afb9f902758#install
-	defp boot_units("scaleway_kexec", _),     do: [%SystemdUnitDisabled{name: "kexec.service"},
-	                                               %SystemdUnitEnabled{name: "scaleway-ubuntu-kernel.service"}]
-	defp boot_units("mbr", _),                do: [%Grub{}]
-	defp boot_units("uefi", boot_resolution), do: [%Grub{gfxpayload: boot_resolution}]
+	defp boot_units("scaleway_kexec", _),        do: [%SystemdUnitDisabled{name: "kexec.service"},
+	                                                  %SystemdUnitEnabled{name: "scaleway-ubuntu-kernel.service"}]
+	defp boot_units("mbr", _),                   do: [%Grub{}]
+	defp boot_units("uefi", boot_resolution),    do: [%Grub{gfxpayload: boot_resolution}]
 	# On a 1-core QEMU VM at Ablenet, our default-BFQ kernel hangs early in the boot unless we set the IO scheduler to deadline
-	defp boot_units("ablenet_vps", _),        do: [%Grub{cmdline_normal_and_recovery: "elevator=deadline"}]
-	defp boot_units("ovh_vps", _),            do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
-	defp boot_units("do_vps", _),             do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
-	defp boot_units("do_vps_2016", _),        do: [%Grub{cmdline_normal_and_recovery: "console=tty1 root=LABEL=DOROOT notsc clocksource=kvm-clock net.ifnames=0"}]
+	defp boot_units("ablenet_vps", _),           do: [%Grub{cmdline_normal_and_recovery: "elevator=deadline"}]
+	# paris2 with Custom-4.4.0-78 crashes after a few days with bfq_lookup_next_entity in the stack; investigating if not using BFQ fixes this
+	defp boot_units("mbr_elevator_deadline", _), do: [%Grub{cmdline_normal_and_recovery: "elevator=deadline"}]
+	defp boot_units("ovh_vps", _),               do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
+	defp boot_units("do_vps", _),                do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
+	defp boot_units("do_vps_2016", _),           do: [%Grub{cmdline_normal_and_recovery: "console=tty1 root=LABEL=DOROOT notsc clocksource=kvm-clock net.ifnames=0"}]
 
 	defp fstab_unit() do
 		fstab_existing_entries = Fstab.get_entries()
