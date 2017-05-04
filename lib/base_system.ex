@@ -430,6 +430,10 @@ defmodule BaseSystem.Configure do
 
 			%AfterMeet{unit:
 				%All{units: [
+					# /etc/hosts must be written before reloading ferm, because ferm
+					# configuration may resolve hosts mentioned there.
+					%FilePresent{path: "/etc/hosts",          mode: 0o644,
+					             content: File.read!("/root/.cache/machine_manager/hosts")},
 					%DirectoryPresent{path: "/etc/ferm",      mode: 0o700},
 					%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600,
 					             content: make_ferm_config(
