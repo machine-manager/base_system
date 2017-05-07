@@ -4,7 +4,7 @@ alias Converge.{
 	PackageRoots, DanglingPackagesPurged, PackagePurged, Fstab, FstabEntry,
 	AfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring,
 	SystemdUnitStarted, SystemdUnitStopped, SystemdUnitEnabled, SystemdUnitDisabled,
-	EtcSystemdUnitFiles, UserPresent, Grub
+	EtcSystemdUnitFiles, UserPresent, Grub, Fallback
 }
 
 defmodule BaseSystem.NoTagsError do
@@ -129,6 +129,17 @@ defmodule BaseSystem.Configure do
 		]
 		apt_keys     = base_keys    ++ extra_apt_keys
 		apt_sources  = base_sources ++ extra_apt_sources
+
+		base_output_chain = [
+			"""
+			outerface lo {
+				# Necessary for chrony to work properly, also for `chronyc tracking`
+				daddr 127.0.0.1 proto udp dport 323 {
+					mod owner uid-owner (root _chrony) ACCEPT;
+				}
+			}
+			"""
+		]
 
 		# Check for transparent_hugepage because it is missing on scaleway kernels
 		transparent_hugepage_variables = case File.exists?("/sys/kernel/mm/transparent_hugepage") do
@@ -428,24 +439,25 @@ defmodule BaseSystem.Configure do
 			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper", "ferm"]},
 			%EtcCommitted{message: "converge (early)"},
 
-			%AfterMeet{unit:
-				%All{units: [
-					# /etc/hosts must be written before reloading ferm, because ferm
-					# configuration may resolve hosts mentioned there.
-					%FilePresent{path: "/etc/hosts",          mode: 0o644,
-					             content: File.read!("/root/.cache/machine_manager/hosts")},
-					%DirectoryPresent{path: "/etc/ferm",      mode: 0o700},
-					%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600,
-					             content: make_ferm_config(
-					               extra_ferm_input_chain,
-					               extra_ferm_output_chain,
-					               extra_ferm_forward_chain,
-					               extra_ferm_postrouting_chain)},
-					conf_file("/etc/default/ferm"),
-				]},
-				trigger: fn -> {_, 0} = System.cmd("service", ["ferm", "reload"]) end
-			},
-			%SystemdUnitStarted{name: "ferm.service"},
+			hosts_and_ferm_unit(
+				make_ferm_config(
+					extra_ferm_input_chain,
+					base_output_chain ++ extra_ferm_output_chain,
+					extra_ferm_forward_chain,
+					extra_ferm_postrouting_chain
+				),
+				# Because the system may not yet have the packages installed that
+				# create the users mentioned in extra_ferm_output_chain, fall back
+				# to a ferm configuration that just does ACCEPT; on the output
+				# chain.  This configuration is replaced after package installation
+				# below.
+				make_ferm_config(
+					extra_ferm_input_chain,
+					["ACCEPT;"],
+					extra_ferm_forward_chain,
+					extra_ferm_postrouting_chain
+				)
+			),
 
 			# Fix this annoying warning:
 			# N: Ignoring file '50unattended-upgrades.ucf-dist' in directory '/etc/apt/apt.conf.d/'
@@ -497,6 +509,15 @@ defmodule BaseSystem.Configure do
 			%PackageRoots{names: ["converge-desired-packages"]},
 			%DanglingPackagesPurged{},
 			# Hopefully it doesn't need to be run a third time...
+
+			hosts_and_ferm_unit(
+				make_ferm_config(
+					extra_ferm_input_chain,
+					base_output_chain ++ extra_ferm_output_chain,
+					extra_ferm_forward_chain,
+					extra_ferm_postrouting_chain
+				)
+			),
 
 			# Make sure this is cleared out after a google-chrome-* install drops a file here
 			%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
@@ -609,6 +630,35 @@ defmodule BaseSystem.Configure do
 		]
 		ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}
 		Runner.converge(%All{units: units}, ctx)
+	end
+
+	defp hosts_and_ferm_unit(ferm_config, ferm_config_fallback \\ nil) do
+		case ferm_config_fallback do
+			nil ->
+				hosts_and_ferm_unit_base(ferm_config)
+			_   ->
+				%Fallback{
+					primary:  hosts_and_ferm_unit_base(ferm_config),
+					fallback: hosts_and_ferm_unit_base(ferm_config_fallback)
+				}
+		end
+	end
+
+	defp hosts_and_ferm_unit_base(ferm_config) do
+		%All{units: [
+			%AfterMeet{unit:
+				%All{units: [
+					# /etc/hosts must be written before reloading ferm, because ferm
+					# configuration may resolve hosts mentioned there.
+					%FilePresent{path: "/etc/hosts",          mode: 0o644, content: File.read!("/root/.cache/machine_manager/hosts")},
+					%DirectoryPresent{path: "/etc/ferm",      mode: 0o700},
+					%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600, content: ferm_config},
+					conf_file("/etc/default/ferm"),
+				]},
+				trigger: fn -> {_, 0} = System.cmd("service", ["ferm", "reload"]) end
+			},
+			%SystemdUnitStarted{name: "ferm.service"},
+		]}
 	end
 
 	defp boot_packages("uefi"),                  do: ["linux-image-generic", "grub-efi-amd64"]
@@ -772,11 +822,6 @@ defmodule BaseSystem.Configure do
 					# No `daddr` to allow access to ssh even when using the LAN IP instead of 127.0.0.1
 					proto tcp syn dport 22 {
 						mod owner uid-owner root ACCEPT;
-					}
-
-					# Necessary for chrony to work properly, also for `chronyc tracking`
-					daddr 127.0.0.1 proto udp dport 323 {
-						mod owner uid-owner (root _chrony) ACCEPT;
 					}
 				}
 
