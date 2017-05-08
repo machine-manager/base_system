@@ -791,7 +791,13 @@ defmodule BaseSystem.Configure do
 		# eno, ens, enp, enx, eth: https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
 		ethernet_interfaces = interface_names |> Enum.filter(fn name -> name |> String.starts_with?("e")   end)
 		wifi_interfaces     = interface_names |> Enum.filter(fn name -> name |> String.starts_with?("wlo") end)
+		# ferm configuration is dependent on uids and gids, so make sure ferm gets reloaded when users/groups change
+		passwd_sha256sum    = :crypto.hash(:sha256, File.read!("/etc/passwd")) |> Base.encode16(case: :lower)
+		group_sha256sum     = :crypto.hash(:sha256, File.read!("/etc/group"))  |> Base.encode16(case: :lower)
 		"""
+		# /etc/passwd sha256sum: #{passwd_sha256sum}
+		# /etc/group  sha256sum: #{group_sha256sum}
+
 		@def $ethernet_interfaces = (#{ethernet_interfaces |> Enum.join(" ")});
 		@def $wifi_interfaces     = (#{wifi_interfaces     |> Enum.join(" ")});
 
