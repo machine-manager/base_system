@@ -4,7 +4,7 @@ alias Converge.{
 	PackageRoots, DanglingPackagesPurged, PackagePurged, Fstab, FstabEntry,
 	AfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring,
 	SystemdUnitStarted, SystemdUnitStopped, SystemdUnitEnabled, SystemdUnitDisabled,
-	EtcSystemdUnitFiles, UserPresent, Grub, Fallback
+	EtcSystemdUnitFiles, UserPresent, Grub, Fallback, UnitError
 }
 
 defmodule BaseSystem.NoTagsError do
@@ -655,7 +655,13 @@ defmodule BaseSystem.Configure do
 					%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600, content: ferm_config},
 					conf_file("/etc/default/ferm"),
 				]},
-				trigger: fn -> {_, 0} = System.cmd("service", ["ferm", "reload"]) end
+				trigger: fn ->
+					# Need to raise UnitError on failed reload for Fallback
+					case System.cmd("service", ["ferm", "reload"]) do
+						{_, 0} -> nil
+						_      -> raise(UnitError, "ferm failed to reload")
+					end
+				end
 			},
 			%SystemdUnitStarted{name: "ferm.service"},
 		]}
