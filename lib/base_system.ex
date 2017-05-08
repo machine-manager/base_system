@@ -1,3 +1,4 @@
+alias Gears.FileUtil
 alias Converge.{
 	Runner, Context, TerminalReporter, FilePresent, FileMissing, SymlinkPresent,
 	DirectoryPresent, DirectoryEmpty, EtcCommitted, MetaPackageInstalled,
@@ -659,7 +660,10 @@ defmodule BaseSystem.Configure do
 					# Need to raise UnitError on failed reload for Fallback
 					case System.cmd("service", ["ferm", "reload"]) do
 						{_, 0} -> nil
-						_      -> raise(UnitError, "ferm failed to reload")
+						_      ->
+							# Taint the on-disk state to force a reload next time
+							FileUtil.rm_f!("/etc/ferm/ferm.conf")
+							raise(UnitError, "ferm failed to reload")
 					end
 				end
 			},
