@@ -683,7 +683,7 @@ defmodule BaseSystem.Configure do
 	defp boot_units("uefi", boot_resolution),    do: [%Grub{gfxpayload: boot_resolution}]
 	# On a 1-core QEMU VM at Ablenet, our default-BFQ kernel hangs early in the boot unless we set the IO scheduler to deadline
 	defp boot_units("ablenet_vps", _),           do: [%Grub{cmdline_normal_and_recovery: "elevator=deadline"}]
-	# paris2 with Custom-4.4.0-78 crashes after a few days with bfq_lookup_next_entity in the stack; investigating if not using BFQ fixes this
+	# paris2 with Custom-4.4.0-78 crashes after a few days with bfq_lookup_next_entity in the stack; not using BFQ seems to fix this
 	defp boot_units("mbr_elevator_deadline", _), do: [%Grub{cmdline_normal_and_recovery: "elevator=deadline"}]
 	defp boot_units("ovh_vps", _),               do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
 	defp boot_units("do_vps", _),                do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
