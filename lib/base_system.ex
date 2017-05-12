@@ -547,12 +547,8 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> {_, 0} = System.cmd("systemctl", ["daemon-reload"]) end
 			},
 
+			# Make sure apparmor is started
 			%SystemdUnitStarted{name: "apparmor.service"},
-			%AfterMeet{
-				# Remove old file we installed
-				unit:    %FileMissing{path: "/etc/apparmor.d/bin.tar"},
-				trigger: fn -> {_, 0} = System.cmd("service", ["apparmor", "reload"]) end
-			},
 
 			%FilePresent{
 				path:    "/etc/modprobe.d/base_system.conf",
