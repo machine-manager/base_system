@@ -535,7 +535,7 @@ defmodule BaseSystem.Configure do
 			%FileMissing{path: "/etc/cron.weekly/fstrim"},
 
 			%AfterMeet{
-				unit:    %All{units: [
+				unit: %All{units: [
 					# Use a lower value for DefaultTimeoutStopSec and a higher value for DefaultRestartSec.
 					conf_file("/etc/systemd/system.conf"),
 
