@@ -365,10 +365,9 @@ defmodule BaseSystem.Configure do
 			base_packages ++
 			human_admin_needs ++
 			extra_desired_packages
-		# Packages to be purged, unless listed in all_desired_packages.  None of this
-		# should be necessary on a minbase system, but we keep this here
-		# 1) in case a package listed here ends up installed by accident or because it is depended-on
-		# 2) to make base_system more useful on non-minbase systems
+		# Packages to be purged, unless listed in all_desired_packages.  Prevents
+		# some package from installing an undesired package because converge will
+		# detect a conflict.
 		undesired_packages = [
 			# ureadahead has some very suspect code and spews messages to syslog
 			# complaining about relative paths
