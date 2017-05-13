@@ -29,7 +29,7 @@ defmodule BaseSystem.Configure do
 	"""
 	alias BaseSystem.{BadRoleDescriptorError, NoTagsError}
 	require Util
-	import Util, only: [content: 1, conf_file: 1, conf_file: 3, conf_dir: 1, conf_dir: 2]
+	import Util, only: [content: 1, conf_file: 1, conf_file: 3, conf_dir: 1, conf_dir: 2, marker: 1]
 	Util.declare_external_resources("files")
 
 	@allowed_descriptor_keys MapSet.new([
@@ -875,9 +875,5 @@ defmodule BaseSystem.Configure do
 		|> String.split("\n")
 		|> Enum.map(fn line -> "\t#{line}" end)
 		|> Enum.join("\n")
-	end
-
-	defp marker(basename) do
-		Path.join("/tmp/base_system/redo_markers", basename)
 	end
 end
