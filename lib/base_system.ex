@@ -1,11 +1,10 @@
-alias Gears.FileUtil
 alias Converge.{
 	Runner, Context, TerminalReporter, FilePresent, FileMissing, SymlinkPresent,
 	DirectoryPresent, DirectoryEmpty, EtcCommitted, MetaPackageInstalled,
 	PackageRoots, DanglingPackagesPurged, PackagePurged, Fstab, FstabEntry,
-	AfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring,
+	RedoAfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring,
 	SystemdUnitStarted, SystemdUnitStopped, SystemdUnitEnabled, SystemdUnitDisabled,
-	EtcSystemdUnitFiles, UserPresent, Grub, Fallback, UnitError
+	EtcSystemdUnitFiles, UserPresent, Grub, Fallback
 }
 
 defmodule BaseSystem.NoTagsError do
@@ -419,7 +418,8 @@ defmodule BaseSystem.Configure do
 
 		units = [
 			# Set up locale early to avoid complaints from programs
-			%AfterMeet{
+			%RedoAfterMeet{
+				marker:  marker("locale-gen"),
 				unit:    conf_file("/etc/locale.gen"),
 				trigger: fn -> {_, 0} = System.cmd("locale-gen", []) end
 			},
@@ -534,7 +534,8 @@ defmodule BaseSystem.Configure do
 			# other time.
 			%FileMissing{path: "/etc/cron.weekly/fstrim"},
 
-			%AfterMeet{
+			%RedoAfterMeet{
+				marker: marker("systemd"),
 				unit: %All{units: [
 					# Use a lower value for DefaultTimeoutStopSec and a higher value for DefaultRestartSec.
 					conf_file("/etc/systemd/system.conf"),
@@ -602,7 +603,8 @@ defmodule BaseSystem.Configure do
 				mode:    0o644
 			},
 
-			%AfterMeet{
+			%RedoAfterMeet{
+				marker: marker("chrony.service"),
 				unit: %FilePresent{
 					path:    "/etc/chrony/chrony.conf",
 					content: EEx.eval_string(content("files/etc/chrony/chrony.conf.eex"), [country: Util.get_country()]),
@@ -642,8 +644,9 @@ defmodule BaseSystem.Configure do
 
 	defp hosts_and_ferm_unit_base(ferm_config) do
 		%All{units: [
-			%AfterMeet{unit:
-				%All{units: [
+			%RedoAfterMeet{
+				marker: marker("ferm.service"),
+				unit: %All{units: [
 					# /etc/hosts must be written before reloading ferm, because ferm
 					# configuration may resolve hosts mentioned there.
 					%FilePresent{path: "/etc/hosts",          mode: 0o644, content: File.read!("/root/.cache/machine_manager/hosts")},
@@ -651,16 +654,7 @@ defmodule BaseSystem.Configure do
 					%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600, content: ferm_config},
 					conf_file("/etc/default/ferm"),
 				]},
-				trigger: fn ->
-					# Need to raise UnitError on failed reload for Fallback
-					case System.cmd("service", ["ferm", "reload"]) do
-						{_, 0} -> nil
-						_      ->
-							# Taint the on-disk state to force a reload next time
-							FileUtil.rm_f!("/etc/ferm/ferm.conf")
-							raise(UnitError, "ferm failed to reload")
-					end
-				end
+				trigger: fn -> {_, 0} = System.cmd("service", ["ferm", "reload"]) end
 			},
 			%SystemdUnitStarted{name: "ferm.service"},
 		]}
@@ -708,7 +702,8 @@ defmodule BaseSystem.Configure do
 		fstab_trigger = fn ->
 			{_, 0} = System.cmd("mount", ["-o", "remount", "/proc"])
 		end
-		%AfterMeet{
+		%RedoAfterMeet{
+			marker:  marker("remount-proc"),
 			unit:    %Fstab{entries: fstab_entries},
 			trigger: fstab_trigger
 		}
@@ -880,5 +875,9 @@ defmodule BaseSystem.Configure do
 		|> String.split("\n")
 		|> Enum.map(fn line -> "\t#{line}" end)
 		|> Enum.join("\n")
+	end
+
+	defp marker(basename) do
+		Path.join("/tmp/base_system/redo_markers", basename)
 	end
 end
