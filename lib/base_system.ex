@@ -215,6 +215,10 @@ defmodule BaseSystem.Configure do
 			"vm.dirty_background_bytes"          => dirty_settings.dirty_background_bytes,
 			"vm.dirty_bytes"                     => dirty_settings.dirty_bytes,
 			"vm.dirty_expire_centisecs"          => dirty_settings.dirty_expire_centisecs,
+
+			# Ubuntu 16.04 ships with a default of fs.inotify.max_user_watches = 8192,
+			# causing Chrome to complain: inotify_init() failed: Too many open files
+			"fs.inotify.max_user_watches"        => inotify_max_user_watches(1/32),
 		}
 
 		unprivileged_bpf_parameters = case File.exists?("/proc/sys/kernel/unprivileged_bpf_disabled") do
@@ -749,6 +753,15 @@ defmodule BaseSystem.Configure do
 				}
 			end
 		end
+	end
+
+	# Return the number of inotify watchers to allow per user, alotting a
+	# maximum of RAM * `max_ram_ratio` to each user for inotify watchers.
+	defp inotify_max_user_watches(max_ram_ratio) when max_ram_ratio > 0 and max_ram_ratio < 1 do
+		memtotal_bytes = Util.get_meminfo()["MemTotal"]
+		# https://unix.stackexchange.com/questions/13751/kernel-inotify-watch-limit-reached
+		watcher_bytes  = 1024
+		round((max_ram_ratio * memtotal_bytes) / watcher_bytes)
 	end
 
 	def make_apt_preferences(undesired_upgrades) do
