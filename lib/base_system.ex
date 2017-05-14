@@ -612,6 +612,7 @@ defmodule BaseSystem.Configure do
 				},
 				trigger: fn -> {_, 0} = System.cmd("service", ["chrony", "restart"]) end
 			},
+			%SystemdUnitStarted{name: "chrony.service"},
 
 			# Make sure root's shell is zsh
 			%BeforeMeet{
