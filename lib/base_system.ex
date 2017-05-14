@@ -217,7 +217,7 @@ defmodule BaseSystem.Configure do
 			"vm.dirty_expire_centisecs"          => dirty_settings.dirty_expire_centisecs,
 
 			# Ubuntu 16.04 ships with a default of fs.inotify.max_user_watches = 8192,
-			# causing Chrome to complain: inotify_init() failed: Too many open files
+			# too low for some applications.
 			"fs.inotify.max_user_watches"        => inotify_max_user_watches(1/32),
 		}
 
