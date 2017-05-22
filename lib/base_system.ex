@@ -155,8 +155,17 @@ defmodule BaseSystem.Configure do
 				]
 			}
 		]
+		root_user = %User{
+			name:            "root",
+			home:            "/root",
+			shell:           "/bin/zsh",
+			authorized_keys: case "no_ssh_to_root" in tags do
+				true  -> []
+				false -> [path_expand_content("~/.ssh/id_rsa.pub") |> String.trim_trailing]
+			end
+		}
 		regular_users   = base_regular_users ++ extra_regular_users
-		ssh_allow_users = regular_users |> Enum.filter_map(
+		ssh_allow_users = [root_user | regular_users] |> Enum.filter_map(
 			fn user -> length(user.authorized_keys) > 0 end,
 			fn user -> user.name end
 		)
@@ -672,13 +681,10 @@ defmodule BaseSystem.Configure do
 			# Make sure root's shell is zsh
 			%BeforeMeet{
 				unit: %UserPresent{
-					name:            "root",
-					home:            "/root",
-					shell:           "/bin/zsh",
-					authorized_keys: case "no_ssh_to_root" in tags do
-						true  -> []
-						false -> [path_expand_content("~/.ssh/id_rsa.pub") |> String.trim_trailing]
-					end
+					name:            root_user.name,
+					home:            root_user.home,
+					shell:           root_user.shell,
+					authorized_keys: root_user.authorized_keys,
 				},
 				# Make sure zsh actually works before setting root's shell to zsh
 				trigger: fn -> {_, 0} = System.cmd("/bin/zsh", ["-c", "true"]) end
