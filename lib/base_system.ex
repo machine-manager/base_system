@@ -168,7 +168,7 @@ defmodule BaseSystem.Configure do
 		ssh_allow_users = [root_user | regular_users] |> Enum.filter_map(
 			fn user -> length(user.authorized_keys) > 0 end,
 			fn user -> user.name end
-		)
+		) |> Enum.uniq
 
 		base_output_chain = [
 			"""
