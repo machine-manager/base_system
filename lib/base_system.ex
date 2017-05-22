@@ -4,7 +4,7 @@ alias Converge.{
 	PackageRoots, DanglingPackagesPurged, PackagePurged, Fstab, FstabEntry,
 	RedoAfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring,
 	SystemdUnitStarted, SystemdUnitStopped, SystemdUnitEnabled, SystemdUnitDisabled,
-	EtcSystemdUnitFiles, UserPresent, Grub, Fallback
+	EtcSystemdUnitFiles, UserPresent, Grub, Fallback#, RegularUsersPresent
 }
 
 defmodule BaseSystem.NoTagsError do
@@ -41,6 +41,7 @@ defmodule BaseSystem.Configure do
 		:etc_systemd_unit_files,
 		:sysctl_parameters,
 		:sysfs_variables,
+		:regular_users,
 		:pre_install_unit,
 		:post_install_unit,
 		:implied_roles,
@@ -78,6 +79,7 @@ defmodule BaseSystem.Configure do
 			extra_apt_keys:               descriptors |> Enum.flat_map(fn desc -> desc[:apt_keys]               || [] end),
 			extra_apt_sources:            descriptors |> Enum.flat_map(fn desc -> desc[:apt_sources]            || [] end),
 			extra_etc_systemd_unit_files: descriptors |> Enum.flat_map(fn desc -> desc[:etc_systemd_unit_files] || [] end),
+			extra_regular_users:          descriptors |> Enum.flat_map(fn desc -> desc[:regular_users]          || [] end),
 			extra_pre_install_units:      descriptors |> Enum.map(fn desc -> desc[:pre_install_unit] end)         |> Enum.reject(&is_nil/1),
 			extra_post_install_units:     descriptors |> Enum.map(fn desc -> desc[:post_install_unit] end)        |> Enum.reject(&is_nil/1),
 			extra_ferm_input_chain:       descriptors |> Enum.map(fn desc -> desc[:ferm_input_chain] end)         |> Enum.reject(&is_nil/1),
@@ -107,6 +109,7 @@ defmodule BaseSystem.Configure do
 		extra_apt_keys                 = opts[:extra_apt_keys]               || []
 		extra_apt_sources              = opts[:extra_apt_sources]            || []
 		extra_etc_systemd_unit_files   = opts[:extra_etc_systemd_unit_files] || []
+		#extra_regular_users            = opts[:extra_regular_users]          || []
 		extra_pre_install_units        = opts[:extra_pre_install_units]      || []
 		extra_post_install_units       = opts[:extra_post_install_units]     || []
 		extra_ferm_input_chain         = opts[:extra_ferm_input_chain]       || []
@@ -449,6 +452,9 @@ defmodule BaseSystem.Configure do
 			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper", "ferm"]},
 			%EtcCommitted{message: "converge (early)"},
 
+			# Do this before ferm config, which may require users already exist
+			#%RegularUsersPresent{users: extra_regular_users},
+
 			hosts_and_ferm_unit(
 				make_ferm_config(
 					extra_ferm_input_chain,
@@ -626,7 +632,12 @@ defmodule BaseSystem.Configure do
 
 			# Make sure root's shell is zsh
 			%BeforeMeet{
-				unit:    %UserPresent{name: "root", home: "/root", shell: "/bin/zsh"},
+				unit: %UserPresent{
+					name:            "root",
+					home:            "/root",
+					shell:           "/bin/zsh",
+					authorized_keys: [content("/home/at/.ssh/id_rsa.pub") |> String.trim_trailing],
+				},
 				# Make sure zsh actually works before setting root's shell to zsh
 				trigger: fn -> {_, 0} = System.cmd("/bin/zsh", ["-c", "true"]) end
 			},
