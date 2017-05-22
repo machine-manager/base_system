@@ -4,7 +4,7 @@ alias Converge.{
 	PackageRoots, DanglingPackagesPurged, PackagePurged, Fstab, FstabEntry,
 	RedoAfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring,
 	SystemdUnitStarted, SystemdUnitStopped, SystemdUnitEnabled, SystemdUnitDisabled,
-	EtcSystemdUnitFiles, UserPresent, Grub, Fallback#, RegularUsersPresent
+	EtcSystemdUnitFiles, UserPresent, Grub, Fallback, User, RegularUsersPresent
 }
 
 defmodule BaseSystem.NoTagsError do
@@ -102,6 +102,17 @@ defmodule BaseSystem.Configure do
 		end
 	end
 
+	@non_root_username System.get_env()["USER"]
+
+	defmacro check_non_root_username(username) do
+		if username == "root" do
+			raise(RuntimeError, ~s(USER environmental variable was "root", cannot determine name of non-root user to create))
+		end
+		if username == nil do
+			raise(RuntimeError, "No USER environmental variable, cannot determine name of non-root user to create")
+		end
+	end
+
 	def configure(tags, opts) do
 		extra_desired_packages         = opts[:extra_desired_packages]       || []
 		extra_undesired_packages       = opts[:extra_undesired_packages]     || []
@@ -109,7 +120,7 @@ defmodule BaseSystem.Configure do
 		extra_apt_keys                 = opts[:extra_apt_keys]               || []
 		extra_apt_sources              = opts[:extra_apt_sources]            || []
 		extra_etc_systemd_unit_files   = opts[:extra_etc_systemd_unit_files] || []
-		#extra_regular_users            = opts[:extra_regular_users]          || []
+		extra_regular_users            = opts[:extra_regular_users]          || []
 		extra_pre_install_units        = opts[:extra_pre_install_units]      || []
 		extra_post_install_units       = opts[:extra_post_install_units]     || []
 		extra_ferm_input_chain         = opts[:extra_ferm_input_chain]       || []
@@ -132,6 +143,23 @@ defmodule BaseSystem.Configure do
 		]
 		apt_keys     = base_keys    ++ extra_apt_keys
 		apt_sources  = base_sources ++ extra_apt_sources
+
+		check_non_root_username(@non_root_username)
+		base_regular_users = [
+			%User{
+				name:  @non_root_username,
+				home:  "/home/#{@non_root_username}",
+				shell: "/bin/zsh",
+				authorized_keys: [
+					path_expand_content("~/.ssh/id_rsa.pub") |> String.trim_trailing
+				]
+			}
+		]
+		regular_users   = base_regular_users ++ extra_regular_users
+		ssh_allow_users = regular_users |> Enum.filter_map(
+			fn user -> length(user.authorized_keys) > 0 end,
+			fn user -> user.name end
+		)
 
 		base_output_chain = [
 			"""
@@ -453,7 +481,7 @@ defmodule BaseSystem.Configure do
 			%EtcCommitted{message: "converge (early)"},
 
 			# Do this before ferm config, which may require users already exist
-			#%RegularUsersPresent{users: extra_regular_users},
+			%RegularUsersPresent{users: base_regular_users ++ extra_regular_users},
 
 			hosts_and_ferm_unit(
 				make_ferm_config(
@@ -629,6 +657,17 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> {_, 0} = System.cmd("service", ["chrony", "restart"]) end
 			},
 			%SystemdUnitStarted{name: "chrony.service"},
+
+			%RedoAfterMeet{
+				marker: marker("ssh.service"),
+				unit: %FilePresent{
+					path:    "/etc/ssh/sshd_config",
+					content: EEx.eval_string(content("files/etc/ssh/sshd_config.eex"), [allow_users: ssh_allow_users]),
+					mode:    0o644
+				},
+				trigger: fn -> {_, 0} = System.cmd("service", ["ssh", "restart"]) end
+			},
+			%SystemdUnitStarted{name: "ssh.service"},
 
 			# Make sure root's shell is zsh
 			%BeforeMeet{
