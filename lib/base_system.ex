@@ -636,8 +636,10 @@ defmodule BaseSystem.Configure do
 					name:            "root",
 					home:            "/root",
 					shell:           "/bin/zsh",
-					# TODO: put this in a role or somehow don't do this on ra and plato
-					authorized_keys: [path_expand_content("~/.ssh/id_rsa.pub") |> String.trim_trailing],
+					authorized_keys: case "no_ssh_to_root" in tags do
+						true  -> []
+						false -> [path_expand_content("~/.ssh/id_rsa.pub") |> String.trim_trailing]
+					end
 				},
 				# Make sure zsh actually works before setting root's shell to zsh
 				trigger: fn -> {_, 0} = System.cmd("/bin/zsh", ["-c", "true"]) end
