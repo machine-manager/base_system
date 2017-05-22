@@ -729,7 +729,7 @@ defmodule BaseSystem.Configure do
 					%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600, content: ferm_config},
 					conf_file("/etc/default/ferm"),
 				]},
-				trigger: fn -> {_, 0} = System.cmd("service", ["ferm", "reload"]) end
+				trigger: fn -> {_, 0} = System.cmd("systemctl", ["reload-or-restart", "ferm.service"]) end
 			},
 			%SystemdUnitStarted{name: "ferm.service"},
 		]}
