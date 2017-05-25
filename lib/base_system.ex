@@ -344,6 +344,9 @@ defmodule BaseSystem.Configure do
 			# We don't use the FUJITSU Extended Socket network device driver anywhere
 			"fjes",
 
+			# CVE-2017-7487 allowed a use-after-free
+			"ipx",
+
 			# TODO: blacklist overlay and overlayfs once we can whitelist it on sbuild
 		]
 
