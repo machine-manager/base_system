@@ -5,7 +5,7 @@ alias Converge.{
 	RedoAfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring,
 	SystemdUnitStarted, SystemdUnitStopped, SystemdUnitEnabled, SystemdUnitDisabled,
 	EtcSystemdUnitFiles, UserPresent, Grub, Fallback, User, RegularUsersPresent,
-	NoPackagesUnavailableInSource
+	NoPackagesUnavailableInSource, NoPackagesNewerThanInSource
 }
 
 defmodule BaseSystem.NoTagsError do
@@ -350,7 +350,7 @@ defmodule BaseSystem.Configure do
 		base_packages = [
 			"apt",
 			"aptitude",          # used by NoPackagesUnavailableInSource
-			"apt-show-versions", # to be used by a NoPackagesNewerThanInSource
+			"apt-show-versions", # used by NoPackagesNewerThanInSource
 			"intel-microcode",
 			"locales",           # needed for locale-gen below
 			"console-setup",     # needed to change console font and not make keyboard-configuration error out on boot
@@ -570,6 +570,7 @@ defmodule BaseSystem.Configure do
 			# Hopefully it doesn't need to be run a third time...
 
 			%NoPackagesUnavailableInSource{whitelist: ["converge-desired-packages", "converge-desired-packages-early"]},
+			%NoPackagesNewerThanInSource{whitelist_regexp: ~r/^linux-(image|headers)-/},
 
 			hosts_and_ferm_unit(
 				make_ferm_config(
