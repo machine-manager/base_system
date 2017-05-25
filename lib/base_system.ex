@@ -4,7 +4,8 @@ alias Converge.{
 	PackageRoots, DanglingPackagesPurged, PackagePurged, Fstab, FstabEntry,
 	RedoAfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring,
 	SystemdUnitStarted, SystemdUnitStopped, SystemdUnitEnabled, SystemdUnitDisabled,
-	EtcSystemdUnitFiles, UserPresent, Grub, Fallback, User, RegularUsersPresent
+	EtcSystemdUnitFiles, UserPresent, Grub, Fallback, User, RegularUsersPresent,
+	NoPackagesUnavailableInSource
 }
 
 defmodule BaseSystem.NoTagsError do
@@ -348,7 +349,7 @@ defmodule BaseSystem.Configure do
 
 		base_packages = [
 			"apt",
-			"aptitude",          # to be used by a ObsoletePackagesPurged
+			"aptitude",          # used by NoPackagesUnavailableInSource
 			"apt-show-versions", # to be used by a NoPackagesNewerThanInSource
 			"intel-microcode",
 			"locales",           # needed for locale-gen below
@@ -567,6 +568,8 @@ defmodule BaseSystem.Configure do
 			%PackageRoots{names: ["converge-desired-packages"]},
 			%DanglingPackagesPurged{},
 			# Hopefully it doesn't need to be run a third time...
+
+			%NoPackagesUnavailableInSource{whitelist: ["converge-desired-packages", "converge-desired-packages-early"]},
 
 			hosts_and_ferm_unit(
 				make_ferm_config(
