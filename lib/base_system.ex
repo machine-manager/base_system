@@ -431,7 +431,7 @@ defmodule BaseSystem.Configure do
 			# complaining about relative paths
 			"ureadahead",
 
-			# Time managers that should be purged because we want just chrony
+			# Time managers that would conflict with chrony
 			"ntpdate",
 			"adjtimex",
 			"ntp",
