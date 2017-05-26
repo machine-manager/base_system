@@ -351,17 +351,16 @@ defmodule BaseSystem.Configure do
 		]
 
 		base_packages = [
-			"apt",
+			"erlang-base-hipe",  # used by all converge escripts
+			"erlang-crypto",     # used by all converge escripts
 			"aptitude",          # used by NoPackagesUnavailableInSource
 			"apt-show-versions", # used by NoPackagesNewerThanInSource
-			"intel-microcode",
-			"locales",           # needed for locale-gen below
-			"console-setup",     # needed to change console font and not make keyboard-configuration error out on boot
-			"cryptsetup",
-			"util-linux",
-			"nocache",
-			"gdisk",
-			"hdparm",
+			"binutils",          # used by MetaPackageInstalled (binutils has `ar`)
+			"curl",              # used by Converge.Util.get_country
+			"locales",           # used by locale-gen below
+			"sysfsutils",        # used by Sysfs unit and for /sys configuration on boot
+			"ferm",              # used by hosts_and_ferm_unit_base below
+			"rsync",             # used by machine_manager to copy files to machine
 			"netbase",
 			"ifupdown",
 			"isc-dhcp-client",
@@ -369,35 +368,36 @@ defmodule BaseSystem.Configure do
 			"logrotate",
 			"cron",
 			"net-tools",
+			"apt",
+			"gnupg2",
+			"zsh",               # root's default shell
+			"apparmor",          # security!
+			"apparmor-profiles", # security!
+			"intel-microcode",
+			"console-setup",     # needed to change console font and prevent keyboard-configuration from erroring out on boot
+			"cryptsetup",
+			"util-linux",
+			"nocache",
+			"gdisk",
+			"hdparm",
 			"sudo",
-			"ferm",
+			"libpam-systemd",    # to make ssh server disconnect clients when it shuts down
 			"openssh-server",
 			"openssh-client",
-			"rsync",
-			"libpam-systemd",   # to make ssh server disconnect clients when it shuts down
 			"ca-certificates",
-			"gnupg2",
-			"pollinate",        # for seeding RNG the very first time
+			"pollinate",         # for seeding RNG the very first time
 			"chrony",
-			"sysfsutils",       # for Sysfs unit and /sys configuration on boot
-			"zsh",              # root's default shell
-			"psmisc",           # for killall
+			"psmisc",            # for killall
 			"acl",
-			"apparmor",
-			"apparmor-profiles",
-			"curl",             # for Converge.Util.get_country
-			"binutils",         # for ar, required by MetaPackageInstalled
-			"pciutils",         # for lspci
-			"erlang-base-hipe", # for converge escripts
-			"erlang-crypto",    # for converge escripts
 		]
 		human_admin_needs = [
 			"molly-guard",
 			"lshw",
-			"net-tools",    # ifconfig, route, netstat
+			"pciutils",       # for lspci
+			"net-tools",      # ifconfig, route, netstat
 			"iputils-ping",
 			"netcat-openbsd",
-			"rlwrap",       # for use with netcat
+			"rlwrap",         # for use with netcat
 			"less",
 			"strace",
 			"htop",
@@ -414,7 +414,7 @@ defmodule BaseSystem.Configure do
 			"lsof",
 			"pv",
 			"tree",
-			"dnsutils",     # dig
+			"dnsutils",       # dig
 			"nmap",
 			"whois",
 		]
