@@ -731,7 +731,16 @@ defmodule BaseSystem.Configure do
 				unit: %All{units: [
 					# /etc/hosts must be written before reloading ferm, because ferm
 					# configuration may resolve hosts mentioned there.
-					%FilePresent{path: "/etc/hosts",          mode: 0o644, content: File.read!("/root/.cache/machine_manager/hosts")},
+					%FilePresent{
+						path:    "/etc/hosts",
+						mode:    0o644,
+						content:
+							File.read!("/root/.cache/machine_manager/hosts") <>
+							case file_content_or_nil("/etc/hosts.unmanaged") do
+								nil -> ""
+								s   -> "\n" <> s
+							end
+					},
 					%DirectoryPresent{path: "/etc/ferm",      mode: 0o700},
 					%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600, content: ferm_config},
 					conf_file("/etc/default/ferm"),
@@ -740,6 +749,13 @@ defmodule BaseSystem.Configure do
 			},
 			%SystemdUnitStarted{name: "ferm.service"},
 		]}
+	end
+
+	defp file_content_or_nil(path) do
+		case File.read(path) do
+			{:ok, content} -> content
+			_              -> nil
+		end
 	end
 
 	defp boot_packages("uefi"),                  do: ["linux-image-generic", "grub-efi-amd64"]
