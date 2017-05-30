@@ -143,7 +143,7 @@ defmodule BaseSystem.Configure do
 		base_sources = [
 			"deb http://#{country}.archive.ubuntu.com/ubuntu xenial          main restricted universe multiverse",
 			"deb http://#{country}.archive.ubuntu.com/ubuntu xenial-updates  main restricted universe multiverse",
-			"deb http://#{country}.archive.ubuntu.com/ubuntu xenial-security main restricted universe multiverse",
+			"deb http://security.ubuntu.com/ubuntu           xenial-security main restricted universe multiverse",
 		]
 		apt_keys     = base_keys    ++ extra_apt_keys
 		apt_sources  = base_sources ++ extra_apt_sources
