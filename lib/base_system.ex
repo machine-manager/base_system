@@ -170,11 +170,11 @@ defmodule BaseSystem.Configure do
 		}
 		regular_users   = base_regular_users ++ extra_regular_users
 		ssh_allow_users =
-			extra_ssh_allow_users ++
-			([root_user | regular_users] |> Enum.filter_map(
-				fn user -> length(user.authorized_keys) > 0 end,
-				fn user -> user.name end
-			)) |> Enum.uniq
+			extra_ssh_allow_users ++ (
+				[root_user | regular_users]
+				|> Enum.filter(fn user -> length(user.authorized_keys) > 0 end)
+				|> Enum.map(fn user -> user.name end)
+			) |> Enum.uniq
 
 		base_output_chain = [
 			"""
