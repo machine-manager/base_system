@@ -61,18 +61,15 @@ defmodule BaseSystem.Configure do
 
 		role_modules                 = get_all_role_modules(tags, role_modules |> MapSet.new)
 		role_modules_and_descriptors = role_modules |> Enum.map(fn mod -> {mod, apply(mod, :role, [tags])} end)
-
-		for {module, desc} <- role_modules_and_descriptors do
+		descriptors                  = for {module, desc} <- role_modules_and_descriptors do
 			descriptor_keys  = desc |> Map.keys |> MapSet.new
 			unsupported_keys = MapSet.difference(descriptor_keys, @allowed_descriptor_keys)
 			if unsupported_keys |> MapSet.size > 0 do
 				raise(BadRoleDescriptorError,
 					"Descriptor for #{inspect module} has unsupported keys #{inspect(unsupported_keys |> MapSet.to_list)}")
 			end
+			desc
 		end
-		descriptors =
-			role_modules_and_descriptors
-			|> Enum.map(fn {_module, desc} -> desc end)
 		configure(
 			tags,
 			extra_desired_packages:       descriptors |> Enum.flat_map(fn desc -> desc[:desired_packages]       || [] end),
