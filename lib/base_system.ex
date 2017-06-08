@@ -311,6 +311,7 @@ defmodule BaseSystem.Configure do
 
 			# CVE-2017-9075 allowed kernel memory corruption
 			"sctp",
+			"sctp_probe",
 
 			# CVE-2017-2636 allows a reliable local privilege escalation in the n_hdlc tty driver
 			"n_hdlc",
