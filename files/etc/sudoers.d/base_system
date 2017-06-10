@@ -2,3 +2,11 @@
 # around for 15 minutes, and any subprocess launched from your shell (not just
 # the shell itself) can silently use `sudo`.
 Defaults timestamp_timeout=0
+
+# When running `sudo -u non-root-user` as root, TIOCSTI allows the `command`
+# in `sudo -u non-root-user command` to execute anything as root:
+# http://www.openwall.com/lists/oss-security/2017/06/03/9
+# https://ruderich.org/simon/notes/su-sudo-from-root-tty-hijacking
+#
+# Avoid this problem by always allocating a new pty.
+Defaults use_pty
