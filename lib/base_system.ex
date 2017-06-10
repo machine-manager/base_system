@@ -630,9 +630,12 @@ defmodule BaseSystem.Configure do
 			# Install default /etc/environment to fix servers that may have an ancient/broken one
 			conf_file("/etc/environment"),
 
+			# Delete obsolete configuration file
+			%FileMissing{path: "/etc/sudoers.d/no-cred-caching"},
+
 			# Prevent sudo from caching credentials, because otherwise programs
 			# in the same terminal may be able to unexpectedly `sudo` without asking.
-			conf_file("/etc/sudoers.d/no-cred-caching"),
+			conf_file("/etc/sudoers.d/base_system"),
 
 			# Lock /etc/resolv.conf to Google DNS servers and without any search domain
 			conf_file("/etc/resolv.conf", 0o644, immutable: true),
