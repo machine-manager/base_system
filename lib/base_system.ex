@@ -777,13 +777,8 @@ defmodule BaseSystem.Configure do
 	                                                  %SystemdUnitEnabled{name: "scaleway-ubuntu-kernel.service"}]
 	defp boot_units("mbr", _),                   do: [%Grub{}]
 	defp boot_units("uefi", boot_resolution),    do: [%Grub{gfxpayload: boot_resolution}]
-	# On a 1-core QEMU VM at Ablenet, our default-BFQ kernel hangs early in the boot unless we set the IO scheduler to deadline
-	defp boot_units("ablenet_vps", _),           do: [%Grub{cmdline_normal_and_recovery: "elevator=deadline"}]
-	# paris2 with Custom-4.4.0-78 crashes after a few days with bfq_lookup_next_entity in the stack; not using BFQ seems to fix this
-	defp boot_units("mbr_elevator_deadline", _), do: [%Grub{cmdline_normal_and_recovery: "elevator=deadline"}]
 	defp boot_units("ovh_vps", _),               do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
 	defp boot_units("do_vps", _),                do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
-	defp boot_units("do_vps_2016", _),           do: [%Grub{cmdline_normal_and_recovery: "console=tty1 root=LABEL=DOROOT notsc clocksource=kvm-clock net.ifnames=0"}]
 
 	defp fstab_unit() do
 		fstab_existing_entries = Fstab.get_entries()
