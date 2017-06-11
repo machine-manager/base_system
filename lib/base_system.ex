@@ -496,7 +496,8 @@ defmodule BaseSystem.Configure do
 
 			# Make sure etckeeper is installed, as it is required for the EtcCommitted units here
 			# Make sure ferm is installed before we install a bunch of other packages
-			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper", "ferm"]},
+			# Make sure chrony is installed because the fallback ferm configuration depends on _chrony user
+			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper", "ferm", "chrony"]},
 			%EtcCommitted{message: "converge (early)"},
 
 			# Do this before ferm config, which may require users already exist
