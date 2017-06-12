@@ -563,19 +563,19 @@ defmodule BaseSystem.Configure do
 				name:    "converge-desired-packages",
 				depends: ["converge-desired-packages-early"] ++ all_desired_packages
 			},
-			%PackageRoots{names: ["converge-desired-packages"]},
+			#%PackageRoots{names: ["converge-desired-packages"]},
 			# This comes after MetaPackageInstalled because the undesired gnupg
 			# must be purged *after* installing gnupg2.
-			%All{units: packages_to_purge |> Enum.map(fn name -> %PackagePurged{name: name} end)},
-			%DanglingPackagesPurged{},
+			#%All{units: packages_to_purge |> Enum.map(fn name -> %PackagePurged{name: name} end)},
+			#%DanglingPackagesPurged{},
 			# Purging can cause some packages to be set to manually-installed,
 			# so repeat the PackageRoots unit, then the DanglingPackagesPurged unit.
-			%PackageRoots{names: ["converge-desired-packages"]},
-			%DanglingPackagesPurged{},
+			#%PackageRoots{names: ["converge-desired-packages"]},
+			#%DanglingPackagesPurged{},
 			# Hopefully it doesn't need to be run a third time...
 
-			%NoPackagesUnavailableInSource{whitelist: ["converge-desired-packages", "converge-desired-packages-early"]},
-			%NoPackagesNewerThanInSource{whitelist_regexp: ~r/^linux-(image|headers)-/},
+			#%NoPackagesUnavailableInSource{whitelist: ["converge-desired-packages", "converge-desired-packages-early"]},
+			#%NoPackagesNewerThanInSource{whitelist_regexp: ~r/^linux-(image|headers)-/},
 
 			hosts_and_ferm_unit(
 				make_ferm_config(
