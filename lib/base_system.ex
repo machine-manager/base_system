@@ -763,22 +763,24 @@ defmodule BaseSystem.Configure do
 		end
 	end
 
-	defp boot_packages("uefi"),                  do: ["linux-image-generic", "grub-efi-amd64"]
+	defp boot_packages("uefi"),                   do: ["linux-image-generic", "grub-efi-amd64"]
 	# outside = our boot is fully managed by the host, to the point where we don't
 	# have to install a Linux kernel and bootloader.  You can use this on scaleway.
-	defp boot_packages("outside"),               do: []
-	defp boot_packages("scaleway_kexec"),        do: ["linux-image-generic", "scaleway-ubuntu-kernel"]
-	defp boot_packages(_),                       do: ["linux-image-generic", "grub-pc"]
+	defp boot_packages("outside"),                do: []
+	defp boot_packages("scaleway_kexec"),         do: ["linux-image-generic", "scaleway-ubuntu-kernel"]
+	defp boot_packages(_),                        do: ["linux-image-generic", "grub-pc"]
 
-	defp boot_units("outside", _),               do: []
+	defp boot_units("outside", _),                do: []
 	# disabling kexec.service is "required as Ubuntu will kexec too early and leave a dirty filesystem"
 	# https://github.com/stuffo/scaleway-ubuntukernel/tree/28f17d8231ad114034d8bbc684fc5afb9f902758#install
-	defp boot_units("scaleway_kexec", _),        do: [%SystemdUnitDisabled{name: "kexec.service"},
-	                                                  %SystemdUnitEnabled{name: "scaleway-ubuntu-kernel.service"}]
-	defp boot_units("mbr", _),                   do: [%Grub{}]
-	defp boot_units("uefi", boot_resolution),    do: [%Grub{gfxpayload: boot_resolution}]
-	defp boot_units("ovh_vps", _),               do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
-	defp boot_units("do_vps", _),                do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
+	defp boot_units("scaleway_kexec", _),         do: [%SystemdUnitDisabled{name: "kexec.service"},
+	                                                   %SystemdUnitEnabled{name: "scaleway-ubuntu-kernel.service"}]
+	defp boot_units("mbr", _),                    do: [%Grub{}]
+	defp boot_units("mbr_bfq", _),                do: [%Grub{cmdline_normal_only: "elevator=bfq"}]
+	defp boot_units("uefi",     boot_resolution), do: [%Grub{gfxpayload: boot_resolution}]
+	defp boot_units("uefi_bfq", boot_resolution), do: [%Grub{gfxpayload: boot_resolution, cmdline_normal_only: "elevator=bfq"}]
+	defp boot_units("ovh_vps", _),                do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
+	defp boot_units("do_vps", _),                 do: [%Grub{cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
 
 	defp fstab_unit() do
 		fstab_existing_entries = Fstab.get_entries()
