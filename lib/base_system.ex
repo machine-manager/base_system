@@ -574,7 +574,7 @@ defmodule BaseSystem.Configure do
 			%DanglingPackagesPurged{},
 			# Hopefully it doesn't need to be run a third time...
 
-			%NoPackagesUnavailableInSource{whitelist: ["converge-desired-packages", "converge-desired-packages-early"]},
+			%NoPackagesUnavailableInSource{whitelist_regexp: ~r/^(converge-desired-packages(-early)?|linux-(image|headers)-.*)$/},
 			%NoPackagesNewerThanInSource{whitelist_regexp: ~r/^linux-(image|headers)-/},
 
 			hosts_and_ferm_unit(
