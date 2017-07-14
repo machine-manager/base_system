@@ -45,6 +45,7 @@ defmodule BaseSystem.Configure do
 		:sysfs_variables,
 		:regular_users,
 		:ssh_allow_users,
+		:hosts,
 		:pre_install_unit,
 		:post_install_unit,
 		:implied_roles,
@@ -81,6 +82,7 @@ defmodule BaseSystem.Configure do
 			extra_etc_systemd_unit_files: descriptors |> Enum.flat_map(fn desc -> desc[:etc_systemd_unit_files] || [] end),
 			extra_regular_users:          descriptors |> Enum.flat_map(fn desc -> desc[:regular_users]          || [] end),
 			extra_ssh_allow_users:        descriptors |> Enum.flat_map(fn desc -> desc[:ssh_allow_users]        || [] end),
+			extra_hosts:                  descriptors |> Enum.flat_map(fn desc -> desc[:hosts]                  || [] end),
 			extra_pre_install_units:      descriptors |> Enum.map(fn desc -> desc[:pre_install_unit] end)         |> Enum.reject(&is_nil/1),
 			extra_post_install_units:     descriptors |> Enum.map(fn desc -> desc[:post_install_unit] end)        |> Enum.reject(&is_nil/1),
 			extra_ferm_input_chain:       descriptors |> Enum.map(fn desc -> desc[:ferm_input_chain] end)         |> Enum.reject(&is_nil/1),
@@ -123,6 +125,7 @@ defmodule BaseSystem.Configure do
 		extra_etc_systemd_unit_files   = opts[:extra_etc_systemd_unit_files] || []
 		extra_regular_users            = opts[:extra_regular_users]          || []
 		extra_ssh_allow_users          = opts[:extra_ssh_allow_users]        || []
+		extra_hosts                    = opts[:extra_hosts]                  || []
 		extra_pre_install_units        = opts[:extra_pre_install_units]      || []
 		extra_post_install_units       = opts[:extra_post_install_units]     || []
 		extra_ferm_input_chain         = opts[:extra_ferm_input_chain]       || []
@@ -505,6 +508,7 @@ defmodule BaseSystem.Configure do
 			%RegularUsersPresent{users: base_regular_users ++ extra_regular_users},
 
 			hosts_and_ferm_unit(
+				extra_hosts,
 				make_ferm_config(
 					extra_ferm_input_chain,
 					base_output_chain ++ extra_ferm_output_chain,
@@ -579,6 +583,7 @@ defmodule BaseSystem.Configure do
 			%NoPackagesNewerThanInSource{whitelist_regexp: ~r/^linux-(image|headers)-/},
 
 			hosts_and_ferm_unit(
+				extra_hosts,
 				make_ferm_config(
 					extra_ferm_input_chain,
 					base_output_chain ++ extra_ferm_output_chain,
@@ -718,19 +723,19 @@ defmodule BaseSystem.Configure do
 		Runner.converge(%All{units: units}, ctx)
 	end
 
-	defp hosts_and_ferm_unit(ferm_config, ferm_config_fallback \\ nil) do
+	defp hosts_and_ferm_unit(extra_hosts, ferm_config, ferm_config_fallback \\ nil) do
 		case ferm_config_fallback do
 			nil ->
-				hosts_and_ferm_unit_base(ferm_config)
+				hosts_and_ferm_unit_base(extra_hosts, ferm_config)
 			_   ->
 				%Fallback{
-					primary:  hosts_and_ferm_unit_base(ferm_config),
-					fallback: hosts_and_ferm_unit_base(ferm_config_fallback)
+					primary:  hosts_and_ferm_unit_base(extra_hosts, ferm_config),
+					fallback: hosts_and_ferm_unit_base(extra_hosts, ferm_config_fallback)
 				}
 		end
 	end
 
-	defp hosts_and_ferm_unit_base(ferm_config) do
+	defp hosts_and_ferm_unit_base(extra_hosts, ferm_config) do
 		%All{units: [
 			%RedoAfterMeet{
 				marker: marker("ferm.service"),
@@ -740,7 +745,7 @@ defmodule BaseSystem.Configure do
 					%FilePresent{
 						path:    "/etc/hosts",
 						mode:    0o644,
-						content: formatted_hosts()
+						content: formatted_hosts(extra_hosts)
 					},
 					%DirectoryPresent{path: "/etc/ferm",      mode: 0o700},
 					%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600, content: ferm_config},
@@ -752,12 +757,14 @@ defmodule BaseSystem.Configure do
 		]}
 	end
 
-	defp formatted_hosts() do
+	defp formatted_hosts(extra_hosts) do
 		IO.iodata_to_binary(
 			TableFormatter.format(
 				preamble_hosts() ++
 				[[]] ++
-				Poison.decode!(File.read!("/root/.cache/machine_manager/hosts.json"))
+				Poison.decode!(File.read!("/root/.cache/machine_manager/hosts.json")) ++
+				[[]] ++
+				extra_hosts
 			)
 		) <>
 		case file_content_or_nil("/etc/hosts.unmanaged") do
