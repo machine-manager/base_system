@@ -7,6 +7,7 @@ alias Converge.{
 	EtcSystemdUnitFiles, UserPresent, Grub, Fallback, User, RegularUsersPresent,
 	NoPackagesUnavailableInSource, NoPackagesNewerThanInSource
 }
+alias Gears.TableFormatter
 
 defmodule BaseSystem.NoTagsError do
 	defexception [:message]
@@ -739,12 +740,7 @@ defmodule BaseSystem.Configure do
 					%FilePresent{
 						path:    "/etc/hosts",
 						mode:    0o644,
-						content:
-							File.read!("/root/.cache/machine_manager/hosts") <>
-							case file_content_or_nil("/etc/hosts.unmanaged") do
-								nil -> ""
-								s   -> "\n" <> s
-							end
+						content: formatted_hosts()
 					},
 					%DirectoryPresent{path: "/etc/ferm",      mode: 0o700},
 					%FilePresent{path: "/etc/ferm/ferm.conf", mode: 0o600, content: ferm_config},
@@ -754,6 +750,29 @@ defmodule BaseSystem.Configure do
 			},
 			%SystemdUnitStarted{name: "ferm.service"},
 		]}
+	end
+
+	defp formatted_hosts() do
+		IO.iodata_to_binary(
+			TableFormatter.format(
+				preamble_hosts() ++
+				[[]] ++
+				Poison.decode!(File.read!("/root/.cache/machine_manager/hosts.json"))
+			)
+		) <>
+		case file_content_or_nil("/etc/hosts.unmanaged") do
+			nil -> ""
+			s   -> "\n" <> s
+		end
+	end
+
+	defp preamble_hosts() do
+		[
+			["127.0.0.1", "localhost #{Util.get_hostname()}"],
+			["::1",       "localhost ip6-localhost ip6-loopback"],
+			["ff02::1",   "ip6-allnodes"],
+			["ff02::2",   "ip6-allrouters"],
+		]
 	end
 
 	defp file_content_or_nil(path) do
