@@ -837,9 +837,10 @@ defmodule BaseSystem.Configure do
 
 	defp get_dirty_settings(opts) do
 		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files)
-		gb                             = 1024 * 1024 * 1024
+		mb                             = 1024 * 1024
+		gb                             = 1024 * mb
 		memtotal                       = Util.get_meminfo()["MemTotal"] # bytes
-		threshold                      = 14 * gb # bytes
+		threshold                      = 4 * gb
 		if optimize_for_short_lived_files do
 			# Some servers have a workload where they download files, keep them on
 			# disk for a minute or two, upload them, then delete them.  For these
@@ -850,7 +851,7 @@ defmodule BaseSystem.Configure do
 				dirty_expire_centisecs: 30000 # 300 seconds = 5 minutes
 			}
 		else
-			# On servers with >= 14GB RAM, try to reduce hangs caused by a large
+			# On servers with >= 4GB RAM, try to reduce hangs caused by a large
 			# number of dirty pages being written to disk, blocking other reads
 			# and writes.
 			#
@@ -862,8 +863,8 @@ defmodule BaseSystem.Configure do
 			# https://lwn.net/Articles/699806/
 			if memtotal >= threshold do
 				%{
-					dirty_background_bytes: 1 * gb,
-					dirty_bytes:            3 * gb,
+					dirty_background_bytes: 300 * mb,
+					dirty_bytes:            600 * mb,
 					dirty_expire_centisecs: 3000, # Linux default of 30 sec
 				}
 			else
