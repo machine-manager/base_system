@@ -613,6 +613,10 @@ defmodule BaseSystem.Configure do
 					# Use a lower value for DefaultTimeoutStopSec and a higher value for DefaultRestartSec.
 					conf_file("/etc/systemd/system.conf"),
 
+					# Ignore power key because we don't need it to shut down a machine and it's easy to
+					# press accidentally or unintentionally (if you assume a blank-screen laptop is off)
+					conf_file("/etc/systemd/logind.conf"),
+
 					# Disable systemd's atrocious "one ctrl-alt-del reboots the system" feature.
 					# This does not affect the 7x ctrl-alt-del force reboot feature.
 					%SymlinkPresent{path: "/etc/systemd/system/ctrl-alt-del.target", target: "/dev/null"},
