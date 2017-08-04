@@ -794,6 +794,7 @@ defmodule BaseSystem.Configure do
 	end
 
 	defp boot_packages("uefi"),                   do: ["linux-image-generic", "grub-efi-amd64"]
+	defp boot_packages("uefi_bfq"),               do: ["linux-image-generic", "grub-efi-amd64"]
 	# outside = our boot is fully managed by the host, to the point where we don't
 	# have to install a Linux kernel and bootloader.  You can use this on scaleway.
 	defp boot_packages("outside"),                do: []
