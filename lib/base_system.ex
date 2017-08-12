@@ -641,9 +641,6 @@ defmodule BaseSystem.Configure do
 			# Install default /etc/environment to fix servers that may have an ancient/broken one
 			conf_file("/etc/environment"),
 
-			# Delete obsolete configuration file
-			%FileMissing{path: "/etc/sudoers.d/no-cred-caching"},
-
 			# Prevent sudo from caching credentials, because otherwise programs
 			# in the same terminal may be able to unexpectedly `sudo` without asking.
 			conf_file("/etc/sudoers.d/base_system"),
