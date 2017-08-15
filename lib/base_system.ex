@@ -942,8 +942,8 @@ defmodule BaseSystem.Configure do
 				# respond to ping
 				proto icmp ACCEPT; 
 
-				# allow SSH connections
-				proto tcp syn dport 22 ACCEPT;
+				# allow SSH connections + 29933 spiped
+				proto tcp syn dport (22 29933) ACCEPT;
 
 				# allow WireGuard traffic
 				interface ($ethernet_interfaces $wifi_interfaces) {
