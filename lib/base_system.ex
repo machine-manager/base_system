@@ -369,6 +369,7 @@ defmodule BaseSystem.Configure do
 			"netbase",
 			"ifupdown",
 			"isc-dhcp-client",
+			"dnsmasq",           # for resolving hosts without involving ISP or Google's recursive resolver
 			"rsyslog",
 			"logrotate",
 			"cron",
@@ -681,6 +682,16 @@ defmodule BaseSystem.Configure do
 			},
 
 			%RedoAfterMeet{
+				marker: marker("dnsmasq.service"),
+				unit: %All{units: [
+					conf_file("/etc/default/dnsmasq"),
+					conf_file("/etc/dnsmasq.conf"),
+				]},
+				trigger: fn -> {_, 0} = System.cmd("service", ["dnsmasq", "restart"]) end
+			},
+			%SystemdUnitStarted{name: "dnsmasq.service"},
+
+			%RedoAfterMeet{
 				marker: marker("chrony.service"),
 				unit: %FilePresent{
 					path:    "/etc/chrony/chrony.conf",
@@ -967,6 +978,14 @@ defmodule BaseSystem.Configure do
 					proto tcp syn dport 22 {
 						mod owner uid-owner root ACCEPT;
 					}
+
+					# Allow everyone to do DNS lookups via local dnsmasq
+					proto (tcp udp) dport 53 ACCEPT;
+				}
+
+				# Allow dnsmasq to make its DNS lookups
+				proto (tcp udp) dport 53 {
+					mod owner uid-owner dnsmasq ACCEPT;
 				}
 
 				outerface wg0 {
