@@ -646,7 +646,7 @@ defmodule BaseSystem.Configure do
 			# in the same terminal may be able to unexpectedly `sudo` without asking.
 			conf_file("/etc/sudoers.d/base_system"),
 
-			# Lock /etc/resolv.conf to Google DNS servers and without any search domain
+			# Lock /etc/resolv.conf into using my local dnsmasq
 			conf_file("/etc/resolv.conf", 0o644, immutable: true),
 
 			# Prevent non-root users from restarting or shutting down the system using the GUI.
