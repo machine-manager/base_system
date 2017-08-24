@@ -681,7 +681,12 @@ defmodule BaseSystem.Configure do
 			%RedoAfterMeet{
 				marker:  marker("unbound.service"),
 				unit:    conf_file("/etc/unbound/unbound.conf"),
-				trigger: fn -> {_, 0} = System.cmd("service", ["unbound", "restart"]) end
+				trigger: fn ctx ->
+					# Do a stop and start instead of a restart because `systemctl restart`
+					# fails to restart the unit when it's in a start-exit loop due to bad
+					# configuration
+					Runner.converge(%SystemdUnitStopped{name: "unbound.service"}, ctx)
+				end
 			},
 			%SystemdUnitStarted{name: "unbound.service"},
 
