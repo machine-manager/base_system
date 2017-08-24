@@ -565,6 +565,10 @@ defmodule BaseSystem.Configure do
 
 			%All{units: extra_pre_install_units},
 
+			# Install unbound.conf early because otherwise the service cannot even start,
+			# at least on machines that have IPv6 disabled.
+			conf_file("/etc/unbound/unbound.conf"),
+
 			%MetaPackageInstalled{
 				name:    "converge-desired-packages",
 				depends: ["converge-desired-packages-early"] ++ all_desired_packages
