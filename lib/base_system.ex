@@ -563,6 +563,9 @@ defmodule BaseSystem.Configure do
 
 			fstab_unit(),
 
+			%Sysfs{variables: sysfs_variables},
+			%Sysctl{parameters: sysctl_parameters},
+
 			%All{units: extra_pre_install_units},
 
 			%MetaPackageInstalled{
@@ -600,8 +603,6 @@ defmodule BaseSystem.Configure do
 			# stops systemd-timesyncd from starting if chrony is installed, but systemd-timesyncd
 			# may still be running if the system hasn't been rebooted.
 			%SystemdUnitStopped{name: "systemd-timesyncd.service"},
-
-			%Sysfs{variables: sysfs_variables},
 
 			# util-linux drops a file to do a TRIM every week.  If we have servers
 			# with SSDs that benefit from TRIM, we should probably do this some
@@ -722,7 +723,6 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> {_, 0} = System.cmd("/bin/zsh", ["-c", "true"]) end
 			},
 
-			%Sysctl{parameters: sysctl_parameters},
 			%All{units: boot_units(Util.tag_value!(tags, "boot"), Util.tag_value(tags, "boot_resolution"))},
 			%EtcSystemdUnitFiles{units: extra_etc_systemd_unit_files},
 			%All{units: extra_post_install_units},
