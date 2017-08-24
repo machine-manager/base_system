@@ -967,6 +967,11 @@ defmodule BaseSystem.Configure do
 					# Allow anyone to make DNS lookups using local unbound
 					proto (tcp udp) dport 53 ACCEPT;
 
+					# Allow root to talk to the unbound control port
+					proto tcp dport 8953 {
+						mod owner uid-owner root ACCEPT;
+					}
+
 					# No `daddr` to allow access to ssh even when using the LAN IP instead of 127.0.0.1
 					proto tcp syn dport 22 {
 						mod owner uid-owner root ACCEPT;
