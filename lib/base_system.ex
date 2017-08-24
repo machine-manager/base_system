@@ -682,6 +682,13 @@ defmodule BaseSystem.Configure do
 			},
 
 			%RedoAfterMeet{
+				marker:  marker("unbound.service"),
+				unit:    conf_file("/etc/unbound/unbound.conf"),
+				trigger: fn -> {_, 0} = System.cmd("service", ["unbound", "restart"]) end
+			},
+			%SystemdUnitStarted{name: "unbound.service"},
+
+			%RedoAfterMeet{
 				marker: marker("chrony.service"),
 				unit: %FilePresent{
 					path:    "/etc/chrony/chrony.conf",
