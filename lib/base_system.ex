@@ -369,6 +369,7 @@ defmodule BaseSystem.Configure do
 			"netbase",
 			"ifupdown",
 			"isc-dhcp-client",
+			"unbound",
 			"rsyslog",
 			"logrotate",
 			"cron",
@@ -963,6 +964,9 @@ defmodule BaseSystem.Configure do
 				mod state state RELATED proto icmp ACCEPT;
 
 				outerface lo {
+					# Allow anyone to make DNS lookups using local unbound
+					proto (tcp udp) dport 53 ACCEPT;
+
 					# No `daddr` to allow access to ssh even when using the LAN IP instead of 127.0.0.1
 					proto tcp syn dport 22 {
 						mod owner uid-owner root ACCEPT;
