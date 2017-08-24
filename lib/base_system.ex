@@ -681,12 +681,7 @@ defmodule BaseSystem.Configure do
 			%RedoAfterMeet{
 				marker:  marker("unbound.service"),
 				unit:    conf_file("/etc/unbound/unbound.conf"),
-				trigger: fn ctx ->
-					# Do a stop and start instead of a restart because `systemctl restart`
-					# fails to restart the unit when it's in a start-exit loop due to bad
-					# configuration
-					Runner.converge(%SystemdUnitStopped{name: "unbound.service"}, ctx)
-				end
+				trigger: fn -> {_, 0} = System.cmd("systemctl", ["try-reload-or-restart", "unbound.service"]) end
 			},
 			%SystemdUnitStarted{name: "unbound.service"},
 
@@ -700,7 +695,7 @@ defmodule BaseSystem.Configure do
 					content: EEx.eval_string(content("files/etc/chrony/chrony.conf.eex"), [country: Util.get_country()]),
 					mode:    0o644
 				},
-				trigger: fn -> {_, 0} = System.cmd("service", ["chrony", "restart"]) end
+				trigger: fn -> {_, 0} = System.cmd("systemctl", ["try-reload-or-restart", "chrony.service"]) end
 			},
 			%SystemdUnitStarted{name: "chrony.service"},
 
@@ -711,7 +706,7 @@ defmodule BaseSystem.Configure do
 					content: EEx.eval_string(content("files/etc/ssh/sshd_config.eex"), [allow_users: ssh_allow_users]),
 					mode:    0o644
 				},
-				trigger: fn -> {_, 0} = System.cmd("service", ["ssh", "restart"]) end
+				trigger: fn -> {_, 0} = System.cmd("systemctl", ["try-reload-or-restart", "ssh.service"]) end
 			},
 			%SystemdUnitStarted{name: "ssh.service"},
 
