@@ -646,9 +646,6 @@ defmodule BaseSystem.Configure do
 			# in the same terminal may be able to unexpectedly `sudo` without asking.
 			conf_file("/etc/sudoers.d/base_system"),
 
-			# Set /etc/resolv.conf nameservers to the local unbound server
-			conf_file("/etc/resolv.conf", 0o644, immutable: true),
-
 			# Prevent non-root users from restarting or shutting down the system using the GUI.
 			# This is mostly to prevent accidental restarts; the "Log Out" and "Restart" buttons
 			# are right next to each other and "Restart" does not require confirmation.
@@ -687,6 +684,9 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> {_, 0} = System.cmd("service", ["unbound", "restart"]) end
 			},
 			%SystemdUnitStarted{name: "unbound.service"},
+
+			# Set /etc/resolv.conf nameservers to the local unbound server
+			conf_file("/etc/resolv.conf", 0o644, immutable: true),
 
 			%RedoAfterMeet{
 				marker: marker("chrony.service"),
