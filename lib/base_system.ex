@@ -595,6 +595,7 @@ defmodule BaseSystem.Configure do
 			conf_dir("/etc/polkit-1/localauthority/50-local.d"),
 			conf_file("/etc/polkit-1/localauthority/50-local.d/restrict-login-powermgmt.pkla"),
 
+			conf_dir("/etc/zsh"),
 			conf_file("/etc/zsh/zsh-autosuggestions.zsh"),
 			conf_file("/etc/zsh/zshrc-custom"),
 
