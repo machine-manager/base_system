@@ -566,6 +566,34 @@ defmodule BaseSystem.Configure do
 			%Sysfs{variables: sysfs_variables},
 			%Sysctl{parameters: sysctl_parameters},
 
+			# UTC timezone everywhere to avoid confusion and timezone-handling bugs
+			conf_file("/etc/timezone"),
+
+			# Install default /etc/environment to fix servers that may have an ancient/broken one
+			conf_file("/etc/environment"),
+
+			# Prevent sudo from caching credentials, because otherwise programs
+			# in the same terminal may be able to unexpectedly `sudo` without asking.
+			conf_file("/etc/sudoers.d/base_system"),
+
+			# Prevent non-root users from restarting or shutting down the system using the GUI.
+			# This is mostly to prevent accidental restarts; the "Log Out" and "Restart" buttons
+			# are right next to each other and "Restart" does not require confirmation.
+			# http://askubuntu.com/questions/453479/how-to-disable-shutdown-reboot-from-lightdm-in-14-04/454230#454230
+			conf_dir("/etc/polkit-1"),
+			conf_dir("/etc/polkit-1/localauthority", 0o700),
+			conf_dir("/etc/polkit-1/localauthority/50-local.d"),
+			conf_file("/etc/polkit-1/localauthority/50-local.d/restrict-login-powermgmt.pkla"),
+
+			conf_file("/etc/zsh/zsh-autosuggestions.zsh"),
+			conf_file("/etc/zsh/zshrc-custom"),
+
+			%FilePresent{
+				path:    "/etc/zsh/zshrc",
+				content: content("files/etc/zsh/zshrc.factory") <> "\n\n" <> "source /etc/zsh/zshrc-custom",
+				mode:    0o644
+			},
+
 			%All{units: extra_pre_install_units},
 
 			%MetaPackageInstalled{
@@ -637,25 +665,6 @@ defmodule BaseSystem.Configure do
 				         |> Enum.join
 			},
 
-			# UTC timezone everywhere to avoid confusion and timezone-handling bugs
-			conf_file("/etc/timezone"),
-
-			# Install default /etc/environment to fix servers that may have an ancient/broken one
-			conf_file("/etc/environment"),
-
-			# Prevent sudo from caching credentials, because otherwise programs
-			# in the same terminal may be able to unexpectedly `sudo` without asking.
-			conf_file("/etc/sudoers.d/base_system"),
-
-			# Prevent non-root users from restarting or shutting down the system using the GUI.
-			# This is mostly to prevent accidental restarts; the "Log Out" and "Restart" buttons
-			# are right next to each other and "Restart" does not require confirmation.
-			# http://askubuntu.com/questions/453479/how-to-disable-shutdown-reboot-from-lightdm-in-14-04/454230#454230
-			conf_dir("/etc/polkit-1"),
-			conf_dir("/etc/polkit-1/localauthority", 0o700),
-			conf_dir("/etc/polkit-1/localauthority/50-local.d"),
-			conf_file("/etc/polkit-1/localauthority/50-local.d/restrict-login-powermgmt.pkla"),
-
 			# We don't use bash for the interactive shell, so there's no point in
 			# dropping these files into every user's $HOME
 			%FileMissing{path: "/etc/skel/.bashrc"},
@@ -669,15 +678,6 @@ defmodule BaseSystem.Configure do
 			conf_dir("/etc/nano.d"),
 			conf_file("/etc/nano.d/elixir.nanorc"),
 			conf_file("/etc/nano.d/git-commit-msg.nanorc"),
-
-			conf_file("/etc/zsh/zsh-autosuggestions.zsh"),
-			conf_file("/etc/zsh/zshrc-custom"),
-
-			%FilePresent{
-				path:    "/etc/zsh/zshrc",
-				content: content("files/etc/zsh/zshrc.factory") <> "\n\n" <> "source /etc/zsh/zshrc-custom",
-				mode:    0o644
-			},
 
 			%RedoAfterMeet{
 				marker:  marker("unbound.service"),
