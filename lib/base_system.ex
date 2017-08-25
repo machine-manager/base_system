@@ -367,6 +367,8 @@ defmodule BaseSystem.Configure do
 			"ferm",              # used by hosts_and_ferm_unit_base below
 			"rsync",             # used by machine_manager to copy files to machine
 			"dnsutils",          # for dig, used below to make sure unbound works
+			"chrony",
+			"etckeeper",
 			"netbase",
 			"ifupdown",
 			"isc-dhcp-client",
@@ -499,11 +501,15 @@ defmodule BaseSystem.Configure do
 				mode:    0o640
 			},
 
-			# Make sure etckeeper is installed, as it is required for the EtcCommitted units here
-			# Make sure ferm is installed before we install a bunch of other packages
-			# Make sure chrony is installed because the fallback ferm configuration depends on _chrony user
-			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper", "ferm", "chrony"]},
+			# Make sure etckeeper is installed because is required for the EtcCommitted units here
+			# Make sure chrony    is installed because the fallback ferm configuration depends on _chrony user
+			# Make sure ferm      is installed before we install a bunch of other packages
+			# Make sure apparmor  is installed to protect the system early
+			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper", "ferm", "chrony", "apparmor", "apparmor-profiles"]},
 			%EtcCommitted{message: "converge (early)"},
+
+			# Make sure apparmor is started
+			%SystemdUnitStarted{name: "apparmor.service"},
 
 			# Do this before ferm config, which may require users already exist
 			%RegularUsersPresent{users: base_regular_users ++ extra_regular_users},
@@ -594,6 +600,49 @@ defmodule BaseSystem.Configure do
 				mode:    0o644
 			},
 
+			%RedoAfterMeet{
+				marker: marker("systemd"),
+				unit: %All{units: [
+					# Use a lower value for DefaultTimeoutStopSec and a higher value for DefaultRestartSec.
+					conf_file("/etc/systemd/system.conf"),
+
+					# Ignore power key because we don't need it to shut down a machine and it's easy to
+					# press accidentally or unintentionally (if you assume a blank-screen laptop is off)
+					conf_file("/etc/systemd/logind.conf"),
+
+					# Disable systemd's atrocious "one ctrl-alt-del reboots the system" feature.
+					# This does not affect the 7x ctrl-alt-del force reboot feature.
+					%SymlinkPresent{path: "/etc/systemd/system/ctrl-alt-del.target", target: "/dev/null"},
+				]},
+				trigger: fn -> {_, 0} = System.cmd("systemctl", ["daemon-reload"]) end
+			},
+
+			%RedoAfterMeet{
+				marker:  marker("unbound.service"),
+				unit:    conf_file("/etc/unbound/unbound.conf"),
+				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("unbound.service") end
+			},
+
+			%RedoAfterMeet{
+				marker: marker("chrony.service"),
+				unit: %FilePresent{
+					path:    "/etc/chrony/chrony.conf",
+					content: EEx.eval_string(content("files/etc/chrony/chrony.conf.eex"), [country: Util.get_country()]),
+					mode:    0o644
+				},
+				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("chrony.service") end
+			},
+
+			%RedoAfterMeet{
+				marker: marker("ssh.service"),
+				unit: %FilePresent{
+					path:    "/etc/ssh/sshd_config",
+					content: EEx.eval_string(content("files/etc/ssh/sshd_config.eex"), [allow_users: ssh_allow_users]),
+					mode:    0o644
+				},
+				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("ssh.service") end
+			},
+
 			%All{units: extra_pre_install_units},
 
 			%MetaPackageInstalled{
@@ -637,25 +686,16 @@ defmodule BaseSystem.Configure do
 			# other time.
 			%FileMissing{path: "/etc/cron.weekly/fstrim"},
 
-			%RedoAfterMeet{
-				marker: marker("systemd"),
-				unit: %All{units: [
-					# Use a lower value for DefaultTimeoutStopSec and a higher value for DefaultRestartSec.
-					conf_file("/etc/systemd/system.conf"),
+			%SystemdUnitStarted{name: "chrony.service"},
+			%SystemdUnitStarted{name: "ssh.service"},
 
-					# Ignore power key because we don't need it to shut down a machine and it's easy to
-					# press accidentally or unintentionally (if you assume a blank-screen laptop is off)
-					conf_file("/etc/systemd/logind.conf"),
-
-					# Disable systemd's atrocious "one ctrl-alt-del reboots the system" feature.
-					# This does not affect the 7x ctrl-alt-del force reboot feature.
-					%SymlinkPresent{path: "/etc/systemd/system/ctrl-alt-del.target", target: "/dev/null"},
-				]},
-				trigger: fn -> {_, 0} = System.cmd("systemctl", ["daemon-reload"]) end
+			%SystemdUnitStarted{name: "unbound.service"},
+			# Set /etc/resolv.conf nameservers to the local unbound server
+			%BeforeMeet{
+				unit:    conf_file("/etc/resolv.conf", 0o644, immutable: true),
+				# Make sure unbound actually works before pointing resolv.conf to localhost
+				trigger: fn -> {_, 0} = System.cmd("/usr/bin/dig", ["-t", "A", "localhost", "@127.0.0.1"]) end
 			},
-
-			# Make sure apparmor is started
-			%SystemdUnitStarted{name: "apparmor.service"},
 
 			%FilePresent{
 				path:    "/etc/modprobe.d/base_system.conf",
@@ -678,42 +718,6 @@ defmodule BaseSystem.Configure do
 			conf_dir("/etc/nano.d"),
 			conf_file("/etc/nano.d/elixir.nanorc"),
 			conf_file("/etc/nano.d/git-commit-msg.nanorc"),
-
-			%RedoAfterMeet{
-				marker:  marker("unbound.service"),
-				unit:    conf_file("/etc/unbound/unbound.conf"),
-				trigger: fn -> {_, 0} = System.cmd("systemctl", ["try-reload-or-restart", "unbound.service"]) end
-			},
-			%SystemdUnitStarted{name: "unbound.service"},
-
-			# Set /etc/resolv.conf nameservers to the local unbound server
-			%BeforeMeet{
-				unit:    conf_file("/etc/resolv.conf", 0o644, immutable: true),
-				# Make sure unbound actually works before pointing resolv.conf to localhost
-				trigger: fn -> {_, 0} = System.cmd("/usr/bin/dig", ["-t", "A", "localhost", "@127.0.0.1"]) end
-			},
-
-			%RedoAfterMeet{
-				marker: marker("chrony.service"),
-				unit: %FilePresent{
-					path:    "/etc/chrony/chrony.conf",
-					content: EEx.eval_string(content("files/etc/chrony/chrony.conf.eex"), [country: Util.get_country()]),
-					mode:    0o644
-				},
-				trigger: fn -> {_, 0} = System.cmd("systemctl", ["try-reload-or-restart", "chrony.service"]) end
-			},
-			%SystemdUnitStarted{name: "chrony.service"},
-
-			%RedoAfterMeet{
-				marker: marker("ssh.service"),
-				unit: %FilePresent{
-					path:    "/etc/ssh/sshd_config",
-					content: EEx.eval_string(content("files/etc/ssh/sshd_config.eex"), [allow_users: ssh_allow_users]),
-					mode:    0o644
-				},
-				trigger: fn -> {_, 0} = System.cmd("systemctl", ["try-reload-or-restart", "ssh.service"]) end
-			},
-			%SystemdUnitStarted{name: "ssh.service"},
 
 			# Make sure root's shell is zsh
 			%BeforeMeet{
