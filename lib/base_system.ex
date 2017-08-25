@@ -619,27 +619,36 @@ defmodule BaseSystem.Configure do
 
 			%RedoAfterMeet{
 				marker:  marker("unbound.service"),
-				unit:    conf_file("/etc/unbound/unbound.conf"),
+				unit:    %All{units: [
+					conf_dir("/etc/unbound"),
+					conf_file("/etc/unbound/unbound.conf"),
+				]},
 				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("unbound.service") end
 			},
 
 			%RedoAfterMeet{
 				marker: marker("chrony.service"),
-				unit: %FilePresent{
-					path:    "/etc/chrony/chrony.conf",
-					content: EEx.eval_string(content("files/etc/chrony/chrony.conf.eex"), [country: Util.get_country()]),
-					mode:    0o644
-				},
+				unit:   %All{units: [
+					conf_dir("/etc/chrony"),
+					%FilePresent{
+						path:    "/etc/chrony/chrony.conf",
+						content: EEx.eval_string(content("files/etc/chrony/chrony.conf.eex"), [country: Util.get_country()]),
+						mode:    0o644
+					},
+				]},
 				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("chrony.service") end
 			},
 
 			%RedoAfterMeet{
 				marker: marker("ssh.service"),
-				unit: %FilePresent{
-					path:    "/etc/ssh/sshd_config",
-					content: EEx.eval_string(content("files/etc/ssh/sshd_config.eex"), [allow_users: ssh_allow_users]),
-					mode:    0o644
-				},
+				unit: %All{units: [
+					conf_dir("/etc/ssh"),
+					%FilePresent{
+						path:    "/etc/ssh/sshd_config",
+						content: EEx.eval_string(content("files/etc/ssh/sshd_config.eex"), [allow_users: ssh_allow_users]),
+						mode:    0o644
+					},
+				]},
 				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("ssh.service") end
 			},
 
