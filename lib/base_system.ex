@@ -366,6 +366,7 @@ defmodule BaseSystem.Configure do
 			"sysfsutils",        # used by Sysfs unit and for /sys configuration on boot
 			"ferm",              # used by hosts_and_ferm_unit_base below
 			"rsync",             # used by machine_manager to copy files to machine
+			"dnsutils",          # for dig, used below to make sure unbound works
 			"netbase",
 			"ifupdown",
 			"isc-dhcp-client",
@@ -420,7 +421,6 @@ defmodule BaseSystem.Configure do
 			"lsof",
 			"pv",
 			"tree",
-			"dnsutils",       # dig
 			"nmap",
 			"whois",
 		]
@@ -687,7 +687,11 @@ defmodule BaseSystem.Configure do
 			%SystemdUnitStarted{name: "unbound.service"},
 
 			# Set /etc/resolv.conf nameservers to the local unbound server
-			conf_file("/etc/resolv.conf", 0o644, immutable: true),
+			%BeforeMeet{
+				unit:    conf_file("/etc/resolv.conf", 0o644, immutable: true),
+				# Make sure unbound actually works before pointing resolv.conf to localhost
+				trigger: fn -> {_, 0} = System.cmd("/usr/bin/dig", ["-t", "A", "localhost", "@127.0.0.1"]) end
+			},
 
 			%RedoAfterMeet{
 				marker: marker("chrony.service"),
