@@ -501,11 +501,15 @@ defmodule BaseSystem.Configure do
 				mode:    0o640
 			},
 
-			# Make sure etckeeper is installed because is required for the EtcCommitted units here
-			# Make sure chrony    is installed because the fallback ferm configuration depends on _chrony user
-			# Make sure ferm      is installed before we install a bunch of other packages
-			# Make sure apparmor  is installed to protect the system early
-			%MetaPackageInstalled{name: "converge-desired-packages-early", depends: ["etckeeper", "ferm", "chrony", "apparmor", "apparmor-profiles"]},
+			# Make sure etckeeper  is installed because is required for the EtcCommitted units here
+			# Make sure chrony     is installed because the fallback ferm configuration depends on _chrony user
+			# Make sure ferm       is installed before we install a bunch of other packages
+			# Make sure apparmor   is installed to protect the system early
+			# Make sure sysfsutils is installed early for the Sysfs unit
+			%MetaPackageInstalled{
+				name:    "converge-desired-packages-early",
+				depends: ["etckeeper", "ferm", "chrony", "apparmor", "apparmor-profiles", "sysfsutils"]
+			},
 			%EtcCommitted{message: "converge (early)"},
 
 			# Make sure apparmor is started
