@@ -7,8 +7,8 @@ umask 027
 set +o histexpand
 
 # http://www.zsh.org/mla/workers/1996/msg00615.html
-HISTSIZE=11000
-SAVEHIST=10000
+HISTSIZE=21000
+SAVEHIST=20000
 mkdir -p ~/.config/zsh
 touch    ~/.config/zsh/history
 HISTFILE=~/.config/zsh/history
