@@ -57,7 +57,7 @@ defmodule BaseSystem.Configure do
 
 	@spec configure_with_roles([String.t], [module]) :: nil
 	def configure_with_roles(tags, role_modules) do
-		if length(tags) == 0 do
+		if tags == [] do
 			raise(NoTagsError, "Refusing to configure with 0 tags because this is probably a mistake; pass a dummy tag if not")
 		end
 
