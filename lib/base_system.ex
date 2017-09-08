@@ -150,16 +150,19 @@ defmodule BaseSystem.Configure do
 		apt_sources  = base_sources ++ extra_apt_sources
 
 		check_non_root_username(@non_root_username)
-		base_regular_users = [
-			%User{
-				name:  @non_root_username,
-				home:  "/home/#{@non_root_username}",
-				shell: "/bin/zsh",
-				authorized_keys: [
-					path_expand_content("~/.ssh/id_rsa.pub") |> String.trim_trailing
-				]
-			}
-		]
+		base_regular_users = case "no_base_regular_user" in tags do
+			true  -> []
+			false -> [
+				%User{
+					name:  @non_root_username,
+					home:  "/home/#{@non_root_username}",
+					shell: "/bin/zsh",
+					authorized_keys: [
+						path_expand_content("~/.ssh/id_rsa.pub") |> String.trim_trailing
+					]
+				}
+			]
+		end
 		root_user = %User{
 			name:            "root",
 			home:            "/root",
