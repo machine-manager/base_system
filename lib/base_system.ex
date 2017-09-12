@@ -361,6 +361,14 @@ defmodule BaseSystem.Configure do
 			false -> [
 				# CVE-2017-1000251 allowed a stack buffer overflow
 				"bluetooth",
+				"bluetooth_6lowpan",
+
+				# drivers/bluetooth
+				"ath3k",
+				"bcm203x",
+				"bfusb",
+				"bluecard_cs",
+				"bpa10x",
 				"bt3c_cs",
 				"btbcm",
 				"btintel",
@@ -372,6 +380,15 @@ defmodule BaseSystem.Configure do
 				"btuart_cs",
 				"btusb",
 				"btwilink",
+				"dtl1_cs",
+				"hci_uart",
+				"hci_vhci",
+
+				# net/bluetooth
+				"cmtp",
+				"bnep",
+				"hidp",
+				"rfcomm",
 			]
 		end
 
