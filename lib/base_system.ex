@@ -356,7 +356,24 @@ defmodule BaseSystem.Configure do
 			"ipx",
 
 			# TODO: blacklist overlay and overlayfs once we can whitelist it on sbuild
-		]
+		] ++ case "bluetooth" in tags do
+			true  -> []
+			false -> [
+				# CVE-2017-1000251 allowed a stack buffer overflow
+				"bluetooth",
+				"bt3c_cs",
+				"btbcm",
+				"btintel",
+				"btmrvl",
+				"btmrvl_sdio",
+				"btqca",
+				"btrtl",
+				"btsdio",
+				"btuart_cs",
+				"btusb",
+				"btwilink",
+			]
+		end
 
 		base_packages = [
 			"erlang-base-hipe",  # used by all converge escripts
