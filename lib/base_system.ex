@@ -355,6 +355,10 @@ defmodule BaseSystem.Configure do
 			# CVE-2017-7487 allowed a use-after-free
 			"ipx",
 
+			# May have more bugs following "tipc: fix use-after-free"
+			# http://kernel.ubuntu.com/git/ubuntu/ubuntu-xenial.git/commit/?id=f08b525e9d9d65021556895399c248d1248842ea
+			"tipc",
+
 			# TODO: blacklist overlay and overlayfs once we can whitelist it on sbuild
 		] ++ case "bluetooth" in tags do
 			true  -> []
