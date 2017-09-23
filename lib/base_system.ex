@@ -453,6 +453,7 @@ defmodule BaseSystem.Configure do
 			"htop",
 			"iotop",
 			"dstat",
+			"perf-tools-unstable", # for execsnoop, opensnoop, cachestat, kprobe, etc
 			"tmux",
 			"git",
 			"tig",
