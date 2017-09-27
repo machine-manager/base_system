@@ -242,3 +242,5 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE=fg=6
 # expected with ZSH options that don't preserve the history order such as
 # HIST_IGNORE_ALL_DUPS or HIST_EXPIRE_DUPS_FIRST"
 ZSH_AUTOSUGGEST_STRATEGY=match_prev_cmd
+# Might be faster on slow machines with HDD
+ZSH_AUTOSUGGEST_USE_ASYNC=1
