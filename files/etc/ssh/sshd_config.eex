@@ -86,3 +86,10 @@ UsePAM yes
 
 AllowUsers <%= allow_users |> Enum.join(" ") %>
 MaxSessions 60
+
+Match group sftponly
+	# Don't break symlinks to /mnt/*
+	# ChrootDirectory /home/%u
+	X11Forwarding no
+	AllowTcpForwarding no
+	ForceCommand internal-sftp
