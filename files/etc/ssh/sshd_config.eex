@@ -88,7 +88,8 @@ AllowUsers <%= allow_users |> Enum.join(" ") %>
 MaxSessions 60
 
 Match group sftponly
-	ChrootDirectory /home/%u
+	# Don't chroot because PhotoSync mysteriously fails to work
+	# ChrootDirectory /home/%u
 	X11Forwarding no
 	AllowTcpForwarding no
 	ForceCommand internal-sftp
