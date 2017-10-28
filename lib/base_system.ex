@@ -136,16 +136,26 @@ defmodule BaseSystem.Configure do
 		extra_sysfs_variables          = opts[:extra_sysfs_variables]        || %{}
 		optimize_for_short_lived_files = "optimize_for_short_lived_files" in tags
 		ipv6                           = "ipv6"                           in tags
+		debian                         = "debian"                         in tags
 
 		base_keys = [
 			content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).txt"),
 		]
 		country      = Util.get_country()
-		base_sources = [
-			"deb http://#{country}.archive.ubuntu.com/ubuntu xenial          main restricted universe multiverse",
-			"deb http://#{country}.archive.ubuntu.com/ubuntu xenial-updates  main restricted universe multiverse",
-			"deb http://security.ubuntu.com/ubuntu           xenial-security main restricted universe multiverse",
-		]
+		base_sources = if debian do 
+			[
+				"deb http://ftp.#{country}.debian.org/debian/           stretch         main contrib non-free",
+				"deb http://security.debian.org/debian-security stretch/updates main contrib non-free",
+				"deb http://ftp.#{country}.debian.org/debian/           stretch-updates main contrib non-free",
+				"deb http://deb.debian.org/debian               experimental    main",
+			]
+		else
+			[
+				"deb http://#{country}.archive.ubuntu.com/ubuntu xenial          main restricted universe multiverse",
+				"deb http://#{country}.archive.ubuntu.com/ubuntu xenial-updates  main restricted universe multiverse",
+				"deb http://security.ubuntu.com/ubuntu           xenial-security main restricted universe multiverse",
+			]
+		end
 		apt_keys     = base_keys    ++ extra_apt_keys
 		apt_sources  = base_sources ++ extra_apt_sources
 
@@ -192,27 +202,29 @@ defmodule BaseSystem.Configure do
 		]
 
 		# Check for transparent_hugepage because it is missing on scaleway kernels
-		transparent_hugepage_variables = case File.exists?("/sys/kernel/mm/transparent_hugepage") do
-			true -> %{
-				# WARNING: removing a variable here will *not* reset it to the
-				# Linux default until a reboot.
+		transparent_hugepage_variables =
+			if not debian and File.exists?("/sys/kernel/mm/transparent_hugepage") do
+				%{
+					# WARNING: removing a variable here will *not* reset it to the
+					# Linux default until a reboot.
 
-				# According to https://goo.gl/Ep8iM6 system stalls are not caused by
-				# transparent hugepages but by synchronous defrag, so leave THP enabled.
-				"kernel/mm/transparent_hugepage/enabled" => "always",
+					# According to https://goo.gl/Ep8iM6 system stalls are not caused by
+					# transparent hugepages but by synchronous defrag, so leave THP enabled.
+					"kernel/mm/transparent_hugepage/enabled" => "always",
 
-				# Linux 4.4 has default "always", so set to "madvise" to reduce
-				# stalls caused by defrag.  Linux 4.6+ has default "madvise"; see
-				# https://github.com/torvalds/linux/commit/444eb2a449ef36fe115431ed7b71467c4563c7f1
-				"kernel/mm/transparent_hugepage/defrag"  => "madvise",
+					# Linux 4.4 has default "always", so set to "madvise" to reduce
+					# stalls caused by defrag.  Linux 4.6+ has default "madvise"; see
+					# https://github.com/torvalds/linux/commit/444eb2a449ef36fe115431ed7b71467c4563c7f1
+					"kernel/mm/transparent_hugepage/defrag"  => "madvise",
 
-				# Note: high-memory systems will need a much lower scan_sleep_millisecs
-				# to increase hugepage availability.
+					# Note: high-memory systems will need a much lower scan_sleep_millisecs
+					# to increase hugepage availability.
 
-				# See also https://www.kernel.org/doc/Documentation/vm/transhuge.txt
-			}
-			false -> %{}
-		end
+					# See also https://www.kernel.org/doc/Documentation/vm/transhuge.txt
+				}
+			else
+				%{}
+			end
 
 		sysfs_variables = %{}
 			|> Map.merge(transparent_hugepage_variables)
@@ -223,6 +235,17 @@ defmodule BaseSystem.Configure do
 		# TODO: min_free_kbytes
 		# TODO: optimize network stack based on wikimedia-puppet
 		base_sysctl_parameters = %{
+			# Standard Ubuntu console log level that we want on Debian as well
+			"kernel.printk"                      => [4, 4, 1, 7],
+
+			# Standard Ubuntu hardening options that we want on Debian as well
+			"kernel.yama.ptrace_scope"           => 1,
+			"kernel.kptr_restrict"               => 1,
+			# Turn on Source Address Verification in all interfaces to
+			# prevent some spoofing attacks.
+			"net.ipv4.conf.default.rp_filter"    => 1,
+			"net.ipv4.conf.all.rp_filter"        => 1,
+
 			# Note that some important settings are already set by the procps package,
 			# which creates .conf files in /etc/sysctl.d/.  Anything we set here will
 			# override those default settings.  (If that is not the case, check
@@ -277,22 +300,45 @@ defmodule BaseSystem.Configure do
 			"fs.inotify.max_user_instances"      => 8192,
 		}
 
-		unprivileged_bpf_parameters = case File.exists?("/proc/sys/kernel/unprivileged_bpf_disabled") do
-			true -> %{
-				# CVE-2016-4557 allowed for local privilege escalation using unprivileged BPF.
-				#
-				# "only used for things like network profiling in userspace [...]; disabling
-				# the bpf() does not mean disabling all BPF/eBPF. Netfilter still uses BPF,
-				# seccomp still uses BPF, etc. All it means is that userspace network profiling
-				# tools and such will not function."
-				"kernel.unprivileged_bpf_disabled" => 1,
+		unprivileged_bpf_parameters =
+			if File.exists?("/proc/sys/kernel/unprivileged_bpf_disabled") do
+				%{
+					# CVE-2016-4557 allowed for local privilege escalation using unprivileged BPF.
+					#
+					# "only used for things like network profiling in userspace [...]; disabling
+					# the bpf() does not mean disabling all BPF/eBPF. Netfilter still uses BPF,
+					# seccomp still uses BPF, etc. All it means is that userspace network profiling
+					# tools and such will not function."
+					"kernel.unprivileged_bpf_disabled" => 1,
+				}
+			else
+				%{}
+			end
+
+		bbr_parameters = if debian do
+			# BBR congestion control (T147569)
+			# https://lwn.net/Articles/701165/
+			#
+			# The BBR TCP congestion control algorithm is based on Bottleneck
+			# Bandwidth, i.e. the estimated bandwidth of the slowest link, and
+			# Round-Trip Time to control outgoing traffic. Other algorithms such as
+			# CUBIC (default on Linux since 2.6.19) and Reno are instead based on
+			# packet loss.
+			#
+			# To send out data at the proper rate, BBR uses the tc-fq packet scheduler
+			# instead of the TCP congestion window.
+			%{
+				"net.core.default_qdisc"          => "fq",
+				"net.ipv4.tcp_congestion_control" => "bbr",
 			}
-			false -> %{}
+		else
+			%{}
 		end
 
 		sysctl_parameters =
 			base_sysctl_parameters
 			|> Map.merge(unprivileged_bpf_parameters)
+			|> Map.merge(bbr_parameters)
 			|> Map.merge(extra_sysctl_parameters)
 
 		blacklisted_kernel_modules = [
@@ -435,11 +481,10 @@ defmodule BaseSystem.Configure do
 			"openssh-server",
 			"openssh-client",
 			"ca-certificates",
-			"pollinate",         # for seeding RNG the very first time
 			"chrony",
 			"psmisc",            # for killall
 			"acl",
-		]
+		] ++ (if debian, do: [], else: ["pollinate"]) # for seeding RNG the very first time
 		human_admin_needs = [
 			"molly-guard",
 			"lshw",
