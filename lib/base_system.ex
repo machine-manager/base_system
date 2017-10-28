@@ -448,8 +448,10 @@ defmodule BaseSystem.Configure do
 		end
 
 		base_packages = [
-			"erlang-base-hipe",  # used by all converge escripts
-			"erlang-crypto",     # used by all converge escripts
+			# erlang is used by all converge escripts; allow esl-erlang for
+			# bootstrapping sbuild on new Debian releases
+			"erlang-base-hipe | esl-erlang",  
+			"erlang-crypto | esl-erlang",
 			"aptitude",          # used by NoPackagesUnavailableInSource
 			"apt-show-versions", # used by NoPackagesNewerThanInSource
 			"binutils",          # used by MetaPackageInstalled (binutils has `ar`)
