@@ -514,7 +514,8 @@ defmodule BaseSystem.Configure do
 			"whois",
 		]
 		all_desired_packages =
-			boot_packages(Util.tag_value!(tags, "boot")) ++
+			kernel_packages(if debian, do: :stretch, else: :xenial) ++
+			bootloader_packages(Util.tag_value!(tags, "boot")) ++
 			base_packages ++
 			human_admin_needs ++
 			extra_desired_packages
@@ -912,13 +913,16 @@ defmodule BaseSystem.Configure do
 		end
 	end
 
-	defp boot_packages("uefi"),                   do: ["linux-image-generic", "grub-efi-amd64"]
-	defp boot_packages("uefi_bfq"),               do: ["linux-image-generic", "grub-efi-amd64"]
+	defp kernel_packages(:xenial),  do: ["linux-image-generic"]
+	defp kernel_packages(:stretch), do: ["linux-image-4.14.0-rc5-amd64", "wireguard-dkms"]
+
+	defp bootloader_packages("uefi"),            do: ["grub-efi-amd64"]
+	defp bootloader_packages("uefi_bfq"),        do: ["grub-efi-amd64"]
 	# outside = our boot is fully managed by the host, to the point where we don't
 	# have to install a Linux kernel and bootloader.  You can use this on scaleway.
-	defp boot_packages("outside"),                do: []
-	defp boot_packages("scaleway_kexec"),         do: ["linux-image-generic", "scaleway-ubuntu-kernel"]
-	defp boot_packages(_),                        do: ["linux-image-generic", "grub-pc"]
+	defp bootloader_packages("outside"),         do: ["grub-efi-amd64"]
+	defp bootloader_packages("scaleway_kexec"),  do: ["scaleway-ubuntu-kernel"]
+	defp bootloader_packages(_),                 do: ["grub-pc"]
 
 	defp boot_units("outside", _),                do: []
 	# disabling kexec.service is "required as Ubuntu will kexec too early and leave a dirty filesystem"
