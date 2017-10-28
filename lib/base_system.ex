@@ -608,7 +608,9 @@ defmodule BaseSystem.Configure do
 			%EtcCommitted{message: "converge (early)"},
 
 			# Make sure apparmor is started
-			%SystemdUnitStarted{name: "apparmor.service"},
+			# TODO: for Debian, make sure it's started only after first successful `configure`
+			# because we need to update-grub and reboot for it to start
+			# %SystemdUnitStarted{name: "apparmor.service"},
 
 			# Do this before ferm config, which may require users already exist
 			%RegularUsersPresent{users: base_regular_users ++ extra_regular_users},
