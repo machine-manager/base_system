@@ -138,21 +138,28 @@ defmodule BaseSystem.Configure do
 		ipv6                           = "ipv6"                           in tags
 		release                        = Util.tag_value!(tags, "release") |> String.to_atom()
 
-		base_keys = [
-			content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).txt"),
-		]
+		base_keys = case release do
+			:xenial  -> [
+				content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).txt"),
+			]
+			:stretch -> [
+				content("files/apt_keys/debian-archive-stretch-automatic.gpg.asc"),
+				content("files/apt_keys/debian-archive-stretch-security-automatic.gpg.asc"),
+				content("files/apt_keys/debian-archive-stretch-stable.gpg.asc"),
+			]
+		end
 		country      = Util.get_country()
 		base_sources = case release do 
+			:xenial -> [
+				"deb http://#{country}.archive.ubuntu.com/ubuntu xenial          main restricted universe multiverse",
+				"deb http://#{country}.archive.ubuntu.com/ubuntu xenial-updates  main restricted universe multiverse",
+				"deb http://security.ubuntu.com/ubuntu           xenial-security main restricted universe multiverse",
+			]
 			:stretch -> [
 				"deb http://ftp.#{country}.debian.org/debian/    stretch         main contrib non-free",
 				"deb http://security.debian.org/debian-security  stretch/updates main contrib non-free",
 				"deb http://ftp.#{country}.debian.org/debian/    stretch-updates main contrib non-free",
 				"deb http://deb.debian.org/debian                experimental    main",
-			]
-			:xenial -> [
-				"deb http://#{country}.archive.ubuntu.com/ubuntu xenial          main restricted universe multiverse",
-				"deb http://#{country}.archive.ubuntu.com/ubuntu xenial-updates  main restricted universe multiverse",
-				"deb http://security.ubuntu.com/ubuntu           xenial-security main restricted universe multiverse",
 			]
 		end
 		apt_keys     = base_keys    ++ extra_apt_keys
@@ -315,6 +322,7 @@ defmodule BaseSystem.Configure do
 			end
 
 		bbr_parameters = case release do
+			:xenial -> %{}
 			# BBR congestion control (T147569)
 			# https://lwn.net/Articles/701165/
 			#
@@ -330,7 +338,6 @@ defmodule BaseSystem.Configure do
 				"net.core.default_qdisc"          => "fq",
 				"net.ipv4.tcp_congestion_control" => "bbr",
 			}
-			:xenial -> %{}
 		end
 
 		sysctl_parameters =
