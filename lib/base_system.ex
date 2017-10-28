@@ -466,7 +466,7 @@ defmodule BaseSystem.Configure do
 			"netbase",
 			"ifupdown",
 			"isc-dhcp-client",
-			"unbound",
+			"unbound (>= 1.6.7)",
 			"rsyslog",
 			"logrotate",
 			"cron",
