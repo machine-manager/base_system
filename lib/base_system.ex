@@ -681,6 +681,7 @@ defmodule BaseSystem.Configure do
 
 			# Prevent sudo from caching credentials, because otherwise programs
 			# in the same terminal may be able to unexpectedly `sudo` without asking.
+			conf_dir("/etc/sudoers.d"),
 			conf_file("/etc/sudoers.d/base_system"),
 
 			# Prevent non-root users from restarting or shutting down the system using the GUI.
