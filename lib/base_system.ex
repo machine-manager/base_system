@@ -601,9 +601,10 @@ defmodule BaseSystem.Configure do
 			# Make sure ferm       is installed before we install a bunch of other packages
 			# Make sure apparmor   is installed to protect the system early
 			# Make sure sysfsutils is installed early for the Sysfs unit
+			# Make sure unbound    is installed early because we expect it to start properly
 			%MetaPackageInstalled{
 				name:    "converge-desired-packages-early",
-				depends: ["etckeeper", "ferm", "chrony", "apparmor", "apparmor-profiles", "sysfsutils"]
+				depends: ["etckeeper", "ferm", "chrony", "apparmor", "apparmor-profiles", "sysfsutils", "unbound (>= 1.6.7)"]
 			},
 			%EtcCommitted{message: "converge (early)"},
 
