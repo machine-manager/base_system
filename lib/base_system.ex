@@ -136,21 +136,20 @@ defmodule BaseSystem.Configure do
 		extra_sysfs_variables          = opts[:extra_sysfs_variables]        || %{}
 		optimize_for_short_lived_files = "optimize_for_short_lived_files" in tags
 		ipv6                           = "ipv6"                           in tags
-		debian                         = "debian"                         in tags
+		release                        = Util.tag_value!(tags, "release") |> String.to_atom()
 
 		base_keys = [
 			content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).txt"),
 		]
 		country      = Util.get_country()
-		base_sources = if debian do 
-			[
-				"deb http://ftp.#{country}.debian.org/debian/           stretch         main contrib non-free",
-				"deb http://security.debian.org/debian-security stretch/updates main contrib non-free",
-				"deb http://ftp.#{country}.debian.org/debian/           stretch-updates main contrib non-free",
-				"deb http://deb.debian.org/debian               experimental    main",
+		base_sources = case release do 
+			:stretch -> [
+				"deb http://ftp.#{country}.debian.org/debian/    stretch         main contrib non-free",
+				"deb http://security.debian.org/debian-security  stretch/updates main contrib non-free",
+				"deb http://ftp.#{country}.debian.org/debian/    stretch-updates main contrib non-free",
+				"deb http://deb.debian.org/debian                experimental    main",
 			]
-		else
-			[
+			:xenial -> [
 				"deb http://#{country}.archive.ubuntu.com/ubuntu xenial          main restricted universe multiverse",
 				"deb http://#{country}.archive.ubuntu.com/ubuntu xenial-updates  main restricted universe multiverse",
 				"deb http://security.ubuntu.com/ubuntu           xenial-security main restricted universe multiverse",
@@ -203,7 +202,7 @@ defmodule BaseSystem.Configure do
 
 		# Check for transparent_hugepage because it is missing on scaleway kernels
 		transparent_hugepage_variables =
-			if not debian and File.exists?("/sys/kernel/mm/transparent_hugepage") do
+			if release == :xenial and File.exists?("/sys/kernel/mm/transparent_hugepage") do
 				%{
 					# WARNING: removing a variable here will *not* reset it to the
 					# Linux default until a reboot.
@@ -315,7 +314,7 @@ defmodule BaseSystem.Configure do
 				%{}
 			end
 
-		bbr_parameters = if debian do
+		bbr_parameters = case release do
 			# BBR congestion control (T147569)
 			# https://lwn.net/Articles/701165/
 			#
@@ -327,12 +326,11 @@ defmodule BaseSystem.Configure do
 			#
 			# To send out data at the proper rate, BBR uses the tc-fq packet scheduler
 			# instead of the TCP congestion window.
-			%{
+			:stretch -> %{
 				"net.core.default_qdisc"          => "fq",
 				"net.ipv4.tcp_congestion_control" => "bbr",
 			}
-		else
-			%{}
+			:xenial -> %{}
 		end
 
 		sysctl_parameters =
@@ -484,7 +482,7 @@ defmodule BaseSystem.Configure do
 			"chrony",
 			"psmisc",            # for killall
 			"acl",
-		] ++ (if debian, do: [], else: ["pollinate"]) # for seeding RNG the very first time
+		] ++ (if release == :xenial, do: ["pollinate"], else: []) # for seeding RNG the very first time
 		human_admin_needs = [
 			"molly-guard",
 			"lshw",
@@ -514,7 +512,7 @@ defmodule BaseSystem.Configure do
 			"whois",
 		]
 		all_desired_packages =
-			kernel_packages(if debian, do: :stretch, else: :xenial) ++
+			kernel_packages(release) ++
 			bootloader_packages(Util.tag_value!(tags, "boot")) ++
 			base_packages ++
 			human_admin_needs ++
