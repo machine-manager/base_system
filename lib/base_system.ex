@@ -2,7 +2,7 @@ alias Converge.{
 	Runner, Context, TerminalReporter, FilePresent, FileMissing, SymlinkPresent,
 	DirectoryPresent, DirectoryEmpty, EtcCommitted, MetaPackageInstalled,
 	PackageRoots, DanglingPackagesPurged, PackagePurged, Fstab, FstabEntry,
-	RedoAfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring,
+	RedoAfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring, GPGKeybox,
 	SystemdUnitStarted, SystemdUnitStopped, SystemdUnitEnabled, SystemdUnitDisabled,
 	EtcSystemdUnitFiles, UserPresent, Grub, Fallback, User, RegularUsersPresent,
 	NoPackagesUnavailableInSource, NoPackagesNewerThanInSource, UnitError
@@ -657,7 +657,10 @@ defmodule BaseSystem.Configure do
 			%DirectoryPresent{path: "/etc/apt/sources.list.d",              mode: 0o755, immutable: true},
 			%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
 
-			%GPGSimpleKeyring{path: "/etc/apt/trusted.gpg", keys: apt_keys, mode: 0o644, immutable: true},
+			(case release do
+				:xenial  -> %GPGSimpleKeyring{path: "/etc/apt/trusted.gpg", keys: apt_keys, mode: 0o644, immutable: true}
+				:stretch -> %GPGKeybox{path: "/etc/apt/trusted.gpg", keys: apt_keys, mode: 0o644, immutable: true}
+			end),
 			%DirectoryPresent{path: "/etc/apt/trusted.gpg.d",               mode: 0o755, immutable: true},
 			# We centralize management of our apt sources in /etc/apt/trusted.gpg,
 			# so remove anything that may be in /etc/apt/trusted.gpg.d/
