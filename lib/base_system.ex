@@ -462,7 +462,7 @@ defmodule BaseSystem.Configure do
 			"netbase",
 			"ifupdown",
 			"isc-dhcp-client",
-			"unbound (>= 1.6.7)",
+			"unbound",
 			"rsyslog",
 			"logrotate",
 			"cron",
@@ -651,7 +651,7 @@ defmodule BaseSystem.Configure do
 			# Make sure unbound    is installed early because we expect it to start properly
 			%MetaPackageInstalled{
 				name:    "converge-desired-packages-early",
-				depends: ["etckeeper", "ferm", "chrony", "apparmor", "apparmor-profiles", "sysfsutils", "unbound (>= 1.6.7)"]
+				depends: ["etckeeper", "ferm", "chrony", "apparmor", "apparmor-profiles", "sysfsutils", "unbound"]
 			},
 			%EtcCommitted{message: "converge (early)"},
 
