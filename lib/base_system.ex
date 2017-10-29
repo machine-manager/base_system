@@ -558,9 +558,6 @@ defmodule BaseSystem.Configure do
 			# the boot with a scan for btrfs volumes.
 			"btrfs-tools",
 
-			# apt will use either gnupg or gnupg2, and gnupg2 is less bad
-			"gnupg",
-
 			# Container technology that works until it doesn't
 			"lxd",
 			"lxcfs",
@@ -569,8 +566,10 @@ defmodule BaseSystem.Configure do
 			# Gave us names like em0 and em1 for network devices, but we don't want
 			# this anywhere; we want systemd's predictable network interface names.
 			"biosdevname",
-		] ++ \
-		extra_undesired_packages
+		] ++ case release do 
+			:xenial  -> ["gnupg"] # apt will use either gnupg or gnupg2, and gnupg2 is less bad
+			:stretch -> []        # gnupg is gnupg2 on stretch
+		end ++ extra_undesired_packages
 
 		packages_to_purge = MapSet.difference(MapSet.new(undesired_packages), MapSet.new(all_desired_packages))
 
