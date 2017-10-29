@@ -142,12 +142,12 @@ defmodule BaseSystem.Configure do
 
 		base_keys = case release do
 			:xenial  -> [
-				content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).txt"),
+				content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).gpg"),
 			]
 			:stretch -> [
-				content("files/apt_keys/debian-archive-stretch-automatic.gpg.asc"),
-				content("files/apt_keys/debian-archive-stretch-security-automatic.gpg.asc"),
-				content("files/apt_keys/debian-archive-stretch-stable.gpg.asc"),
+				content("files/apt_keys/debian-archive-stretch-automatic.gpg"),
+				content("files/apt_keys/debian-archive-stretch-security-automatic.gpg"),
+				content("files/apt_keys/debian-archive-stretch-stable.gpg"),
 			]
 		end
 		country      = Util.get_country()
