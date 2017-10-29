@@ -420,35 +420,33 @@ defmodule BaseSystem.Configure do
 			]
 		end
 
-		base_packages = [
-			# erlang is used by all converge escripts; allow esl-erlang for
-			# bootstrapping sbuild on new Debian releases
-			"erlang-base-hipe | esl-erlang",
-			"erlang-crypto | esl-erlang",
-			"aptitude",          # used by NoPackagesUnavailableInSource
-			"apt-show-versions", # used by NoPackagesNewerThanInSource
-			"binutils",          # used by MetaPackageInstalled (binutils has `ar`)
-			"curl",              # used by Converge.Util.get_country
+		early_packages = [
+			"ferm",              # before we install a bunch of other packages; used by hosts_and_ferm_unit_base
+			"chrony",            # because the fallback ferm configuration depends on _chrony user
+			"apparmor",          # protect the system early
+			"apparmor-profiles", # protect the system early
+			"sysfsutils",        # used by Converge.Sysfs unit and for /sys configuration on boot
+			"unbound",           # started before full MetaPackageInstalled
 			"locales",           # used by locale-gen below
-			"sysfsutils",        # used by Sysfs unit and for /sys configuration on boot
-			"ferm",              # used by hosts_and_ferm_unit_base below
+		]
+		base_packages  = [
+			"git",               # used by Converge.EtcCommitted (note: auto-installed by unit)
+			"etckeeper",         # used by Converge.EtcCommitted (note: auto-installed by unit)
+			"gnupg2",            # used by Converge.GPGKeybox (note: auto-installed by unit)
+			"binutils",          # used by Converge.MetaPackageInstalled (note: auto-installed by unit)
+			"aptitude",          # used by Converge.NoPackagesUnavailableInSource
+			"apt-show-versions", # used by Converge.NoPackagesNewerThanInSource
 			"rsync",             # used by machine_manager to copy files to machine
 			"dnsutils",          # for dig, used below to make sure unbound works
-			"chrony",
-			"etckeeper",
 			"netbase",
 			"ifupdown",
 			"isc-dhcp-client",
-			"unbound",
 			"rsyslog",
 			"logrotate",
 			"cron",
 			"net-tools",
 			"apt",
-			"gnupg2",
 			"zsh",               # root's default shell
-			"apparmor",          # security!
-			"apparmor-profiles", # security!
 			"intel-microcode",
 			"console-setup",     # needed to change console font and prevent keyboard-configuration from erroring out on boot
 			"cryptsetup",
@@ -483,6 +481,7 @@ defmodule BaseSystem.Configure do
 			"git",
 			"tig",
 			"wget",
+			"curl",
 			"nano",
 			"mtr-tiny",
 			"nethogs",
@@ -554,14 +553,6 @@ defmodule BaseSystem.Configure do
 			%EtcCommitted{message: "converge (before any converging)"},
 			%Sysctl{parameters: sysctl_parameters},
 
-			# Set up locale early to avoid complaints from programs
-			%RedoAfterMeet{
-				marker:  marker("locale-gen"),
-				unit:    conf_file("/etc/locale.gen"),
-				trigger: fn -> {_, 0} = System.cmd("locale-gen", []) end
-			},
-			conf_file("/etc/default/locale"),
-
 			# Fix this annoying warning:
 			# N: Ignoring file '50unattended-upgrades.ucf-dist' in directory '/etc/apt/apt.conf.d/'
 			# as it has an invalid filename extension
@@ -619,17 +610,19 @@ defmodule BaseSystem.Configure do
 				mode:    0o640
 			},
 
-			# Make sure etckeeper  is installed because is required for the EtcCommitted units here
-			# Make sure chrony     is installed because the fallback ferm configuration depends on _chrony user
-			# Make sure ferm       is installed before we install a bunch of other packages
-			# Make sure apparmor   is installed to protect the system early
-			# Make sure sysfsutils is installed early for the Sysfs unit
-			# Make sure unbound    is installed early because we expect it to start properly
 			%MetaPackageInstalled{
 				name:    "converge-desired-packages-early",
-				depends: ["etckeeper", "ferm", "chrony", "apparmor", "apparmor-profiles", "sysfsutils", "unbound"]
+				depends: early_packages,
 			},
 			%EtcCommitted{message: "converge (early)"},
+
+			# Set up locale early to avoid complaints from programs
+			%RedoAfterMeet{
+				marker:  marker("locale-gen"),
+				unit:    conf_file("/etc/locale.gen"),
+				trigger: fn -> {_, 0} = System.cmd("locale-gen", []) end
+			},
+			conf_file("/etc/default/locale"),
 
 			%Sysfs{variables: sysfs_variables},
 
@@ -750,8 +743,8 @@ defmodule BaseSystem.Configure do
 			%DanglingPackagesPurged{},
 			# Hopefully it doesn't need to be run a third time...
 
-			%NoPackagesUnavailableInSource{whitelist_regexp: ~r/^(converge-desired-packages(-early)?|linux-(image|tools|headers)-.*)$/},
-			%NoPackagesNewerThanInSource{whitelist_regexp: ~r/^linux-(image|tools|headers)-/},
+			%NoPackagesUnavailableInSource{whitelist_regexp: ~r/\A(converge-desired-packages(-early)?|linux-(image|tools|headers)-.*)\z/},
+			%NoPackagesNewerThanInSource{whitelist_regexp: ~r/\Alinux-(image|tools|headers)-.*\z/},
 
 			hosts_and_ferm_unit(
 				extra_hosts,
