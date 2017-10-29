@@ -30,6 +30,8 @@ defmodule BaseSystem.Configure do
 	`binutils`'s `ar` is needed for `MetaPackageInstalled`.
 
 	`etckeeper` is needed for `EtcCommitted`.
+
+	`gnupg2` is needed for `GPGKeybox`.
 	"""
 	alias BaseSystem.{BadRoleDescriptorError, NoTagsError}
 	require Util
