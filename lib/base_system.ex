@@ -448,7 +448,7 @@ defmodule BaseSystem.Configure do
 		base_packages = [
 			# erlang is used by all converge escripts; allow esl-erlang for
 			# bootstrapping sbuild on new Debian releases
-			"erlang-base-hipe | esl-erlang",  
+			"erlang-base-hipe | esl-erlang",
 			"erlang-crypto | esl-erlang",
 			"aptitude",          # used by NoPackagesUnavailableInSource
 			"apt-show-versions", # used by NoPackagesNewerThanInSource
