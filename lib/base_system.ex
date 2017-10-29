@@ -706,7 +706,7 @@ defmodule BaseSystem.Configure do
 					conf_dir("/etc/chrony"),
 					%FilePresent{
 						path:    "/etc/chrony/chrony.conf",
-						content: EEx.eval_string(content("files/etc/chrony/chrony.conf.eex"), [country: Util.get_country()]),
+						content: EEx.eval_string(content("files/etc/chrony/chrony.conf.eex"), [country: country]),
 						mode:    0o644
 					},
 				]},
