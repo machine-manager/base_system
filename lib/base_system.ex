@@ -9,31 +9,7 @@ alias Converge.{
 }
 alias Gears.TableFormatter
 
-defmodule BaseSystem.NoTagsError do
-	defexception [:message]
-end
-
-defmodule BaseSystem.BadRoleDescriptorError do
-	defexception [:message]
-end
-
 defmodule BaseSystem.Configure do
-	@moduledoc """
-	Converts a `debootstrap --variant=minbase` install of Ubuntu LTS into a
-	useful Ubuntu system.
-
-	Requires that these packages are already installed:
-	`erlang-base-hipe erlang-crypto curl binutils etckeeper`
-
-	`curl` is needed for `Util.get_country`.
-
-	`binutils`'s `ar` is needed for `MetaPackageInstalled`.
-
-	`etckeeper` is needed for `EtcCommitted`.
-
-	`gnupg2` is needed for `GPGKeybox`.
-	"""
-	alias BaseSystem.{BadRoleDescriptorError, NoTagsError}
 	require Util
 	import Util, only: [content: 1, path_expand_content: 1, conf_file: 1, conf_file: 3, conf_dir: 1, conf_dir: 2, marker: 1]
 	Util.declare_external_resources("files")
@@ -62,7 +38,7 @@ defmodule BaseSystem.Configure do
 	@spec configure_with_roles([String.t], [module]) :: nil
 	def configure_with_roles(tags, role_modules) do
 		if tags == [] do
-			raise(NoTagsError, "Refusing to configure with 0 tags because this is probably a mistake; pass a dummy tag if not")
+			raise("Refusing to configure with 0 tags because this is probably a mistake; pass a dummy tag if not")
 		end
 
 		role_modules                 = get_all_role_modules(tags, role_modules |> MapSet.new)
@@ -70,9 +46,8 @@ defmodule BaseSystem.Configure do
 		descriptors                  = for {module, desc} <- role_modules_and_descriptors do
 			descriptor_keys  = desc |> Map.keys |> MapSet.new
 			unsupported_keys = MapSet.difference(descriptor_keys, @allowed_descriptor_keys)
-			if unsupported_keys |> MapSet.size > 0 do
-				raise(BadRoleDescriptorError,
-					"Descriptor for #{inspect module} has unsupported keys #{inspect(unsupported_keys |> MapSet.to_list)}")
+			if MapSet.size(unsupported_keys) > 0 do
+				raise("Descriptor for #{inspect module} has unsupported keys #{inspect(unsupported_keys |> MapSet.to_list)}")
 			end
 			desc
 		end
@@ -146,8 +121,8 @@ defmodule BaseSystem.Configure do
 			:xenial  -> [content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).gpg")]
 			:stretch -> [content("files/apt_keys/debian-archive-keyring.gpg")]
 		end
-		country      = Util.get_country()
-		base_sources = case release do 
+		country      = Util.tag_value!(tags, "country")
+		base_sources = case release do
 			:xenial -> [
 				"deb http://#{country}.archive.ubuntu.com/ubuntu xenial          main restricted universe multiverse",
 				"deb http://#{country}.archive.ubuntu.com/ubuntu xenial-updates  main restricted universe multiverse",
