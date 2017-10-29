@@ -23,11 +23,13 @@ defmodule BaseSystem.Configure do
 	useful Ubuntu system.
 
 	Requires that these packages are already installed:
-	`erlang-base-hipe erlang-crypto curl binutils`
+	`erlang-base-hipe erlang-crypto curl binutils etckeeper`
 
 	`curl` is needed for `Util.get_country`.
 
 	`binutils`'s `ar` is needed for `MetaPackageInstalled`.
+
+	`etckeeper` is needed for `EtcCommitted`.
 	"""
 	alias BaseSystem.{BadRoleDescriptorError, NoTagsError}
 	require Util
@@ -579,6 +581,9 @@ defmodule BaseSystem.Configure do
 		packages_to_purge = MapSet.difference(MapSet.new(undesired_packages), MapSet.new(all_desired_packages))
 
 		units = [
+			%EtcCommitted{message: "converge (before any converging)"},
+			%Sysctl{parameters: sysctl_parameters},
+
 			# Set up locale early to avoid complaints from programs
 			%RedoAfterMeet{
 				marker:  marker("locale-gen"),
@@ -586,6 +591,54 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> {_, 0} = System.cmd("locale-gen", []) end
 			},
 			conf_file("/etc/default/locale"),
+
+			# Fix this annoying warning:
+			# N: Ignoring file '50unattended-upgrades.ucf-dist' in directory '/etc/apt/apt.conf.d/'
+			# as it has an invalid filename extension
+			%FileMissing{path: "/etc/apt/apt.conf.d/50unattended-upgrades.ucf-dist"},
+
+			%FilePresent{
+				path:      "/etc/apt/sources.list",
+				content:   apt_sources ++ [""] |> Enum.join("\n"),
+				# TODO: after we have _apt in a group, use 0o640 and group: ... to hide the custom-packages password
+				mode:      0o644,
+				user:      "root",
+				#group:     "_apt",
+				immutable: true
+			},
+
+			# We centralize management of our apt sources in /etc/apt/sources.list,
+			# so remove anything that may be in /etc/apt/sources.list.d/
+			%DirectoryPresent{path: "/etc/apt/sources.list.d", mode: 0o755, immutable: true},
+			%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
+
+			(case release do
+				:xenial  -> %GPGSimpleKeyring{path: "/etc/apt/trusted.gpg", keys: apt_keys, mode: 0o644, immutable: true}
+				:stretch -> %GPGKeybox{path: "/etc/apt/trusted.gpg", keys: apt_keys, mode: 0o644, immutable: true}
+			end),
+			%DirectoryPresent{path: "/etc/apt/trusted.gpg.d", mode: 0o755, immutable: true},
+			# We centralize management of our apt sources in /etc/apt/trusted.gpg,
+			# so remove anything that may be in /etc/apt/trusted.gpg.d/
+			%DirectoryEmpty{path: "/etc/apt/trusted.gpg.d"},
+
+			%FilePresent{path: "/etc/apt/preferences", mode: 0o644, content: make_apt_preferences(extra_undesired_upgrades)},
+			%DirectoryPresent{path: "/etc/apt/preferences.d", mode: 0o755, immutable: true},
+			# We centralize management of our apt preferences in /etc/apt/preferences,
+			# so remove anything that may be in /etc/apt/preferences.d/
+			%DirectoryEmpty{path: "/etc/apt/preferences.d"},
+
+			fstab_unit(),
+
+			# UTC timezone everywhere to avoid confusion and timezone-handling bugs
+			conf_file("/etc/timezone"),
+
+			# Install default /etc/environment to fix servers that may have an ancient/broken one
+			conf_file("/etc/environment"),
+
+			# Prevent sudo from caching credentials, because otherwise programs
+			# in the same terminal may be able to unexpectedly `sudo` without asking.
+			conf_dir("/etc/sudoers.d"),
+			conf_file("/etc/sudoers.d/base_system"),
 
 			# We need a git config with a name and email for etckeeper to work
 			%DirectoryPresent{path: "/root/.config",     mode: 0o700},
@@ -607,6 +660,8 @@ defmodule BaseSystem.Configure do
 				depends: ["etckeeper", "ferm", "chrony", "apparmor", "apparmor-profiles", "sysfsutils", "unbound (>= 1.6.7)"]
 			},
 			%EtcCommitted{message: "converge (early)"},
+
+			%Sysfs{variables: sysfs_variables},
 
 			# Make sure apparmor is started
 			# TODO: for Debian, make sure it's started only after first successful `configure`
@@ -636,57 +691,6 @@ defmodule BaseSystem.Configure do
 					extra_ferm_postrouting_chain
 				)
 			),
-
-			# Fix this annoying warning:
-			# N: Ignoring file '50unattended-upgrades.ucf-dist' in directory '/etc/apt/apt.conf.d/'
-			# as it has an invalid filename extension
-			%FileMissing{path: "/etc/apt/apt.conf.d/50unattended-upgrades.ucf-dist"},
-
-			%FilePresent{
-				path:      "/etc/apt/sources.list",
-				content:   apt_sources ++ [""] |> Enum.join("\n"),
-				# TODO: after we have _apt in a group, use 0o640 and group: ... to hide the custom-packages password
-				mode:      0o644,
-				user:      "root",
-				#group:     "_apt",
-				immutable: true
-			},
-
-			# We centralize management of our apt sources in /etc/apt/sources.list,
-			# so remove anything that may be in /etc/apt/sources.list.d/
-			%DirectoryPresent{path: "/etc/apt/sources.list.d",              mode: 0o755, immutable: true},
-			%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
-
-			(case release do
-				:xenial  -> %GPGSimpleKeyring{path: "/etc/apt/trusted.gpg", keys: apt_keys, mode: 0o644, immutable: true}
-				:stretch -> %GPGKeybox{path: "/etc/apt/trusted.gpg", keys: apt_keys, mode: 0o644, immutable: true}
-			end),
-			%DirectoryPresent{path: "/etc/apt/trusted.gpg.d",               mode: 0o755, immutable: true},
-			# We centralize management of our apt sources in /etc/apt/trusted.gpg,
-			# so remove anything that may be in /etc/apt/trusted.gpg.d/
-			%DirectoryEmpty{path: "/etc/apt/trusted.gpg.d"},
-
-			%FilePresent{path: "/etc/apt/preferences",        mode: 0o644, content: make_apt_preferences(extra_undesired_upgrades)},
-			%DirectoryPresent{path: "/etc/apt/preferences.d", mode: 0o755, immutable: true},
-			# We centralize management of our apt preferences in /etc/apt/preferences,
-			# so remove anything that may be in /etc/apt/preferences.d/
-			%DirectoryEmpty{path: "/etc/apt/preferences.d"},
-
-			fstab_unit(),
-
-			%Sysfs{variables: sysfs_variables},
-			%Sysctl{parameters: sysctl_parameters},
-
-			# UTC timezone everywhere to avoid confusion and timezone-handling bugs
-			conf_file("/etc/timezone"),
-
-			# Install default /etc/environment to fix servers that may have an ancient/broken one
-			conf_file("/etc/environment"),
-
-			# Prevent sudo from caching credentials, because otherwise programs
-			# in the same terminal may be able to unexpectedly `sudo` without asking.
-			conf_dir("/etc/sudoers.d"),
-			conf_file("/etc/sudoers.d/base_system"),
 
 			# Prevent non-root users from restarting or shutting down the system using the GUI.
 			# This is mostly to prevent accidental restarts; the "Log Out" and "Restart" buttons
