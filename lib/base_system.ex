@@ -926,7 +926,10 @@ defmodule BaseSystem.Configure do
 	end
 
 	defp kernel_packages(:xenial),  do: ["linux-image-generic"]
-	defp kernel_packages(:stretch), do: ["linux-image-4.14.0-rc5-amd64", "wireguard-dkms"]
+	# We need busybox because otherwise we get:
+	# update-initramfs: Generating /boot/initrd.img-4.14.0-rc5-amd64
+	# E: busybox or busybox-static, version 1:1.22.0-17~ or later, is required but not installed
+	defp kernel_packages(:stretch), do: ["linux-image-4.14.0-rc5-amd64", "busybox", "wireguard-dkms"]
 
 	defp bootloader_packages("uefi"),            do: ["grub-efi-amd64"]
 	defp bootloader_packages("uefi_bfq"),        do: ["grub-efi-amd64"]
