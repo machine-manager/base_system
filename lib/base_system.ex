@@ -433,6 +433,7 @@ defmodule BaseSystem.Configure do
 			"git",               # used by Converge.EtcCommitted (note: auto-installed by unit)
 			"etckeeper",         # used by Converge.EtcCommitted (note: auto-installed by unit)
 			"gnupg2",            # used by Converge.GPGKeybox (note: auto-installed by unit)
+			"faketime",          # used by Converge.GPGKeybox (note: auto-installed by unit)
 			"binutils",          # used by Converge.MetaPackageInstalled (note: auto-installed by unit)
 			"aptitude",          # used by Converge.NoPackagesUnavailableInSource
 			"apt-show-versions", # used by Converge.NoPackagesNewerThanInSource
