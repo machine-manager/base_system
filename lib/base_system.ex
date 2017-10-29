@@ -550,6 +550,15 @@ defmodule BaseSystem.Configure do
 		packages_to_purge = MapSet.difference(MapSet.new(undesired_packages), MapSet.new(all_desired_packages))
 
 		units = [
+			# We need a git config with a name and email for etckeeper to work
+			%DirectoryPresent{path: "/root/.config",     mode: 0o700},
+			%DirectoryPresent{path: "/root/.config/git", mode: 0o700},
+			%FilePresent{
+				path:    "/root/.config/git/config",
+				content: EEx.eval_string(content("files/root/.config/git/config.eex"), [hostname: Util.get_hostname()]),
+				mode:    0o640
+			},
+
 			%EtcCommitted{message: "converge (before any converging)"},
 			%Sysctl{parameters: sysctl_parameters},
 
@@ -600,15 +609,6 @@ defmodule BaseSystem.Configure do
 			# in the same terminal may be able to unexpectedly `sudo` without asking.
 			conf_dir("/etc/sudoers.d"),
 			conf_file("/etc/sudoers.d/base_system"),
-
-			# We need a git config with a name and email for etckeeper to work
-			%DirectoryPresent{path: "/root/.config",     mode: 0o700},
-			%DirectoryPresent{path: "/root/.config/git", mode: 0o700},
-			%FilePresent{
-				path:    "/root/.config/git/config",
-				content: EEx.eval_string(content("files/root/.config/git/config.eex"), [hostname: Util.get_hostname()]),
-				mode:    0o640
-			},
 
 			%MetaPackageInstalled{
 				name:    "converge-desired-packages-early",
