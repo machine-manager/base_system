@@ -1029,12 +1029,10 @@ defmodule BaseSystem.Configure do
 		# eno, ens, enp, enx, eth: https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
 		ethernet_interfaces = interface_names |> Enum.filter(fn name -> name |> String.starts_with?("e")   end)
 		wifi_interfaces     = interface_names |> Enum.filter(fn name -> name |> String.starts_with?("wlo") end)
-		# ferm configuration is dependent on uids and gids, so make sure ferm gets reloaded when users/groups change
-		passwd_sha256sum    = :crypto.hash(:sha256, File.read!("/etc/passwd")) |> Base.encode16(case: :lower)
-		group_sha256sum     = :crypto.hash(:sha256, File.read!("/etc/group"))  |> Base.encode16(case: :lower)
 		"""
-		# /etc/passwd sha256sum: #{passwd_sha256sum}
-		# /etc/group  sha256sum: #{group_sha256sum}
+		# ferm configuration is dependent on uids and gids, so make sure ferm gets reloaded when users/groups change
+		# /etc/passwd sha256sum: #{sha256sum("/etc/passwd")}
+		# /etc/group  sha256sum: #{sha256sum("/etc/group")}
 
 		@def $ethernet_interfaces = (#{ethernet_interfaces |> Enum.join(" ")});
 		@def $wifi_interfaces     = (#{wifi_interfaces     |> Enum.join(" ")});
@@ -1124,6 +1122,16 @@ defmodule BaseSystem.Configure do
 			}
 		}
 		"""
+	end
+
+	defp sha256sum(path) do
+		# Don't use :crypto.hash because that requires erlang-crypto, which may
+		# be linked to the wrong version of openssl when configuring a machine
+		# from a machine_manager running on a different Debian/Ubuntu release.
+		{out, 0} = System.cmd("sha256sum", ["--", path])
+		out
+		|> String.split(~r/\s/)
+		|> Enum.at(0)
 	end
 
 	defp indent(s) do
