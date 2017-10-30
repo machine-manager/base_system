@@ -896,7 +896,10 @@ defmodule BaseSystem.Configure do
 	end
 
 	defp kernel_packages(:xenial),  do: ["linux-image-generic"]
-	defp kernel_packages(:stretch), do: ["linux-image-amd64"]
+	# initramfs-tools trigger requires busybox | busybox-static even though it doesn't list it in Depends!?
+	# update-initramfs: Generating /boot/initrd.img-4.9.0-4-amd64
+	# E: busybox or busybox-static, version 1:1.22.0-17~ or later, is required but not installed
+	defp kernel_packages(:stretch), do: ["linux-image-amd64", "busybox"]
 
 	defp bootloader_packages("uefi"),            do: ["grub-efi-amd64"]
 	defp bootloader_packages("uefi_bfq"),        do: ["grub-efi-amd64"]
