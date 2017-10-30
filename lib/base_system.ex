@@ -465,6 +465,7 @@ defmodule BaseSystem.Configure do
 			"acl",
 		] ++ (if release == :xenial, do: ["pollinate"], else: []) # for seeding RNG the very first time
 		human_admin_needs = [
+			"file",
 			"molly-guard",
 			"lshw",
 			"pciutils",       # for lspci
