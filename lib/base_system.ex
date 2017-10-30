@@ -747,16 +747,6 @@ defmodule BaseSystem.Configure do
 			%NoPackagesUnavailableInSource{whitelist_regexp: ~r/\A(converge-desired-packages(-early)?|linux-(image|tools|headers)-.*)\z/},
 			%NoPackagesNewerThanInSource{whitelist_regexp: ~r/\Alinux-(image|tools|headers)-.*\z/},
 
-			hosts_and_ferm_unit(
-				extra_hosts,
-				make_ferm_config(
-					extra_ferm_input_chain,
-					base_output_chain ++ extra_ferm_output_chain,
-					extra_ferm_forward_chain,
-					extra_ferm_postrouting_chain
-				)
-			),
-
 			# Make sure this is cleared out after a google-chrome-* install drops a file here
 			%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
 
@@ -818,6 +808,19 @@ defmodule BaseSystem.Configure do
 			%All{units: boot_units(Util.tag_value!(tags, "boot"), Util.tag_value(tags, "boot_resolution"))},
 			%EtcSystemdUnitFiles{units: extra_etc_systemd_unit_files},
 			%All{units: extra_post_install_units},
+
+			# To stabilize on the first run, this should be near-last, after any possible
+			# modifications to /etc/passwd or /etc/group
+			hosts_and_ferm_unit(
+				extra_hosts,
+				make_ferm_config(
+					extra_ferm_input_chain,
+					base_output_chain ++ extra_ferm_output_chain,
+					extra_ferm_forward_chain,
+					extra_ferm_postrouting_chain
+				)
+			),
+
 			%EtcCommitted{message: "converge"},
 		]
 		ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}
