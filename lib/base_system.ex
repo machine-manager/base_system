@@ -425,6 +425,7 @@ defmodule BaseSystem.Configure do
 			"chrony",            # because the fallback ferm configuration depends on _chrony user
 			"apparmor",          # protect the system early
 			"apparmor-profiles", # protect the system early
+			"apparmor-profiles-extra",
 			"sysfsutils",        # used by Converge.Sysfs unit and for /sys configuration on boot
 			"unbound",           # started before full MetaPackageInstalled
 			"locales",           # used by locale-gen below
