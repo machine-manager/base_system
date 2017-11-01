@@ -31,6 +31,7 @@ alias Converge.{
 	SystemdUnitStarted,
 	SystemdUnitStopped,
 	TerminalReporter,
+	Unit,
 	UnitError,
 	User,
 	UserPresent,
@@ -486,10 +487,7 @@ defmodule BaseSystem.Configure do
 		# Packages that we need to install before we can converge the giant All unit below
 		unit_packages =
 			@unit_modules
-			# We have the atom for the module, but we need a different, longer atom:
-			# protocol implementations end up in a module prefixed with the protocol name.
-			|> Enum.map(fn mod -> "Elixir.Converge.Unit.#{mod |> Atom.to_string |> String.replace_leading("Elixir.", "")}" |> String.to_atom end)
-			|> Enum.flat_map(fn mod -> apply(mod, :package_dependencies, [:release]) end)
+			|> Enum.flat_map(fn mod -> Unit.package_dependencies(%{__struct__: mod}, release) end)
 			# We use the Grub unit below, but not for all types of machines
 			|> Kernel.--(["grub2-common"])
 
