@@ -1,15 +1,78 @@
 alias Converge.{
-	Runner, Context, TerminalReporter, FilePresent, FileMissing, SymlinkPresent,
-	DirectoryPresent, DirectoryEmpty, EtcCommitted, MetaPackageInstalled,
-	PackageRoots, DanglingPackagesPurged, PackagePurged, Fstab, FstabEntry,
-	RedoAfterMeet, BeforeMeet, Sysctl, Sysfs, Util, All, GPGSimpleKeyring, GPGKeybox,
-	SystemdUnitStarted, SystemdUnitStopped, SystemdUnitEnabled, SystemdUnitDisabled,
-	EtcSystemdUnitFiles, UserPresent, Grub, Fallback, User, RegularUsersPresent,
-	NoPackagesUnavailableInSource, NoPackagesNewerThanInSource, UnitError
+	All,
+	BeforeMeet,
+	Context,
+	DanglingPackagesPurged,
+	DirectoryEmpty,
+	DirectoryPresent,
+	EtcCommitted,
+	EtcSystemdUnitFiles,
+	Fallback,
+	FileMissing,
+	FilePresent,
+	Fstab,
+	FstabEntry,
+	GPGKeybox,
+	GPGSimpleKeyring,
+	Grub,
+	MetaPackageInstalled,
+	NoPackagesNewerThanInSource,
+	NoPackagesUnavailableInSource,
+	PackagePurged,
+	PackageRoots,
+	RedoAfterMeet,
+	RegularUsersPresent,
+	Runner,
+	SymlinkPresent,
+	Sysctl,
+	Sysfs,
+	SystemdUnitDisabled,
+	SystemdUnitEnabled,
+	SystemdUnitStarted,
+	SystemdUnitStopped,
+	TerminalReporter,
+	UnitError,
+	User,
+	UserPresent,
+	Util
 }
 alias Gears.TableFormatter
 
 defmodule BaseSystem.Configure do
+	# Keep in sync with the units above; this list is queried to determine which
+	# packages need to be installed before converging the giant All unit below.
+	@unit_modules [
+		All,
+		BeforeMeet,
+		DanglingPackagesPurged,
+		DirectoryEmpty,
+		DirectoryPresent,
+		EtcCommitted,
+		EtcSystemdUnitFiles,
+		Fallback,
+		FileMissing,
+		FilePresent,
+		Fstab,
+		GPGKeybox,
+		GPGSimpleKeyring,
+		Grub,
+		MetaPackageInstalled,
+		NoPackagesNewerThanInSource,
+		NoPackagesUnavailableInSource,
+		PackagePurged,
+		PackageRoots,
+		RedoAfterMeet,
+		RegularUsersPresent,
+		SymlinkPresent,
+		Sysctl,
+		Sysfs,
+		SystemdUnitDisabled,
+		SystemdUnitEnabled,
+		SystemdUnitStarted,
+		SystemdUnitStopped,
+		UserPresent,
+	]
+
 	require Util
 	import Util, only: [content: 1, path_expand_content: 1, conf_file: 1, conf_file: 3, conf_dir: 1, conf_dir: 2, marker: 1]
 	Util.declare_external_resources("files")
@@ -420,24 +483,27 @@ defmodule BaseSystem.Configure do
 			]
 		end
 
+		# Packages that we need to install before we can converge the giant All unit below
+		unit_packages =
+			@unit_modules
+			# We have the atom for the module, but we need a different, longer atom:
+			# protocol implementations end up in a module prefixed with the protocol name.
+			|> Enum.map(fn mod -> "Elixir.Converge.Unit.#{mod |> Atom.to_string |> String.replace_leading("Elixir.", "")}" |> String.to_atom end)
+			|> Enum.flat_map(fn mod -> apply(mod, :package_dependencies, [:release]) end)
+			# We use the Grub unit below, but not for all types of machines
+			|> Kernel.--(["grub2-common"])
+
+		# Packages not used by the unit implementations themselves but still necessary for base_system
 		early_packages = [
 			"ferm",              # before we install a bunch of other packages; used by hosts_and_ferm_unit_base
 			"chrony",            # because the fallback ferm configuration depends on _chrony user
 			"apparmor",          # protect the system early
 			"apparmor-profiles", # protect the system early
 			"apparmor-profiles-extra",
-			"sysfsutils",        # used by Converge.Sysfs unit and for /sys configuration on boot
 			"unbound",           # started before full MetaPackageInstalled
 			"locales",           # used by locale-gen below
 		]
 		base_packages  = [
-			"git",               # used by Converge.EtcCommitted (note: auto-installed by unit)
-			"etckeeper",         # used by Converge.EtcCommitted (note: auto-installed by unit)
-			"gnupg2",            # used by Converge.GPGKeybox (note: auto-installed by unit)
-			"faketime",          # used by Converge.GPGKeybox (note: auto-installed by unit)
-			"binutils",          # used by Converge.MetaPackageInstalled (note: auto-installed by unit)
-			"aptitude",          # used by Converge.NoPackagesUnavailableInSource
-			"apt-show-versions", # used by Converge.NoPackagesNewerThanInSource
 			"rsync",             # used by machine_manager to copy files to machine
 			"dnsutils",          # for dig, used below to make sure unbound works
 			"netbase",
@@ -498,6 +564,8 @@ defmodule BaseSystem.Configure do
 		all_desired_packages =
 			kernel_packages(release) ++
 			bootloader_packages(Util.tag_value!(tags, "boot")) ++
+			unit_packages ++
+			early_packages ++
 			base_packages ++
 			human_admin_needs ++
 			extra_desired_packages
@@ -825,6 +893,12 @@ defmodule BaseSystem.Configure do
 
 			%EtcCommitted{message: "converge"},
 		]
+		# Install packages required by the unit implementations
+		for package <- Enum.uniq(unit_packages) do
+			if not Util.installed?(package) do
+				Util.install_package(package)
+			end
+		end
 		ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}
 		Runner.converge(%All{units: units}, ctx)
 	end
