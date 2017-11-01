@@ -631,6 +631,9 @@ defmodule BaseSystem.Configure do
 			%EtcCommitted{message: "converge (before any converging)"},
 			%Sysctl{parameters: sysctl_parameters},
 
+			# Don't let other users read /etc/apt/sources.list or anything else in /etc/apt
+			%DirectoryPresent{path: "/etc/apt", mode: 0o750},
+
 			# Fix this annoying warning:
 			# N: Ignoring file '50unattended-upgrades.ucf-dist' in directory '/etc/apt/apt.conf.d/'
 			# as it has an invalid filename extension
@@ -643,10 +646,7 @@ defmodule BaseSystem.Configure do
 			%FilePresent{
 				path:      "/etc/apt/sources.list",
 				content:   apt_sources ++ [""] |> Enum.join("\n"),
-				mode:      0o440,
-				# Make _apt the user owner because there is no _apt group
-				user:      "_apt",
-				group:     "root",
+				mode:      0o644,
 				immutable: true
 			},
 
