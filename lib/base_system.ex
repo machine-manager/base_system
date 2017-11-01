@@ -650,6 +650,14 @@ defmodule BaseSystem.Configure do
 				immutable: true
 			},
 
+			# Don't let any user read the package cache and other metadata
+			%DirectoryPresent{path: "/var/cache/apt",               mode: 0o750},
+			%DirectoryPresent{path: "/var/cache/apt-show-versions", mode: 0o750},
+			%DirectoryPresent{path: "/var/cache/apt-xapian-index",  mode: 0o750},
+			%DirectoryPresent{path: "/var/cache/debconf",           mode: 0o750},
+			%DirectoryPresent{path: "/var/lib/apt",                 mode: 0o750},
+			%DirectoryPresent{path: "/var/log/apt",                 mode: 0o750},
+
 			# We centralize management of our apt sources in /etc/apt/sources.list,
 			# so remove anything that may be in /etc/apt/sources.list.d/
 			%DirectoryPresent{path: "/etc/apt/sources.list.d", mode: 0o755, immutable: true},
