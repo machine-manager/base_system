@@ -916,10 +916,10 @@ defmodule BaseSystem.Configure do
 		if missing_unit_impl_packages != [] do
 			try do
 				Util.update_package_index()
-			catch
+			rescue
 				# If we get an error (because e.g. /etc/apt/sources.list is bad),
 				# let's hope the existing package index has the packages we need.
-				_ -> nil
+				RuntimeError -> nil
 			end
 			for package <- missing_unit_impl_packages do
 				Util.install_package(package)
