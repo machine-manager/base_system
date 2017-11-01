@@ -914,7 +914,13 @@ defmodule BaseSystem.Configure do
 			|> Enum.uniq
 			|> Enum.reject(&Util.installed?/1)
 		if missing_unit_impl_packages != [] do
-			Util.update_package_index()
+			try do
+				Util.update_package_index()
+			catch
+				# If we get an error (because e.g. /etc/apt/sources.list is bad),
+				# let's hope the existing package index has the packages we need.
+				_ -> nil
+			end
 			for package <- missing_unit_impl_packages do
 				Util.install_package(package)
 			end
