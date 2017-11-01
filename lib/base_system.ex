@@ -643,10 +643,10 @@ defmodule BaseSystem.Configure do
 			%FilePresent{
 				path:      "/etc/apt/sources.list",
 				content:   apt_sources ++ [""] |> Enum.join("\n"),
-				# TODO: after we have _apt in a group, use 0o640 and group: ... to hide the custom-packages password
-				mode:      0o644,
-				user:      "root",
-				#group:     "_apt",
+				mode:      0o440,
+				# Make _apt the user owner because there is no _apt group
+				user:      "_apt",
+				group:     "root",
 				immutable: true
 			},
 
