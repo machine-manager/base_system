@@ -893,14 +893,22 @@ defmodule BaseSystem.Configure do
 
 			%EtcCommitted{message: "converge"},
 		]
-		# Install packages required by the unit implementations
-		for package <- Enum.uniq(unit_packages) do
-			if not Util.installed?(package) do
+		install_unit_impl_packages(unit_packages)
+		ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}
+		Runner.converge(%All{units: units}, ctx)
+	end
+
+	defp install_unit_impl_packages(unit_packages) do
+		missing_unit_impl_packages =
+			unit_packages
+			|> Enum.uniq
+			|> Enum.reject(&Util.installed?/1)
+		if missing_unit_impl_packages != [] do
+			Util.update_package_index()
+			for package <- missing_unit_impl_packages do
 				Util.install_package(package)
 			end
 		end
-		ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}
-		Runner.converge(%All{units: units}, ctx)
 	end
 
 	defp hosts_and_ferm_unit(extra_hosts, ferm_config, ferm_config_fallback \\ nil) do
