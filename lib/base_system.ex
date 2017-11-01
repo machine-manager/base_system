@@ -655,7 +655,6 @@ defmodule BaseSystem.Configure do
 			%DirectoryPresent{path: "/var/cache/apt-show-versions", mode: 0o750},
 			%DirectoryPresent{path: "/var/cache/apt-xapian-index",  mode: 0o750},
 			%DirectoryPresent{path: "/var/cache/debconf",           mode: 0o750},
-			%DirectoryPresent{path: "/var/lib/apt",                 mode: 0o750},
 			%DirectoryPresent{path: "/var/log/apt",                 mode: 0o750},
 
 			# We centralize management of our apt sources in /etc/apt/sources.list,
