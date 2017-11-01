@@ -651,7 +651,7 @@ defmodule BaseSystem.Configure do
 			},
 
 			# Don't let any user read the package cache and other metadata
-			%DirectoryPresent{path: "/var/cache/apt",               mode: 0o750},
+			%DirectoryPresent{path: "/var/cache/apt",               mode: 0o570, user: "_apt", group: "root"},
 			%DirectoryPresent{path: "/var/cache/apt-show-versions", mode: 0o750},
 			%DirectoryPresent{path: "/var/cache/apt-xapian-index",  mode: 0o750},
 			%DirectoryPresent{path: "/var/cache/debconf",           mode: 0o750},
