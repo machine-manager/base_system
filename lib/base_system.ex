@@ -636,6 +636,10 @@ defmodule BaseSystem.Configure do
 			# as it has an invalid filename extension
 			%FileMissing{path: "/etc/apt/apt.conf.d/50unattended-upgrades.ucf-dist"},
 
+			%FileMissing{path: "/etc/apt/sources.list~"},
+			%FileMissing{path: "/etc/apt/sources.list.bak"},
+			%FileMissing{path: "/etc/apt/sources.list.save"},
+			%FileMissing{path: "/etc/apt/sources.list.distUpgrade"},
 			%FilePresent{
 				path:      "/etc/apt/sources.list",
 				content:   apt_sources ++ [""] |> Enum.join("\n"),
