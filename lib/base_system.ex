@@ -497,7 +497,12 @@ defmodule BaseSystem.Configure do
 			"chrony",            # because the fallback ferm configuration depends on _chrony user
 			"apparmor",          # protect the system early
 			"apparmor-profiles", # protect the system early
-			"apparmor-profiles-extra",
+			# Do not install apparmor-profiles-extra because it includes a broken profile
+			# for apt-cacher-ng, which causes the service to fail to start:
+			#
+			# kernel: audit: type=1400 audit(1509580980.586:74): apparmor="DENIED" operation="sendmsg"
+			# profile="/usr/sbin/apt-cacher-ng" name="/run/systemd/notify" pid=2597 comm="apt-cacher-ng"
+			# requested_mask="w" denied_mask="w" fsuid=110 ouid=0
 			"unbound",           # started before full MetaPackageInstalled
 			"locales",           # used by locale-gen below
 		]
