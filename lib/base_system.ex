@@ -450,7 +450,9 @@ defmodule BaseSystem.Configure do
 			# http://kernel.ubuntu.com/git/ubuntu/ubuntu-xenial.git/commit/?id=f08b525e9d9d65021556895399c248d1248842ea
 			"tipc",
 
-			# TODO: blacklist overlay and overlayfs once we can whitelist it on sbuild
+			# Has had local root exploits in the past
+			"overlay",
+			"overlayfs",
 		] ++ case "bluetooth" in tags do
 			true  -> []
 			false -> [
@@ -486,6 +488,9 @@ defmodule BaseSystem.Configure do
 				"rfcomm",
 			]
 		end
+
+		# Remove from blacklist if a role has the module listed in boot_time_kernel_modules
+		blacklisted_kernel_modules = blacklisted_kernel_modules -- extra_boot_time_kernel_modules
 
 		# Packages that we need to install before we can converge the giant All unit below
 		unit_packages =
@@ -646,12 +651,16 @@ defmodule BaseSystem.Configure do
 				         |> Enum.join
 			},
 
-			%FilePresent{
-				path:    "/etc/modules",
-				mode:    0o644,
-				content: extra_boot_time_kernel_modules
-				         |> Kernel.++([""])
-				         |> Enum.join("\n")
+			%RedoAfterMeet{
+				marker:  marker("kmod.service"),
+				unit:    %FilePresent{
+					path:    "/etc/modules",
+					mode:    0o644,
+					content: extra_boot_time_kernel_modules
+					         |> Kernel.++([""])
+					         |> Enum.join("\n")
+				},
+				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("kmod.service") end
 			},
 
 			# Fix this annoying warning:
