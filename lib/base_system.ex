@@ -533,6 +533,7 @@ defmodule BaseSystem.Configure do
 			"chrony",
 			"psmisc",            # for killall
 			"acl",
+			"prometheus-node-exporter",
 		] ++ (if release == :xenial, do: ["pollinate"], else: []) # for seeding RNG the very first time
 		human_admin_needs = [
 			"file",
@@ -863,6 +864,9 @@ defmodule BaseSystem.Configure do
 				         |> Enum.join
 			},
 
+			%SystemdUnitEnabled{name: "prometheus-node-exporter.service"},
+			%SystemdUnitStarted{name: "prometheus-node-exporter.service"},
+
 			# We don't use bash for the interactive shell, so there's no point in
 			# dropping these files into every user's $HOME
 			%FileMissing{path: "/etc/skel/.bashrc"},
@@ -1164,6 +1168,14 @@ defmodule BaseSystem.Configure do
 				# allow WireGuard traffic
 				interface ($ethernet_interfaces $wifi_interfaces) {
 					proto udp dport 51820 ACCEPT;
+				}
+
+				# allow localhost or any wg0 host to reach prometheus-node-exporter
+				#
+				# TODO: add configuration to lock this down to a few hosts that actually
+				# need to see the metrics
+				interface (lo wg0) {
+					proto tcp syn dport 9100 ACCEPT;
 				}
 
 		#{input_chain |> Enum.join("\n") |> indent |> indent}
