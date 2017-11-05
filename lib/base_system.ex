@@ -87,6 +87,7 @@ defmodule BaseSystem.Configure do
 		:etc_systemd_unit_files,
 		:sysctl_parameters,
 		:sysfs_variables,
+		:boot_time_kernel_modules,
 		:regular_users,
 		:ssh_allow_users,
 		:hosts,
@@ -117,23 +118,24 @@ defmodule BaseSystem.Configure do
 		end
 		configure(
 			tags,
-			extra_desired_packages:       descriptors |> Enum.flat_map(fn desc -> desc[:desired_packages]       || [] end),
-			extra_undesired_packages:     descriptors |> Enum.flat_map(fn desc -> desc[:undesired_packages]     || [] end),
-			extra_undesired_upgrades:     descriptors |> Enum.flat_map(fn desc -> desc[:undesired_upgrades]     || [] end),
-			extra_apt_keys:               descriptors |> Enum.flat_map(fn desc -> desc[:apt_keys]               || [] end),
-			extra_apt_sources:            descriptors |> Enum.flat_map(fn desc -> desc[:apt_sources]            || [] end),
-			extra_etc_systemd_unit_files: descriptors |> Enum.flat_map(fn desc -> desc[:etc_systemd_unit_files] || [] end),
-			extra_regular_users:          descriptors |> Enum.flat_map(fn desc -> desc[:regular_users]          || [] end),
-			extra_ssh_allow_users:        descriptors |> Enum.flat_map(fn desc -> desc[:ssh_allow_users]        || [] end),
-			extra_hosts:                  descriptors |> Enum.flat_map(fn desc -> desc[:hosts]                  || [] end),
-			extra_pre_install_units:      descriptors |> Enum.map(fn desc -> desc[:pre_install_unit] end)         |> Enum.reject(&is_nil/1),
-			extra_post_install_units:     descriptors |> Enum.map(fn desc -> desc[:post_install_unit] end)        |> Enum.reject(&is_nil/1),
-			extra_ferm_input_chain:       descriptors |> Enum.map(fn desc -> desc[:ferm_input_chain] end)         |> Enum.reject(&is_nil/1),
-			extra_ferm_output_chain:      descriptors |> Enum.map(fn desc -> desc[:ferm_output_chain] end)        |> Enum.reject(&is_nil/1),
-			extra_ferm_forward_chain:     descriptors |> Enum.map(fn desc -> desc[:ferm_forward_chain] end)       |> Enum.reject(&is_nil/1),
-			extra_ferm_postrouting_chain: descriptors |> Enum.map(fn desc -> desc[:ferm_postrouting_chain] end)   |> Enum.reject(&is_nil/1),
-			extra_sysctl_parameters:      descriptors |> Enum.map(fn desc -> desc[:sysctl_parameters] || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end),
-			extra_sysfs_variables:        descriptors |> Enum.map(fn desc -> desc[:sysfs_variables]   || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end)
+			extra_desired_packages:         descriptors |> Enum.flat_map(fn desc -> desc[:desired_packages]         || [] end),
+			extra_undesired_packages:       descriptors |> Enum.flat_map(fn desc -> desc[:undesired_packages]       || [] end),
+			extra_undesired_upgrades:       descriptors |> Enum.flat_map(fn desc -> desc[:undesired_upgrades]       || [] end),
+			extra_apt_keys:                 descriptors |> Enum.flat_map(fn desc -> desc[:apt_keys]                 || [] end),
+			extra_apt_sources:              descriptors |> Enum.flat_map(fn desc -> desc[:apt_sources]              || [] end),
+			extra_etc_systemd_unit_files:   descriptors |> Enum.flat_map(fn desc -> desc[:etc_systemd_unit_files]   || [] end),
+			extra_regular_users:            descriptors |> Enum.flat_map(fn desc -> desc[:regular_users]            || [] end),
+			extra_ssh_allow_users:          descriptors |> Enum.flat_map(fn desc -> desc[:ssh_allow_users]          || [] end),
+			extra_hosts:                    descriptors |> Enum.flat_map(fn desc -> desc[:hosts]                    || [] end),
+			extra_boot_time_kernel_modules: descriptors |> Enum.flat_map(fn desc -> desc[:boot_time_kernel_modules] || [] end),
+			extra_pre_install_units:        descriptors |> Enum.map(fn desc -> desc[:pre_install_unit] end)         |> Enum.reject(&is_nil/1),
+			extra_post_install_units:       descriptors |> Enum.map(fn desc -> desc[:post_install_unit] end)        |> Enum.reject(&is_nil/1),
+			extra_ferm_input_chain:         descriptors |> Enum.map(fn desc -> desc[:ferm_input_chain] end)         |> Enum.reject(&is_nil/1),
+			extra_ferm_output_chain:        descriptors |> Enum.map(fn desc -> desc[:ferm_output_chain] end)        |> Enum.reject(&is_nil/1),
+			extra_ferm_forward_chain:       descriptors |> Enum.map(fn desc -> desc[:ferm_forward_chain] end)       |> Enum.reject(&is_nil/1),
+			extra_ferm_postrouting_chain:   descriptors |> Enum.map(fn desc -> desc[:ferm_postrouting_chain] end)   |> Enum.reject(&is_nil/1),
+			extra_sysctl_parameters:        descriptors |> Enum.map(fn desc -> desc[:sysctl_parameters] || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end),
+			extra_sysfs_variables:          descriptors |> Enum.map(fn desc -> desc[:sysfs_variables]   || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end)
 		)
 	end
 
@@ -160,23 +162,24 @@ defmodule BaseSystem.Configure do
 	end
 
 	def configure(tags, opts) do
-		extra_desired_packages         = opts[:extra_desired_packages]       || []
-		extra_undesired_packages       = opts[:extra_undesired_packages]     || []
-		extra_undesired_upgrades       = opts[:extra_undesired_upgrades]     || []
-		extra_apt_keys                 = opts[:extra_apt_keys]               || []
-		extra_apt_sources              = opts[:extra_apt_sources]            || []
-		extra_etc_systemd_unit_files   = opts[:extra_etc_systemd_unit_files] || []
-		extra_regular_users            = opts[:extra_regular_users]          || []
-		extra_ssh_allow_users          = opts[:extra_ssh_allow_users]        || []
-		extra_hosts                    = opts[:extra_hosts]                  || []
-		extra_pre_install_units        = opts[:extra_pre_install_units]      || []
-		extra_post_install_units       = opts[:extra_post_install_units]     || []
-		extra_ferm_input_chain         = opts[:extra_ferm_input_chain]       || []
-		extra_ferm_output_chain        = opts[:extra_ferm_output_chain]      || []
-		extra_ferm_forward_chain       = opts[:extra_ferm_forward_chain]     || []
-		extra_ferm_postrouting_chain   = opts[:extra_ferm_postrouting_chain] || []
-		extra_sysctl_parameters        = opts[:extra_sysctl_parameters]      || %{}
-		extra_sysfs_variables          = opts[:extra_sysfs_variables]        || %{}
+		extra_desired_packages         = opts[:extra_desired_packages]         || []
+		extra_undesired_packages       = opts[:extra_undesired_packages]       || []
+		extra_undesired_upgrades       = opts[:extra_undesired_upgrades]       || []
+		extra_apt_keys                 = opts[:extra_apt_keys]                 || []
+		extra_apt_sources              = opts[:extra_apt_sources]              || []
+		extra_etc_systemd_unit_files   = opts[:extra_etc_systemd_unit_files]   || []
+		extra_regular_users            = opts[:extra_regular_users]            || []
+		extra_ssh_allow_users          = opts[:extra_ssh_allow_users]          || []
+		extra_hosts                    = opts[:extra_hosts]                    || []
+		extra_boot_time_kernel_modules = opts[:extra_boot_time_kernel_modules] || []
+		extra_pre_install_units        = opts[:extra_pre_install_units]        || []
+		extra_post_install_units       = opts[:extra_post_install_units]       || []
+		extra_ferm_input_chain         = opts[:extra_ferm_input_chain]         || []
+		extra_ferm_output_chain        = opts[:extra_ferm_output_chain]        || []
+		extra_ferm_forward_chain       = opts[:extra_ferm_forward_chain]       || []
+		extra_ferm_postrouting_chain   = opts[:extra_ferm_postrouting_chain]   || []
+		extra_sysctl_parameters        = opts[:extra_sysctl_parameters]        || %{}
+		extra_sysfs_variables          = opts[:extra_sysfs_variables]          || %{}
 		optimize_for_short_lived_files = "optimize_for_short_lived_files" in tags
 		ipv6                           = "ipv6"                           in tags
 		release                        = Util.tag_value!(tags, "release") |> String.to_atom()
@@ -641,6 +644,14 @@ defmodule BaseSystem.Configure do
 				content: blacklisted_kernel_modules
 				         |> Enum.map(fn module -> "blacklist #{module}\n" end)
 				         |> Enum.join
+			},
+
+			%FilePresent{
+				path:    "/etc/modules",
+				mode:    0o644,
+				content: extra_boot_time_kernel_modules
+				         |> Kernel.++([""])
+				         |> Enum.join("\n")
 			},
 
 			# Fix this annoying warning:
