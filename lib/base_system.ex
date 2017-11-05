@@ -522,7 +522,6 @@ defmodule BaseSystem.Configure do
 			"console-setup",     # needed to change console font and prevent keyboard-configuration from erroring out on boot
 			"cryptsetup",
 			"util-linux",
-			"nocache",
 			"gdisk",
 			"hdparm",
 			"sudo",
