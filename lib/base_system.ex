@@ -637,6 +637,14 @@ defmodule BaseSystem.Configure do
 			%EtcCommitted{message: "converge (before any converging)"},
 			%Sysctl{parameters: sysctl_parameters},
 
+			%FilePresent{
+				path:    "/etc/modprobe.d/base_system.conf",
+				mode:    0o644,
+				content: blacklisted_kernel_modules
+				         |> Enum.map(fn module -> "blacklist #{module}\n" end)
+				         |> Enum.join
+			},
+
 			# Fix this annoying warning:
 			# N: Ignoring file '50unattended-upgrades.ucf-dist' in directory '/etc/apt/apt.conf.d/'
 			# as it has an invalid filename extension
@@ -854,14 +862,6 @@ defmodule BaseSystem.Configure do
 				unit:    conf_file("/etc/resolv.conf", 0o644, immutable: true),
 				# Make sure unbound actually works before pointing resolv.conf to localhost
 				trigger: fn -> {_, 0} = System.cmd("/usr/bin/dig", ["-t", "A", "localhost", "@127.0.0.1"]) end
-			},
-
-			%FilePresent{
-				path:    "/etc/modprobe.d/base_system.conf",
-				mode:    0o644,
-				content: blacklisted_kernel_modules
-				         |> Enum.map(fn module -> "blacklist #{module}\n" end)
-				         |> Enum.join
 			},
 
 			%SystemdUnitEnabled{name: "prometheus-node-exporter.service"},
