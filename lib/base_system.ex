@@ -861,7 +861,7 @@ defmodule BaseSystem.Configure do
 			%BeforeMeet{
 				unit:    conf_file("/etc/resolv.conf", 0o644, immutable: true),
 				# Make sure unbound actually works before pointing resolv.conf to localhost
-				trigger: fn -> {_, 0} = System.cmd("/usr/bin/dig", ["-t", "A", "localhost", "@127.0.0.1"]) end
+				trigger: fn -> {_, 0} = System.cmd("dig", ["-t", "A", "localhost", "@127.0.0.1"]) end
 			},
 
 			%SystemdUnitEnabled{name: "prometheus-node-exporter.service"},
