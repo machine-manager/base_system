@@ -1,5 +1,4 @@
-# This syntax format is used for editing commit and tag messages
-syntax "git commit/tag messages" "COMMIT_EDITMSG|TAG_EDITMSG"
+syntax "git_commit_or_tag_messages" "/(COMMIT_EDITMSG|TAG_EDITMSG)$"
 
 color red start="^\-" end="$"
 color green start="^\+" end="$"
