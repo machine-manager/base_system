@@ -814,6 +814,9 @@ defmodule BaseSystem.Configure do
 						content: EEx.eval_string(content("files/etc/ssh/sshd_config.eex"), [allow_users: ssh_allow_users]),
 						mode:    0o644
 					},
+					# Remove obsolete keys no longer used by config
+					%FileMissing{path: "/etc/ssh/ssh_host_dsa_key"},
+					%FileMissing{path: "/etc/ssh/ssh_host_dsa_key.pub"},
 				]},
 				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("ssh.service") end
 			},
