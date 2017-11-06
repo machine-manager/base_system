@@ -124,7 +124,6 @@ export LESSHISTFILE=-
 ### System-wide aliases
 
 alias cp='cp -a'
-
 alias mv='mv -i'
 # Make du and df report sizes in bytes, with commas, like our ls
 alias du="du --block-size=\'1"
@@ -169,6 +168,8 @@ alias gs='git status'
 alias gc='git commit'
 alias gca='git commit -a'
 alias gcam='git commit -a -m'
+
+alias aginir='apt-get install --no-install-recommends'
 
 # Typos caused by keyboard matrix circuit not releasing Shift fast enough
 alias Grep=grep
