@@ -844,6 +844,8 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("ssh.service") end
 			},
 
+			%EtcSystemdUnitFiles{units: extra_etc_systemd_unit_files},
+
 			%All{units: extra_pre_install_units},
 
 			%MetaPackageInstalled{
@@ -918,7 +920,6 @@ defmodule BaseSystem.Configure do
 			},
 
 			%All{units: boot_units(Util.tag_value!(tags, "boot"), Util.tag_value(tags, "boot_resolution"))},
-			%EtcSystemdUnitFiles{units: extra_etc_systemd_unit_files},
 			%All{units: extra_post_install_units},
 
 			# To stabilize on the first run, this should be near-last, after any possible
