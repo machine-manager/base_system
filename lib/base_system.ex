@@ -80,6 +80,7 @@ defmodule BaseSystem.Configure do
 
 	@allowed_descriptor_keys MapSet.new([
 		:desired_packages,
+		:desired_early_packages,
 		:undesired_packages,
 		:undesired_upgrades,
 		:apt_keys,
@@ -119,6 +120,7 @@ defmodule BaseSystem.Configure do
 		configure(
 			tags,
 			extra_desired_packages:         descriptors |> Enum.flat_map(fn desc -> desc[:desired_packages]         || [] end),
+			extra_desired_early_packages:   descriptors |> Enum.flat_map(fn desc -> desc[:desired_early_packages]   || [] end),
 			extra_undesired_packages:       descriptors |> Enum.flat_map(fn desc -> desc[:undesired_packages]       || [] end),
 			extra_undesired_upgrades:       descriptors |> Enum.flat_map(fn desc -> desc[:undesired_upgrades]       || [] end),
 			extra_apt_keys:                 descriptors |> Enum.flat_map(fn desc -> desc[:apt_keys]                 || [] end),
@@ -163,6 +165,7 @@ defmodule BaseSystem.Configure do
 
 	def configure(tags, opts) do
 		extra_desired_packages         = opts[:extra_desired_packages]         || []
+		extra_desired_early_packages   = opts[:extra_desired_early_packages]   || []
 		extra_undesired_packages       = opts[:extra_undesired_packages]       || []
 		extra_undesired_upgrades       = opts[:extra_undesired_upgrades]       || []
 		extra_apt_keys                 = opts[:extra_apt_keys]                 || []
@@ -513,7 +516,7 @@ defmodule BaseSystem.Configure do
 			# requested_mask="w" denied_mask="w" fsuid=110 ouid=0
 			"unbound",           # started before full MetaPackageInstalled
 			"locales",           # used by locale-gen below
-		]
+		] ++ extra_desired_early_packages
 		base_packages  = [
 			"rsync",             # used by machine_manager to copy files to machine
 			"dnsutils",          # for dig, used below to make sure unbound works
