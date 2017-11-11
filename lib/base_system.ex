@@ -199,10 +199,11 @@ defmodule BaseSystem.Configure do
 				"deb http://security.ubuntu.com/ubuntu           xenial-security main restricted universe multiverse",
 			]
 			:stretch -> [
-				"deb http://ftp.#{country}.debian.org/debian/    stretch         main contrib non-free",
-				"deb http://security.debian.org/debian-security  stretch/updates main contrib non-free",
-				"deb http://ftp.#{country}.debian.org/debian/    stretch-updates main contrib non-free",
-				"deb http://deb.debian.org/debian                experimental    main",
+				"deb http://ftp.#{country}.debian.org/debian/    stretch           main contrib non-free",
+				"deb http://security.debian.org/debian-security  stretch/updates   main contrib non-free",
+				"deb http://ftp.#{country}.debian.org/debian/    stretch-updates   main contrib non-free",
+				"deb http://ftp.debian.org/debian                stretch-backports main",
+				"deb http://deb.debian.org/debian                experimental      main",
 			]
 		end
 		apt_keys     = base_keys    ++ extra_apt_keys
