@@ -288,9 +288,9 @@ defmodule BaseSystem.Configure do
 			# Standard Ubuntu console log level that we want on Debian as well
 			"kernel.printk"                      => [4, 4, 1, 7],
 
-			# Standard Ubuntu hardening options that we want on Debian as well
-			"kernel.yama.ptrace_scope"           => 1,
+			# See https://www.kernel.org/doc/Documentation/sysctl/kernel.txt
 			"kernel.kptr_restrict"               => 1,
+
 			# Turn on Source Address Verification in all interfaces to
 			# prevent some spoofing attacks.
 			"net.ipv4.conf.default.rp_filter"    => 1,
