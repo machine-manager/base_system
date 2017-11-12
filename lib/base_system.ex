@@ -954,6 +954,7 @@ defmodule BaseSystem.Configure do
 				# let's hope the existing package index has the packages we need.
 				RuntimeError -> nil
 			end
+			:ok = IO.puts("Installing packages #{inspect missing_unit_impl_packages} before converging, this could take a few minutes...")
 			for package <- missing_unit_impl_packages do
 				Util.install_package(package)
 			end
