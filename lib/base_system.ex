@@ -315,9 +315,8 @@ defmodule BaseSystem.Configure do
 			"kernel.sysrq"                       => 0,
 
 			# "The perf subsystem has a huge history of privilege escalation vunerabilities"
-			#
-			# TODO: apply grkernsec_perf_harden.patch to our kernels to that setting '3'
-			# actually completely disables access to perf for unprivileged users.
+			# "When kernel.perf_event_open is set to 3 (or greater), disallow all
+			# access to performance events by users without CAP_SYS_ADMIN."
 			"kernel.perf_event_paranoid"         => 3,
 
 			# Disable IPv6 by default because far too many IPv6 routes announced
