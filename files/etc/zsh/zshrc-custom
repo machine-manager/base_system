@@ -202,6 +202,19 @@ paged-with-color() {
 }
 alias p=paged-with-color
 
+# Given a command, use info to read Info document if it exists, otherwise
+# use man to read the manpage.  This avoids using info's inferior manpage
+# renderer.
+info-or-man() {
+	command=$1
+	if info -w -- "$command" | grep -q "^/"; then
+		info -- "$command"
+	else
+		man -- "$command"
+	fi
+}
+alias man=info-or-man
+
 # Starts an process with arguments and restarts it when it exits,
 # slowing down the restart speed if the process returns a non-0
 # exit code.  Useful for development-mode servers that exit when
