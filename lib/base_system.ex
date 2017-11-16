@@ -1057,6 +1057,7 @@ defmodule BaseSystem.Configure do
 	defp boot_units("uefi_bfq", boot_resolution), do: [%Grub{cmdline_normal_only: "apparmor=1 security=apparmor elevator=bfq", gfxpayload: boot_resolution}]
 	defp boot_units("ovh_vps", _),                do: [%Grub{cmdline_normal_only: "apparmor=1 security=apparmor", cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
 	defp boot_units("do_vps", _),                 do: [%Grub{cmdline_normal_only: "apparmor=1 security=apparmor", cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
+	defp boot_units("do_vps_201711", _),          do: [%Grub{cmdline_normal_only: "apparmor=1 security=apparmor biosdevname=0 net.ifnames=0 console=tty0 console=ttyS0,115200 earlyprintk=ttyS0,115200 consoleblank=0 systemd.show_status=true"}]
 
 	defp fstab_unit() do
 		fstab_existing_entries = Fstab.get_entries()
