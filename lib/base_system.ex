@@ -1057,7 +1057,7 @@ defmodule BaseSystem.Configure do
 	defp boot_units(release, "uefi_bfq", boot_resolution), do: [%Grub{cmdline_normal_only: release_specific_cmdline(release) ++ ["elevator=bfq"], gfxpayload: boot_resolution}]
 	defp boot_units(release, "ovh_vps", _),                do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     cmdline_normal_and_recovery: ["console=tty1", "console=ttyS0"]}]
 	defp boot_units(release, "do_vps", _),                 do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     cmdline_normal_and_recovery: ["console=tty1", "console=ttyS0"]}]
-	defp boot_units(release, "do_vps_201711", _),          do: [%Grub{cmdline_normal_only: release_specific_cmdline(release) ++ ["biosdevname=0", "net.ifnames=0", "console=tty0", "console=ttyS0,115200", "earlyprintk=ttyS0,115200", "systemd.show_status=true"]}]
+	defp boot_units(release, "do_vps_stretch", _),         do: [%Grub{cmdline_normal_only: release_specific_cmdline(release) ++ ["biosdevname=0", "net.ifnames=0", "console=tty0", "console=ttyS0,115200", "earlyprintk=ttyS0,115200", "systemd.show_status=true"]}]
 
 	defp release_specific_cmdline(:xenial),  do: [
 		# Kernels before 4.12 blank the console after a delay
