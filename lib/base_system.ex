@@ -1053,10 +1053,10 @@ defmodule BaseSystem.Configure do
 	                                                   %SystemdUnitEnabled{name: "scaleway-ubuntu-kernel.service"}]
 	defp boot_units("mbr", _),                    do: [%Grub{cmdline_normal_only: "apparmor=1 security=apparmor"}]
 	defp boot_units("mbr_bfq", _),                do: [%Grub{cmdline_normal_only: "apparmor=1 security=apparmor elevator=bfq"}]
-	defp boot_units("uefi",     boot_resolution), do: [%Grub{cmdline_normal_only: "apparmor=1 security=apparmor", gfxpayload: boot_resolution}]
+	defp boot_units("uefi",     boot_resolution), do: [%Grub{cmdline_normal_only: "apparmor=1 security=apparmor",              gfxpayload: boot_resolution}]
 	defp boot_units("uefi_bfq", boot_resolution), do: [%Grub{cmdline_normal_only: "apparmor=1 security=apparmor elevator=bfq", gfxpayload: boot_resolution}]
-	defp boot_units("ovh_vps", _),                do: [%Grub{cmdline_normal_only: "apparmor=1 security=apparmor", cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
-	defp boot_units("do_vps", _),                 do: [%Grub{cmdline_normal_only: "apparmor=1 security=apparmor", cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
+	defp boot_units("ovh_vps", _),                do: [%Grub{cmdline_normal_only: "apparmor=1 security=apparmor",              cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
+	defp boot_units("do_vps", _),                 do: [%Grub{cmdline_normal_only: "apparmor=1 security=apparmor",              cmdline_normal_and_recovery: "console=tty1 console=ttyS0"}]
 	defp boot_units("do_vps_201711", _),          do: [%Grub{cmdline_normal_only: "apparmor=1 security=apparmor biosdevname=0 net.ifnames=0 console=tty0 console=ttyS0,115200 earlyprintk=ttyS0,115200 consoleblank=0 systemd.show_status=true"}]
 
 	defp fstab_unit() do
