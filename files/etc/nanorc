@@ -6,5 +6,7 @@ set tabsize 4
 # Useful when writing git commit messages.
 set fill 80
 
+bind ^S savefile main
+
 include "/usr/share/nano/*.nanorc"
 include "/etc/nano.d/*.nanorc"
