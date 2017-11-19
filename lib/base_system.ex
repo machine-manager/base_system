@@ -99,6 +99,7 @@ defmodule BaseSystem.Configure do
 		:ferm_output_chain,
 		:ferm_forward_chain,
 		:ferm_postrouting_chain,
+		:udev_rules,
 	])
 
 	@spec configure_with_roles([String.t], [module]) :: nil
@@ -130,6 +131,7 @@ defmodule BaseSystem.Configure do
 			extra_ssh_allow_users:          descriptors |> Enum.flat_map(fn desc -> desc[:ssh_allow_users]          || [] end),
 			extra_hosts:                    descriptors |> Enum.flat_map(fn desc -> desc[:hosts]                    || [] end),
 			extra_boot_time_kernel_modules: descriptors |> Enum.flat_map(fn desc -> desc[:boot_time_kernel_modules] || [] end),
+			extra_udev_rules:               descriptors |> Enum.flat_map(fn desc -> desc[:udev_rules]               || [] end),
 			extra_pre_install_units:        descriptors |> Enum.map(fn desc -> desc[:pre_install_unit] end)         |> Enum.reject(&is_nil/1),
 			extra_post_install_units:       descriptors |> Enum.map(fn desc -> desc[:post_install_unit] end)        |> Enum.reject(&is_nil/1),
 			extra_ferm_input_chain:         descriptors |> Enum.map(fn desc -> desc[:ferm_input_chain] end)         |> Enum.reject(&is_nil/1),
@@ -181,6 +183,7 @@ defmodule BaseSystem.Configure do
 		extra_ferm_output_chain        = opts[:extra_ferm_output_chain]        || []
 		extra_ferm_forward_chain       = opts[:extra_ferm_forward_chain]       || []
 		extra_ferm_postrouting_chain   = opts[:extra_ferm_postrouting_chain]   || []
+		extra_udev_rules               = opts[:extra_udev_rules]               || []
 		extra_sysctl_parameters        = opts[:extra_sysctl_parameters]        || %{}
 		extra_sysfs_variables          = opts[:extra_sysfs_variables]          || %{}
 		optimize_for_short_lived_files = "optimize_for_short_lived_files" in tags
@@ -664,6 +667,14 @@ defmodule BaseSystem.Configure do
 					         |> Enum.join("\n")
 				},
 				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("kmod.service") end
+			},
+
+			%FilePresent{
+				path:    "/etc/udev/rules.d/99-base_system.rules",
+				mode:    0o644,
+				content: extra_udev_rules
+				         |> Enum.map(fn rule -> "#{rule}\n" end)
+				         |> Enum.join
 			},
 
 			# Fix this annoying warning:
