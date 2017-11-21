@@ -1012,6 +1012,16 @@ defmodule BaseSystem.Configure do
 
 			# old kernel-package file
 			%FileMissing{path: "/etc/kernel-img.conf"},
+
+			# Ubuntu's kmod installs these blacklist conf files; Debian's kmod does not
+			%FileMissing{path: "/etc/modprobe.d/blacklist-ath_pci.conf"},
+			%FileMissing{path: "/etc/modprobe.d/blacklist-firewire.conf"},
+			%FileMissing{path: "/etc/modprobe.d/blacklist-framebuffer.conf"},
+			%FileMissing{path: "/etc/modprobe.d/blacklist-rare-network.conf"},
+			%FileMissing{path: "/etc/modprobe.d/blacklist-watchdog.conf"},
+			%FileMissing{path: "/etc/modprobe.d/blacklist.conf"},
+			%FileMissing{path: "/etc/modprobe.d/iwlwifi.conf"},
+			%FileMissing{path: "/etc/modprobe.d/mlx4.conf"},
 		]}
 	end
 
