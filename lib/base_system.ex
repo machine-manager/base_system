@@ -684,6 +684,8 @@ defmodule BaseSystem.Configure do
 				         |> Enum.join
 			},
 
+			conf_file("/etc/profile"),
+
 			# Clean up and unify motd across machines
 			%FileMissing{path: "/etc/motd"},
 			%FileMissing{path: "/etc/legal"},
