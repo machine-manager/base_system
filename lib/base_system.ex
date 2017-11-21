@@ -1048,6 +1048,10 @@ defmodule BaseSystem.Configure do
 			# grub-common leftovers from xenial
 			%FileMissing{path: "/etc/init.d/grub-common"},
 			%FileMissing{path: "/etc/pm/sleep.d/10_grub-common"},
+
+			# console-setup-linux leftovers from xenial
+			%FileMissing{path: "/etc/vtrgb"},
+			%FileMissing{path: "/etc/alternatives/vtrgb"},
 		]}
 	end
 
