@@ -631,10 +631,10 @@ defmodule BaseSystem.Configure do
 			"biosdevname",
 		] ++ case release do 
 			:xenial  -> ["gnupg"] # apt will use either gnupg or gnupg2, and gnupg2 is less bad
-			_        -> []        # gnupg is gnupg2 on stretch
+			:stretch -> []        # gnupg is gnupg2 on stretch
 		end ++ case release do
 			:xenial  -> []
-			_        -> ["initscripts", "sysv-rc"] # obsolete but retained after xenial -> stretch upgrade
+			:stretch -> ["initscripts", "sysv-rc"] # obsolete but retained after xenial -> stretch upgrade
 		end ++
 		extra_undesired_packages
 
