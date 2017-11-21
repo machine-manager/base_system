@@ -681,6 +681,15 @@ defmodule BaseSystem.Configure do
 				         |> Enum.join
 			},
 
+			# Clean up and unify motd across machines
+			%FileMissing{path: "/etc/motd"},
+			%FileMissing{path: "/etc/legal"},
+			%FileMissing{path: "/etc/update-motd.d/00-header"},
+			%FileMissing{path: "/etc/update-motd.d/10-help-text"},
+			%FileMissing{path: "/etc/update-motd.d/20-ovh-informations"},
+			%FileMissing{path: "/etc/update-motd.d/51-cloudguest"},
+			%FilePresent{path: "/etc/update-motd.d/10-uname", mode: 0o755, content: content("files/etc/update-motd.d/10-uname")},
+
 			# Fix this annoying warning:
 			# N: Ignoring file '50unattended-upgrades.ucf-dist' in directory '/etc/apt/apt.conf.d/'
 			# as it has an invalid filename extension
