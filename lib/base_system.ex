@@ -1008,7 +1008,7 @@ defmodule BaseSystem.Configure do
 			%FileMissing{path: "/etc/init/startpar-bridge.conf"},
 
 			# leftover from xenial with contents: Acquire::Changelogs::AlwaysOnline "true";
-			%FileMissing{path: "/etc/apt.conf.d/01-vendor-ubuntu"},
+			%FileMissing{path: "/etc/apt/apt.conf.d/01-vendor-ubuntu"},
 
 			# leftover from a xenial -> stretch upgrade
 			%FileMissing{path: "/etc/dpkg/origins/ubuntu"},
