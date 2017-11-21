@@ -1030,6 +1030,17 @@ defmodule BaseSystem.Configure do
 			%FileMissing{path: "/etc/rsyslog.d/50-default.conf"},
 			%FileMissing{path: "/etc/apparmor.d/usr.sbin.rsyslogd"},
 			%FileMissing{path: "/etc/apparmor.d/disable/usr.sbin.rsyslogd"},
+
+			# procps leftovers from xenial
+			%FileMissing{path: "/etc/sysctl.d/10-console-messages.conf"},
+			%FileMissing{path: "/etc/sysctl.d/10-ipv6-privacy.conf"},
+			%FileMissing{path: "/etc/sysctl.d/10-kernel-hardening.conf"},
+			%FileMissing{path: "/etc/sysctl.d/10-link-restrictions.conf"},
+			%FileMissing{path: "/etc/sysctl.d/10-magic-sysrq.conf"},
+			%FileMissing{path: "/etc/sysctl.d/10-network-security.conf"},
+			%FileMissing{path: "/etc/sysctl.d/10-ptrace.conf"},
+			%FileMissing{path: "/etc/sysctl.d/10-zeropage.conf"},
+			%FileMissing{path: "/etc/sysctl.d/README"},
 		]}
 	end
 
