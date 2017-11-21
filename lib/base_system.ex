@@ -937,6 +937,7 @@ defmodule BaseSystem.Configure do
 			conf_file("/etc/skel/.zshrc"),
 			conf_file("/etc/issue"),
 			%FileMissing{path: "/etc/issue.dpkg-dist"},
+			%FileMissing{path: "/etc/sysctl.conf.dpkg-dist"},
 			conf_file("/etc/tmux.conf"),
 			conf_file("/etc/nanorc"),
 			conf_dir("/etc/nano.d"),
