@@ -1041,6 +1041,10 @@ defmodule BaseSystem.Configure do
 			%FileMissing{path: "/etc/sysctl.d/10-ptrace.conf"},
 			%FileMissing{path: "/etc/sysctl.d/10-zeropage.conf"},
 			%FileMissing{path: "/etc/sysctl.d/README"},
+
+			# grub-common leftovers from xenial
+			%FileMissing{path: "/etc/init.d/grub-common"},
+			%FileMissing{path: "/etc/pm/sleep.d/10_grub-common"},
 		]}
 	end
 
