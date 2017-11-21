@@ -755,6 +755,8 @@ defmodule BaseSystem.Configure do
 			# in the same terminal may be able to unexpectedly `sudo` without asking.
 			conf_dir("/etc/sudoers.d"),
 			conf_file("/etc/sudoers.d/base_system"),
+			# leftover from old base_system
+			%FileMissing{path: "/etc/sudoers.d/no_cred_caching"},
 
 			%MetaPackageInstalled{
 				name:    "converge-desired-packages-early",
@@ -1022,6 +1024,12 @@ defmodule BaseSystem.Configure do
 			%FileMissing{path: "/etc/modprobe.d/blacklist.conf"},
 			%FileMissing{path: "/etc/modprobe.d/iwlwifi.conf"},
 			%FileMissing{path: "/etc/modprobe.d/mlx4.conf"},
+
+			# rsyslog leftovers from xenial (note: the apparmor profile is disabled by
+			# default on xenial via a symlink in /etc/apparmor.d/disable)
+			%FileMissing{path: "/etc/rsyslog.d/50-default.conf"},
+			%FileMissing{path: "/etc/apparmor.d/usr.sbin.rsyslogd"},
+			%FileMissing{path: "/etc/apparmor.d/disable/usr.sbin.rsyslogd"},
 		]}
 	end
 
