@@ -757,8 +757,9 @@ defmodule BaseSystem.Configure do
 			# in the same terminal may be able to unexpectedly `sudo` without asking.
 			conf_dir("/etc/sudoers.d"),
 			conf_file("/etc/sudoers.d/base_system"),
-			# leftover from old base_system
+			# leftovers from old base_system
 			%FileMissing{path: "/etc/sudoers.d/no_cred_caching"},
+			%FileMissing{path: "/etc/country"},
 
 			%MetaPackageInstalled{
 				name:    "converge-desired-packages-early",
