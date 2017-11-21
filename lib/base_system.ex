@@ -690,6 +690,8 @@ defmodule BaseSystem.Configure do
 			%FileMissing{path: "/etc/update-motd.d/51-cloudguest"},
 			%FilePresent{path: "/etc/update-motd.d/10-uname", mode: 0o755, content: content("files/etc/update-motd.d/10-uname")},
 
+			leftover_files_unit(release),
+
 			# Fix this annoying warning:
 			# N: Ignoring file '50unattended-upgrades.ucf-dist' in directory '/etc/apt/apt.conf.d/'
 			# as it has an invalid filename extension
@@ -983,6 +985,16 @@ defmodule BaseSystem.Configure do
 				Util.install_package(package)
 			end
 		end
+	end
+
+	defp leftover_files_unit(:xenial), do: %All{units: []}
+	defp leftover_files_unit(:stretch) do
+		%All{units: [
+			# leftover from xenial; stretch doesn't come with an /etc/lsb-release
+			%FileMissing{path: "/etc/lsb-release"},
+			# upstart-related leftover from xenial
+			%FileMissing{path: "/etc/init/startpar-bridge.conf"},
+		]}
 	end
 
 	defp hosts_and_ferm_unit(extra_hosts, ferm_config, ferm_config_fallback \\ nil) do
