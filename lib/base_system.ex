@@ -932,6 +932,7 @@ defmodule BaseSystem.Configure do
 
 			conf_file("/etc/skel/.zshrc"),
 			conf_file("/etc/issue"),
+			%FileMissing{path: "/etc/issue.dpkg-dist"},
 			conf_file("/etc/tmux.conf"),
 			conf_file("/etc/nanorc"),
 			conf_dir("/etc/nano.d"),
@@ -997,14 +998,20 @@ defmodule BaseSystem.Configure do
 		%All{units: [
 			# leftover from xenial; stretch doesn't come with an /etc/lsb-release
 			%FileMissing{path: "/etc/lsb-release"},
+
 			# upstart-related leftover from xenial
 			%FileMissing{path: "/etc/init/startpar-bridge.conf"},
+
 			# leftover from xenial with contents: Acquire::Changelogs::AlwaysOnline "true";
 			%FileMissing{path: "/etc/apt.conf.d/01-vendor-ubuntu"},
+
 			# leftover from a xenial -> stretch upgrade
 			%FileMissing{path: "/etc/dpkg/origins/ubuntu"},
 			# pointing to the wrong file after a xenial -> stretch upgrade
 			%SymlinkPresent{path: "/etc/dpkg/origins/default", target: "debian"},
+
+			# old kernel-package file
+			%FileMissing{path: "/etc/kernel-img.conf"},
 		]}
 	end
 
