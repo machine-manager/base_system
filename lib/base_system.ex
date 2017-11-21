@@ -1007,7 +1007,9 @@ defmodule BaseSystem.Configure do
 			# upstart-related leftover from xenial
 			%FileMissing{path: "/etc/init/startpar-bridge.conf"},
 
-			# leftover from xenial with contents: Acquire::Changelogs::AlwaysOnline "true";
+			# leftovers from xenial
+			%FileMissing{path: "/etc/apt/apt.conf.d/00aptitude"},
+			%FileMissing{path: "/etc/apt/apt.conf.d/00trustcdrom"},
 			%FileMissing{path: "/etc/apt/apt.conf.d/01-vendor-ubuntu"},
 
 			# leftover from a xenial -> stretch upgrade
