@@ -918,6 +918,8 @@ defmodule BaseSystem.Configure do
 			%SystemdUnitStarted{name: "chrony.service"},
 			%SystemdUnitStarted{name: "ssh.service"},
 
+			conf_file("/etc/dhcp/dhclient-enter-hooks.d/base_system"),
+
 			%SystemdUnitStarted{name: "unbound.service"},
 			# Set /etc/resolv.conf nameservers to the local unbound server
 			%BeforeMeet{

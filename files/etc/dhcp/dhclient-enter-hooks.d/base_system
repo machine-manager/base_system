@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Don't try to update the immutable /etc/resolv.conf, leaving
+# hundreds of resolv.conf.dhclient-new.* files lying around
+make_resolv_conf() {
+	:
+}
