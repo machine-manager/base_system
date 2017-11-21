@@ -11,7 +11,7 @@ READNULLCMD=${PAGER:-/usr/bin/pager}
 # An array to note missing features to ease diagnosis in case of problems.
 typeset -ga debian_missing_features
 
-if [[ -z "$DEBIAN_PREVENT_KEYBOARD_CHANGES" ]] &&
+if [[ -z "${DEBIAN_PREVENT_KEYBOARD_CHANGES-}" ]] &&
    [[ "$TERM" != 'emacs' ]]
 then
 
@@ -102,11 +102,3 @@ zstyle ':completion:*:sudo:*' command-path /usr/local/sbin \
 
 (( ${+aliases[run-help]} )) && unalias run-help
 autoload -Uz run-help
-
-# If you don't want compinit called here, place the line
-# skip_global_compinit=1
-# in your $ZDOTDIR/.zshenv or $ZDOTDIR/.zprofile
-if [[ -z "$skip_global_compinit" ]]; then
-  autoload -U compinit
-  compinit
-fi
