@@ -731,6 +731,8 @@ defmodule BaseSystem.Configure do
 			# We centralize management of our apt sources in /etc/apt/trusted.gpg,
 			# so remove anything that may be in /etc/apt/trusted.gpg.d/
 			%DirectoryEmpty{path: "/etc/apt/trusted.gpg.d"},
+			# Leftover backup file?
+			%FileMissing{path: "/etc/apt/trusted.gpg~"},
 
 			%FilePresent{path: "/etc/apt/preferences", mode: 0o644, content: make_apt_preferences(extra_undesired_upgrades)},
 			%DirectoryPresent{path: "/etc/apt/preferences.d", mode: 0o755, immutable: true},
@@ -994,6 +996,8 @@ defmodule BaseSystem.Configure do
 			%FileMissing{path: "/etc/lsb-release"},
 			# upstart-related leftover from xenial
 			%FileMissing{path: "/etc/init/startpar-bridge.conf"},
+			# leftover from xenial with contents: Acquire::Changelogs::AlwaysOnline "true";
+			%FileMissing{path: "/etc/apt.conf.d/01-vendor-ubuntu"},
 		]}
 	end
 
