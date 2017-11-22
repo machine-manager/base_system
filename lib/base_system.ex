@@ -202,11 +202,11 @@ defmodule BaseSystem.Configure do
 				"deb http://security.ubuntu.com/ubuntu           xenial-security main restricted universe multiverse",
 			]
 			:stretch -> [
-				"deb http://ftp.#{country}.debian.org/debian/    stretch           main contrib non-free",
-				"deb http://security.debian.org/debian-security  stretch/updates   main contrib non-free",
-				"deb http://ftp.#{country}.debian.org/debian/    stretch-updates   main contrib non-free",
-				"deb http://ftp.debian.org/debian                stretch-backports main",
-				"deb http://deb.debian.org/debian                experimental      main",
+				"deb https://mirrors.kernel.org/debian          stretch           main contrib non-free",
+				"deb http://security.debian.org/debian-security stretch/updates   main contrib non-free",
+				"deb https://mirrors.kernel.org/debian          stretch-updates   main contrib non-free",
+				"deb https://mirrors.kernel.org/debian          stretch-backports main",
+				"deb https://mirrors.kernel.org/debian          experimental      main",
 			]
 		end
 		apt_keys     = base_keys    ++ extra_apt_keys
@@ -531,6 +531,8 @@ defmodule BaseSystem.Configure do
 			"cron",
 			"net-tools",
 			"apt",
+			"apt-transport-https",
+			"ca-certificates",
 			"zsh",               # root's default shell
 			"intel-microcode",
 			"console-setup",     # needed to change console font and prevent keyboard-configuration from erroring out on boot
@@ -542,7 +544,6 @@ defmodule BaseSystem.Configure do
 			"libpam-systemd",    # to make ssh server disconnect clients when it shuts down
 			"openssh-server",
 			"openssh-client",
-			"ca-certificates",
 			"chrony",
 			"psmisc",            # for killall
 			"acl",
@@ -976,7 +977,7 @@ defmodule BaseSystem.Configure do
 
 			%EtcCommitted{message: "converge"},
 		]
-		install_unit_impl_packages(unit_packages)
+		install_unit_impl_packages(unit_packages ++ ["apt-transport-https", "ca-certificates"])
 		ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}
 		Runner.converge(%All{units: units}, ctx)
 	end
