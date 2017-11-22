@@ -393,7 +393,7 @@ defmodule BaseSystem.Configure do
 			|> Map.merge(extra_sysctl_parameters)
 
 		# The default limit of 1024 is too low
-		default_limit_nofile = 131072
+		default_limit_nofile = 128 * 1024
 		security_limits = [
 			["root", "soft", "nofile", Integer.to_string(default_limit_nofile)],
 			["root", "hard", "nofile", Integer.to_string(default_limit_nofile)],
