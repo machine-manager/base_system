@@ -392,6 +392,15 @@ defmodule BaseSystem.Configure do
 			|> Map.merge(bbr_parameters)
 			|> Map.merge(extra_sysctl_parameters)
 
+		# The default limit of 1024 is too low
+		default_limit_nofile = 131072
+		security_limits = [
+			["root", "soft", "nofile", Integer.to_string(default_limit_nofile)],
+			["root", "hard", "nofile", Integer.to_string(default_limit_nofile)],
+			["*",    "soft", "nofile", Integer.to_string(default_limit_nofile)],
+			["*",    "hard", "nofile", Integer.to_string(default_limit_nofile)],
+		]
+
 		blacklisted_kernel_modules = [
 			# Disable the Intel Management Engine Interface driver, which we do not need
 			# and may introduce network attack vectors.
@@ -698,6 +707,28 @@ defmodule BaseSystem.Configure do
 
 			leftover_files_unit(release),
 
+			%FilePresent{path: "/etc/security/limits.conf", content: security_limits |> TableFormatter.format |> IO.iodata_to_binary, mode: 0o644},
+
+			%RedoAfterMeet{
+				marker: marker("systemd"),
+				unit: %All{units: [
+					%FilePresent{
+						path:    "/etc/systemd/system.conf",
+						content: EEx.eval_string(content("files/etc/systemd/system.conf.eex"), [default_limit_nofile: default_limit_nofile]),
+						mode:    0o644
+					},
+
+					# Ignore power key because we don't need it to shut down a machine and it's easy to
+					# press accidentally or unintentionally (if you assume a blank-screen laptop is off)
+					conf_file("/etc/systemd/logind.conf"),
+
+					# Disable systemd's atrocious "one ctrl-alt-del reboots the system" feature.
+					# This does not affect the 7x ctrl-alt-del force reboot feature.
+					%SymlinkPresent{path: "/etc/systemd/system/ctrl-alt-del.target", target: "/dev/null"},
+				]},
+				trigger: fn -> {_, 0} = System.cmd("systemctl", ["daemon-reload"]) end
+			},
+
 			# Fix this annoying warning:
 			# N: Ignoring file '50unattended-upgrades.ucf-dist' in directory '/etc/apt/apt.conf.d/'
 			# as it has an invalid filename extension
@@ -824,23 +855,6 @@ defmodule BaseSystem.Configure do
 				path:    "/etc/zsh/zshrc",
 				content: content("files/etc/zsh/zshrc.factory") <> "\n\n" <> "source /etc/zsh/zshrc-custom",
 				mode:    0o644
-			},
-
-			%RedoAfterMeet{
-				marker: marker("systemd"),
-				unit: %All{units: [
-					# Use a lower value for DefaultTimeoutStopSec and a higher value for DefaultRestartSec.
-					conf_file("/etc/systemd/system.conf"),
-
-					# Ignore power key because we don't need it to shut down a machine and it's easy to
-					# press accidentally or unintentionally (if you assume a blank-screen laptop is off)
-					conf_file("/etc/systemd/logind.conf"),
-
-					# Disable systemd's atrocious "one ctrl-alt-del reboots the system" feature.
-					# This does not affect the 7x ctrl-alt-del force reboot feature.
-					%SymlinkPresent{path: "/etc/systemd/system/ctrl-alt-del.target", target: "/dev/null"},
-				]},
-				trigger: fn -> {_, 0} = System.cmd("systemctl", ["daemon-reload"]) end
 			},
 
 			%RedoAfterMeet{

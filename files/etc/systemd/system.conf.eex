@@ -50,7 +50,10 @@ DefaultRestartSec=1s
 #DefaultLimitSTACK=
 #DefaultLimitCORE=
 #DefaultLimitRSS=
-#DefaultLimitNOFILE=
+# Setting a default here might be the only way to raise gnome-terminal from a max of 4096
+# https://bugzilla.redhat.com/show_bug.cgi?format=multiple&id=1364332
+# https://bugs.archlinux.org/task/46201
+DefaultLimitNOFILE=<%= default_limit_nofile %>
 #DefaultLimitAS=
 #DefaultLimitNPROC=
 #DefaultLimitMEMLOCK=
