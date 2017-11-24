@@ -562,15 +562,16 @@ defmodule BaseSystem.Configure do
 			"file",
 			"molly-guard",
 			"lshw",
-			"pciutils",       # for lspci
-			"net-tools",      # ifconfig, route, netstat
+			"pciutils",            # for lspci
+			"net-tools",           # ifconfig, route, netstat
 			"iputils-ping",
 			"netcat-openbsd",
-			"rlwrap",         # for use with netcat
+			"rlwrap",              # for use with netcat
 			"less",
 			"strace",
 			"htop",
 			"iotop",
+			"perf-tools-unstable", # for execsnoop, opensnoop, cachestat, kprobe, etc
 			"dstat",
 			"tmux",
 			"git",
