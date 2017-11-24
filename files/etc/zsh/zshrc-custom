@@ -3,11 +3,6 @@
 
 umask 027
 
-if [[ "$TERM" = "linux" ]]; do
-	# Don't beep the beep speaker
-	setterm --blength 0 2> /dev/null || true
-fi
-
 # Let me type a ! in a filename without escaping it
 set +o histexpand
 
