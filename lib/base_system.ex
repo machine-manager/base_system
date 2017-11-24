@@ -402,10 +402,10 @@ defmodule BaseSystem.Configure do
 		# The default limit of 1024 is too low
 		default_limit_nofile = 128 * 1024
 		security_limits = [
-			["root", "soft", "nofile", Integer.to_string(default_limit_nofile)],
-			["root", "hard", "nofile", Integer.to_string(default_limit_nofile)],
-			["*",    "soft", "nofile", Integer.to_string(default_limit_nofile)],
-			["*",    "hard", "nofile", Integer.to_string(default_limit_nofile)],
+			["root", "soft", "nofile", default_limit_nofile],
+			["root", "hard", "nofile", default_limit_nofile],
+			["*",    "soft", "nofile", default_limit_nofile],
+			["*",    "hard", "nofile", default_limit_nofile],
 		] ++ extra_security_limits
 
 		blacklisted_kernel_modules = [
@@ -721,7 +721,15 @@ defmodule BaseSystem.Configure do
 
 			leftover_files_unit(release),
 
-			%FilePresent{path: "/etc/security/limits.conf", content: security_limits |> TableFormatter.format |> IO.iodata_to_binary, mode: 0o644},
+			%FilePresent{
+				path: "/etc/security/limits.conf",
+				content:
+					security_limits
+					|> Enum.map(fn row -> Enum.map(row, &value_to_string/1) end)
+					|> TableFormatter.format
+					|> IO.iodata_to_binary,
+				mode: 0o644
+			},
 
 			%RedoAfterMeet{
 				marker: marker("systemd"),
@@ -1432,4 +1440,7 @@ defmodule BaseSystem.Configure do
 		|> Enum.map(fn line -> "\t#{line}" end)
 		|> Enum.join("\n")
 	end
+
+	defp value_to_string(value) when is_binary(value),  do: value
+	defp value_to_string(value) when is_integer(value), do: to_string(value)
 end
