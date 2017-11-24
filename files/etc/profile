@@ -32,8 +32,3 @@ if [ -d /etc/profile.d ]; then
   done
   unset i
 fi
-
-if [ "$TERM" = "linux" ]; do
-  # Disable beeping
-  setterm --blength 0 2> /dev/null || true
-fi
