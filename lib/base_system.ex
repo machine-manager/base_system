@@ -402,10 +402,11 @@ defmodule BaseSystem.Configure do
 		# The default limit of 1024 is too low
 		default_limit_nofile = 128 * 1024
 		security_limits = [
-			["root", "soft", "nofile", default_limit_nofile],
-			["root", "hard", "nofile", default_limit_nofile],
-			["*",    "soft", "nofile", default_limit_nofile],
-			["*",    "hard", "nofile", default_limit_nofile],
+			["root",             "soft", "nofile", default_limit_nofile],
+			["root",             "hard", "nofile", default_limit_nofile],
+			["*",                "soft", "nofile", default_limit_nofile],
+			["*",                "hard", "nofile", default_limit_nofile],
+			[@non_root_username, "-",    "nice",   -11],
 		] ++ extra_security_limits
 
 		blacklisted_kernel_modules = [
