@@ -294,6 +294,10 @@ defmodule BaseSystem.Configure do
 			# See https://www.kernel.org/doc/Documentation/sysctl/kernel.txt
 			"kernel.kptr_restrict"               => 1,
 
+			# Debian has this off by default but we don't want to disable Chrome
+			# namespace sandbox or break `unshare`.
+			"kernel.unprivileged_userns_clone"   => 1,
+
 			# Turn on Source Address Verification in all interfaces to
 			# prevent some spoofing attacks.
 			"net.ipv4.conf.default.rp_filter"    => 1,
