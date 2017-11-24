@@ -406,9 +406,6 @@ defmodule BaseSystem.Configure do
 		]
 
 		blacklisted_kernel_modules = [
-			# Makes computers emit horrible beeps (note: Ubuntu blacklists this, Debian doesn't)
-			"pcspkr",
-
 			# Disable the Intel Management Engine Interface driver, which we do not need
 			# and may introduce network attack vectors.
 			"mei",
