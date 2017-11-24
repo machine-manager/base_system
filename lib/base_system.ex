@@ -557,7 +557,10 @@ defmodule BaseSystem.Configure do
 			"psmisc",            # for killall
 			"acl",
 			"prometheus-node-exporter",
-		] ++ (if release == :xenial, do: ["pollinate"], else: []) # for seeding RNG the very first time
+		] ++ (case release do
+			:xenial  -> ["pollinate"] # for seeding RNG the very first time
+			:stretch -> ["firmware-linux", "firmware-linux-nonfree", "firmware-misc-nonfree"]
+		end)
 		human_admin_needs = [
 			"file",
 			"molly-guard",
