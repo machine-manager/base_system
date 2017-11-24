@@ -100,6 +100,7 @@ defmodule BaseSystem.Configure do
 		:ferm_forward_chain,
 		:ferm_postrouting_chain,
 		:udev_rules,
+		:security_limits,
 	])
 
 	@spec configure_with_roles([String.t], [module]) :: nil
@@ -132,6 +133,7 @@ defmodule BaseSystem.Configure do
 			extra_hosts:                    descriptors |> Enum.flat_map(fn desc -> desc[:hosts]                    || [] end),
 			extra_boot_time_kernel_modules: descriptors |> Enum.flat_map(fn desc -> desc[:boot_time_kernel_modules] || [] end),
 			extra_udev_rules:               descriptors |> Enum.flat_map(fn desc -> desc[:udev_rules]               || [] end),
+			extra_security_limits:          descriptors |> Enum.flat_map(fn desc -> desc[:security_limits]          || [] end),
 			extra_pre_install_units:        descriptors |> Enum.map(fn desc -> desc[:pre_install_unit] end)         |> Enum.reject(&is_nil/1),
 			extra_post_install_units:       descriptors |> Enum.map(fn desc -> desc[:post_install_unit] end)        |> Enum.reject(&is_nil/1),
 			extra_ferm_input_chain:         descriptors |> Enum.map(fn desc -> desc[:ferm_input_chain] end)         |> Enum.reject(&is_nil/1),
@@ -184,6 +186,7 @@ defmodule BaseSystem.Configure do
 		extra_ferm_forward_chain       = opts[:extra_ferm_forward_chain]       || []
 		extra_ferm_postrouting_chain   = opts[:extra_ferm_postrouting_chain]   || []
 		extra_udev_rules               = opts[:extra_udev_rules]               || []
+		extra_security_limits          = opts[:extra_security_limits]          || []
 		extra_sysctl_parameters        = opts[:extra_sysctl_parameters]        || %{}
 		extra_sysfs_variables          = opts[:extra_sysfs_variables]          || %{}
 		optimize_for_short_lived_files = "optimize_for_short_lived_files" in tags
@@ -403,7 +406,7 @@ defmodule BaseSystem.Configure do
 			["root", "hard", "nofile", Integer.to_string(default_limit_nofile)],
 			["*",    "soft", "nofile", Integer.to_string(default_limit_nofile)],
 			["*",    "hard", "nofile", Integer.to_string(default_limit_nofile)],
-		]
+		] ++ extra_security_limits
 
 		blacklisted_kernel_modules = [
 			# Makes computers emit horrible beeps (note: Ubuntu blacklists this, Debian doesn't)
