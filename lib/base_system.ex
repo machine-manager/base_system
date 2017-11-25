@@ -1200,8 +1200,8 @@ defmodule BaseSystem.Configure do
 	# https://github.com/stuffo/scaleway-ubuntukernel/tree/28f17d8231ad114034d8bbc684fc5afb9f902758#install
 	defp boot_units(_release, "scaleway_kexec", _),        do: [%SystemdUnitDisabled{name: "kexec.service"},
 	                                                            %SystemdUnitEnabled{name: "scaleway-ubuntu-kernel.service"}]
-	defp boot_units(release, "mbr", _),                    do: [%Grub{cmdline_normal_only: release_specific_cmdline(release)}]
-	defp boot_units(release, "mbr_bfq", _),                do: [%Grub{cmdline_normal_only: release_specific_cmdline(release) ++ ["elevator=bfq"]}]
+	defp boot_units(release, "mbr",      boot_resolution), do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     gfxpayload: boot_resolution}]
+	defp boot_units(release, "mbr_bfq",  boot_resolution), do: [%Grub{cmdline_normal_only: release_specific_cmdline(release) ++ ["elevator=bfq"], gfxpayload: boot_resolution}]
 	defp boot_units(release, "uefi",     boot_resolution), do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     gfxpayload: boot_resolution}]
 	defp boot_units(release, "uefi_bfq", boot_resolution), do: [%Grub{cmdline_normal_only: release_specific_cmdline(release) ++ ["elevator=bfq"], gfxpayload: boot_resolution}]
 	defp boot_units(release, "ovh_vps", _),                do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     cmdline_normal_and_recovery: ["console=tty1", "console=ttyS0"]}]
