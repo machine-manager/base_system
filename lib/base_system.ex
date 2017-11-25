@@ -717,6 +717,13 @@ defmodule BaseSystem.Configure do
 
 			conf_file("/etc/profile"),
 
+			# Use the nicer colors for text VTs
+			%RedoAfterMeet{
+				marker:  marker("setvtrgb"),
+				unit:    %SymlinkPresent{path: "/etc/vtrgb", target: "/etc/console-setup/vtrgb"},
+				trigger: fn -> {_, 0} = System.cmd("setvtrgb", ["/etc/vtrgb"]) end
+			},
+
 			# Clean up and unify motd across machines
 			%FileMissing{path: "/etc/motd"},
 			%FileMissing{path: "/etc/legal"},
@@ -1099,7 +1106,6 @@ defmodule BaseSystem.Configure do
 			%FileMissing{path: "/etc/pm/sleep.d/10_grub-common"},
 
 			# console-setup-linux leftovers from xenial
-			%FileMissing{path: "/etc/vtrgb"},
 			%FileMissing{path: "/etc/alternatives/vtrgb"},
 		]}
 	end
