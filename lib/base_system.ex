@@ -1207,21 +1207,21 @@ defmodule BaseSystem.Configure do
 		"consoleblank=0",
 	]
 	defp release_specific_cmdline(:stretch), do: [
+		# Use nicer VT colors from Ubuntu's console-setup-linux
+		"vt.default_red=1,222,57,255,0,118,44,204,128,255,0,255,0,255,0,255",
+		"vt.default_grn=1,56,181,199,111,38,181,204,128,0,255,255,0,0,255,255",
+		"vt.default_blu=1,43,74,6,184,113,233,204,128,0,0,0,255,255,255,255",
+
 		# Kernels before 4.12 blank the console after a delay
 		"consoleblank=0",
-
-		# Debian kernels before 4.13 need apparmor explicitly enabled
-		"apparmor=1",
-		"security=apparmor",
 
 		# Use blk-mq so that we can use the new bfq scheduler in 4.12+
 		"scsi_mod.use_blk_mq=y",
 		"dm_mod.use_blk_mq=y",
 
-		# Use nicer VT colors from Ubuntu's console-setup-linux
-		"vt.default_red=1,222,57,255,0,118,44,204,128,255,0,255,0,255,0,255",
-		"vt.default_grn=1,56,181,199,111,38,181,204,128,0,255,255,0,0,255,255",
-		"vt.default_blu=1,43,74,6,184,113,233,204,128,0,0,0,255,255,255,255",
+		# Debian kernels before 4.13 need apparmor explicitly enabled
+		"apparmor=1",
+		"security=apparmor",
 	]
 
 	defp fstab_unit() do
