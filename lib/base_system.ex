@@ -717,13 +717,6 @@ defmodule BaseSystem.Configure do
 
 			conf_file("/etc/profile"),
 
-			# Use the nicer colors for text VTs
-			%RedoAfterMeet{
-				marker:  marker("setvtrgb"),
-				unit:    %SymlinkPresent{path: "/etc/vtrgb", target: "/etc/console-setup/vtrgb"},
-				trigger: fn -> {_, 0} = System.cmd("setvtrgb", ["/etc/vtrgb"]) end
-			},
-
 			# Clean up and unify motd across machines
 			%FileMissing{path: "/etc/motd"},
 			%FileMissing{path: "/etc/legal"},
@@ -1107,6 +1100,7 @@ defmodule BaseSystem.Configure do
 
 			# console-setup-linux leftovers from xenial
 			%FileMissing{path: "/etc/alternatives/vtrgb"},
+			%FileMissing{path: "/etc/vtrgb"},
 		]}
 	end
 
@@ -1223,6 +1217,11 @@ defmodule BaseSystem.Configure do
 		# Use blk-mq so that we can use the new bfq scheduler in 4.12+
 		"scsi_mod.use_blk_mq=y",
 		"dm_mod.use_blk_mq=y",
+
+		# Use nicer VT colors from Ubuntu's console-setup-linux
+		"vt.default_red=1,222,57,255,0,118,44,204,128,255,0,255,0,255,0,255",
+		"vt.default_grn=1,56,181,199,111,38,181,204,128,0,255,255,0,0,255,255",
+		"vt.default_blu=1,43,74,6,184,113,233,204,128,0,0,0,255,255,255,255",
 	]
 
 	defp fstab_unit() do
