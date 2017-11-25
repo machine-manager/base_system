@@ -82,7 +82,7 @@ defmodule BaseSystem.Configure do
 		:desired_packages,
 		:desired_early_packages,
 		:undesired_packages,
-		:undesired_upgrades,
+		:apt_pins,
 		:apt_keys,
 		:apt_sources,
 		:etc_systemd_unit_files,
@@ -124,7 +124,7 @@ defmodule BaseSystem.Configure do
 			extra_desired_packages:         descriptors |> Enum.flat_map(fn desc -> desc[:desired_packages]         || [] end),
 			extra_desired_early_packages:   descriptors |> Enum.flat_map(fn desc -> desc[:desired_early_packages]   || [] end),
 			extra_undesired_packages:       descriptors |> Enum.flat_map(fn desc -> desc[:undesired_packages]       || [] end),
-			extra_undesired_upgrades:       descriptors |> Enum.flat_map(fn desc -> desc[:undesired_upgrades]       || [] end),
+			extra_apt_pins:                 descriptors |> Enum.flat_map(fn desc -> desc[:apt_pins]                 || [] end),
 			extra_apt_keys:                 descriptors |> Enum.flat_map(fn desc -> desc[:apt_keys]                 || [] end),
 			extra_apt_sources:              descriptors |> Enum.flat_map(fn desc -> desc[:apt_sources]              || [] end),
 			extra_etc_systemd_unit_files:   descriptors |> Enum.flat_map(fn desc -> desc[:etc_systemd_unit_files]   || [] end),
@@ -171,7 +171,7 @@ defmodule BaseSystem.Configure do
 		extra_desired_packages         = opts[:extra_desired_packages]         || []
 		extra_desired_early_packages   = opts[:extra_desired_early_packages]   || []
 		extra_undesired_packages       = opts[:extra_undesired_packages]       || []
-		extra_undesired_upgrades       = opts[:extra_undesired_upgrades]       || []
+		extra_apt_pins                 = opts[:extra_apt_pins]                 || []
 		extra_apt_keys                 = opts[:extra_apt_keys]                 || []
 		extra_apt_sources              = opts[:extra_apt_sources]              || []
 		extra_etc_systemd_unit_files   = opts[:extra_etc_systemd_unit_files]   || []
@@ -800,7 +800,7 @@ defmodule BaseSystem.Configure do
 			# Leftover backup file?
 			%FileMissing{path: "/etc/apt/trusted.gpg~"},
 
-			%FilePresent{path: "/etc/apt/preferences", mode: 0o644, content: make_apt_preferences(extra_undesired_upgrades)},
+			%FilePresent{path: "/etc/apt/preferences", mode: 0o644, content: make_apt_preferences(extra_apt_pins)},
 			%DirectoryPresent{path: "/etc/apt/preferences.d", mode: 0o755, immutable: true},
 			# We centralize management of our apt preferences in /etc/apt/preferences,
 			# so remove anything that may be in /etc/apt/preferences.d/
@@ -1297,28 +1297,13 @@ defmodule BaseSystem.Configure do
 		round((max_ram_ratio * memtotal_bytes) / watcher_bytes)
 	end
 
-	def make_apt_preferences(undesired_upgrades) do
-		for upgrade <- undesired_upgrades do
-			cond do
-				upgrade[:version] != nil -> 
-					"""
-					Package: #{upgrade.name}
-					Pin: version #{upgrade.version}
-					Pin-Priority: -1
-					"""
-				upgrade[:distribution_codename] != nil ->
-					"""
-					Package: #{upgrade.name}
-					Pin: release n=#{upgrade.distribution_codename}
-					Pin-Priority: -1
-					"""
-				true ->
-					raise(ArgumentError,
-						"""
-						Undesired upgrade descriptor #{inspect upgrade} had neither \
-						a :version or :distribution_codename key.\
-						""")
-			end
+	def make_apt_preferences(pins) do
+		for pin <- pins do
+			"""
+			Package: #{pin.package}
+			Pin: #{pin.pin}
+			Pin-Priority: #{pin.pin_priority}
+			"""
 		end
 		|> Enum.join("\n")
 	end
