@@ -208,8 +208,8 @@ defmodule BaseSystem.Configure do
 				"deb https://mirrors.kernel.org/debian          stretch           main contrib non-free",
 				"deb http://security.debian.org/debian-security stretch/updates   main contrib non-free",
 				"deb https://mirrors.kernel.org/debian          stretch-updates   main contrib non-free",
-				"deb https://mirrors.kernel.org/debian          stretch-backports main",
-				"deb https://mirrors.kernel.org/debian          experimental      main",
+				"deb https://mirrors.kernel.org/debian          stretch-backports main contrib non-free",
+				"deb https://mirrors.kernel.org/debian          experimental      main contrib non-free",
 			]
 		end
 		apt_keys     = base_keys    ++ extra_apt_keys
