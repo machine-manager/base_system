@@ -930,7 +930,13 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("ssh.service") end
 			},
 
-			%EtcSystemdUnitFiles{units: extra_etc_systemd_unit_files},
+			%EtcSystemdUnitFiles{
+				units: [
+					conf_file("/etc/systemd/system/fstrim.service"),
+					conf_file("/etc/systemd/system/fstrim.timer"),
+				] ++ extra_etc_systemd_unit_files
+			},
+			%SystemdUnitEnabled{name: "fstrim.timer"},
 
 			%All{units: extra_pre_install_units},
 
@@ -960,9 +966,8 @@ defmodule BaseSystem.Configure do
 			# may still be running if the system hasn't been rebooted.
 			%SystemdUnitStopped{name: "systemd-timesyncd.service"},
 
-			# util-linux drops a file to do a TRIM every week.  If we have servers
-			# with SSDs that benefit from TRIM, we should probably do this some
-			# other time.
+			# Ubuntu util-linux drops a file to do a TRIM every week.  We set up fstrim.timer
+			# to do this instead.
 			%FileMissing{path: "/etc/cron.weekly/fstrim"},
 
 			%SystemdUnitStarted{name: "chrony.service"},
