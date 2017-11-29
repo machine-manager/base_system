@@ -1235,6 +1235,11 @@ defmodule BaseSystem.Configure do
 		"apparmor=1",
 		"security=apparmor",
 
+		# Use nvidia-drm.modeset=1 so that nvidia 387 driver can wake up a
+		# DisplayPort monitor currently on a text VT.
+		# https://devtalk.nvidia.com/default/topic/1024719/linux-solaris-and-freebsd-driver-387-12-beta-/
+		"nvidia-drm.modeset=1",
+
 		# Linux efivars returns ENOSPC when our Asus Z97-A has plenty of space
 		# for another Boot variable, so tell Linux to take a hike.
 		"efi_no_storage_paranoia",
