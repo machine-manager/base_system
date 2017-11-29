@@ -579,6 +579,7 @@ defmodule BaseSystem.Configure do
 			:stretch -> ["firmware-linux", "firmware-linux-nonfree", "firmware-misc-nonfree"]
 		end)
 		human_admin_needs = [
+			"dosfstools",          # for making UEFI partitions
 			"file",
 			"molly-guard",
 			"lshw",
