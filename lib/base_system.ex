@@ -1234,6 +1234,10 @@ defmodule BaseSystem.Configure do
 		# Debian kernels before 4.13 need apparmor explicitly enabled
 		"apparmor=1",
 		"security=apparmor",
+
+		# Linux efivars returns ENOSPC when our Asus Z97-A has plenty of space
+		# for another Boot variable, so tell Linux to take a hike.
+		"efi_no_storage_paranoia",
 	]
 
 	defp fstab_unit() do
