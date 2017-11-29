@@ -687,6 +687,7 @@ defmodule BaseSystem.Configure do
 			%EtcCommitted{message: "converge (before any converging)"},
 			%Sysctl{parameters: sysctl_parameters},
 
+			%DirectoryPresent{path: "/etc/modprobe.d", mode: 0o755},
 			%FilePresent{
 				path:    "/etc/modprobe.d/base_system.conf",
 				mode:    0o644,
@@ -707,6 +708,8 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("kmod.service") end
 			},
 
+			%DirectoryPresent{path: "/etc/udev",         mode: 0o755},
+			%DirectoryPresent{path: "/etc/udev/rules.d", mode: 0o755},
 			%FilePresent{
 				path:    "/etc/udev/rules.d/99-base_system.rules",
 				mode:    0o644,
@@ -720,6 +723,7 @@ defmodule BaseSystem.Configure do
 			# Clean up and unify motd across machines
 			%FileMissing{path: "/etc/motd"},
 			%FileMissing{path: "/etc/legal"},
+			%DirectoryPresent{path: "/etc/update-motd.d", mode: 0o755},
 			%FileMissing{path: "/etc/update-motd.d/00-header"},
 			%FileMissing{path: "/etc/update-motd.d/10-help-text"},
 			%FileMissing{path: "/etc/update-motd.d/20-ovh-informations"},
@@ -728,6 +732,7 @@ defmodule BaseSystem.Configure do
 
 			leftover_files_unit(release),
 
+			%DirectoryPresent{path: "/etc/security", mode: 0o755},
 			%FilePresent{
 				path: "/etc/security/limits.conf",
 				content:
@@ -741,6 +746,7 @@ defmodule BaseSystem.Configure do
 			%RedoAfterMeet{
 				marker: marker("systemd"),
 				unit: %All{units: [
+					%DirectoryPresent{path: "/etc/systemd", mode: 0o755},
 					%FilePresent{
 						path:    "/etc/systemd/system.conf",
 						content: EEx.eval_string(content("files/etc/systemd/system.conf.eex"), [default_limit_nofile: default_limit_nofile]),
