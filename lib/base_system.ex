@@ -1224,9 +1224,11 @@ defmodule BaseSystem.Configure do
 		# Kernels before 4.12 blank the console after a delay
 		"consoleblank=0",
 
-		# Use blk-mq so that we can use the new bfq scheduler in 4.12+
-		"scsi_mod.use_blk_mq=y",
-		"dm_mod.use_blk_mq=y",
+		# We would really like to use blk-mq for the bfq scheduler, but mq currently
+		# has problems with suspend-to-ram, writing partitions w/ bfq, and USB replug.
+		# Use sq and live with cfq for now.
+		"scsi_mod.use_blk_mq=n",
+		"dm_mod.use_blk_mq=n",
 
 		# Debian kernels before 4.13 need apparmor explicitly enabled
 		"apparmor=1",
