@@ -576,7 +576,12 @@ defmodule BaseSystem.Configure do
 			"prometheus-node-exporter",
 		] ++ (case release do
 			:xenial  -> ["pollinate"] # for seeding RNG the very first time
-			:stretch -> ["firmware-linux", "firmware-linux-nonfree", "firmware-misc-nonfree"]
+			:stretch -> [
+				"firmware-linux",
+				"firmware-linux-nonfree",
+				"firmware-misc-nonfree",
+				"debian-security-support", # for `check-support-status` (printing list of packages with limited security support)
+			]
 		end)
 		human_admin_needs = [
 			"dosfstools",          # for making UEFI partitions
