@@ -582,6 +582,7 @@ defmodule BaseSystem.Configure do
 			"dosfstools",          # for making UEFI partitions
 			"file",
 			"man",
+			"manpages",
 			"info",
 			"molly-guard",
 			"lshw",
