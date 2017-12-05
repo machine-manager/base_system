@@ -9,9 +9,10 @@ set +o histexpand
 # http://www.zsh.org/mla/workers/1996/msg00615.html
 HISTSIZE=21000
 SAVEHIST=20000
-mkdir -p ~/.config/zsh
+mkdir -p ~/.config/zsh ~/.cache/zsh
 touch    ~/.config/zsh/history
 HISTFILE=~/.config/zsh/history
+ZSH_COMPDUMP=~/.cache/zsh/zcompdump
 
 # LS_COLORS is used by the :completion: setup below
 # inlined eval "$(/usr/bin/dircolors -b)"
