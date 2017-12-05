@@ -1058,6 +1058,7 @@ defmodule BaseSystem.Configure do
 				RuntimeError -> nil
 			end
 			:ok = IO.puts("Installing packages #{inspect missing_unit_impl_packages} before converging, this could take a few minutes...")
+			Util.dpkg_configure_pending()
 			for package <- missing_unit_impl_packages do
 				Util.install_package(package)
 			end
