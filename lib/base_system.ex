@@ -589,6 +589,7 @@ defmodule BaseSystem.Configure do
 		human_admin_needs = [
 			"dosfstools",          # for making UEFI partitions
 			"file",
+			"attr",                # for printing xattrs with getfattr -d
 			"man",
 			"manpages",
 			"info",
