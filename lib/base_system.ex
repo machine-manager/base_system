@@ -1164,11 +1164,12 @@ defmodule BaseSystem.Configure do
 	end
 
 	defp formatted_hosts(extra_hosts) do
+		script_dir = Path.dirname(:escript.script_name())
 		IO.iodata_to_binary(
 			TableFormatter.format(
 				preamble_hosts() ++
 				[[]] ++
-				Poison.decode!(File.read!("/root/.cache/machine_manager/hosts.json")) ++
+				Poison.decode!(File.read!("#{script_dir}/hosts.json")) ++
 				[[]] ++
 				extra_hosts
 			)
