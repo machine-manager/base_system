@@ -1254,29 +1254,22 @@ defmodule BaseSystem.Configure do
 	]
 
 	defp fstab_unit() do
-		fstab_existing_entries = Fstab.get_entries()
-			|> Enum.map(fn entry -> {entry.mount_point, entry} end)
-			|> Enum.into(%{})
-		fstab_entries = [
-			fstab_existing_entries["/"],
-			fstab_existing_entries["/boot"],
-			fstab_existing_entries["/boot/efi"],
-			%FstabEntry{
-				spec:             "proc",
-				mount_point:      "/proc",
-				type:             "proc",
-				# hidepid=2 prevents users from seeing other users' processes
-				options:          "hidepid=2",
-				fsck_pass_number: 0
-			}
-		] |> Enum.reject(&is_nil/1)
-		fstab_trigger = fn ->
-			{_, 0} = System.cmd("mount", ["-o", "remount", "/proc"])
-		end
+		# Keep all existing entries except /proc, which may need its options changed.
+		fstab_entries =
+			Enum.reject(Fstab.get_entries(), fn entry -> entry.mount_point == "/proc" end) ++ [
+				%FstabEntry{
+					spec:             "proc",
+					mount_point:      "/proc",
+					type:             "proc",
+					# hidepid=2 prevents users from seeing other users' processes
+					options:          "hidepid=2",
+					fsck_pass_number: 0
+				}
+			]
 		%RedoAfterMeet{
 			marker:  marker("remount-proc"),
 			unit:    %Fstab{entries: fstab_entries},
-			trigger: fstab_trigger
+			trigger: fn -> {_, 0} = System.cmd("mount", ["-o", "remount", "/proc"]) end
 		}
 	end
 
