@@ -258,4 +258,6 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE=fg=6
 ZSH_AUTOSUGGEST_STRATEGY=match_prev_cmd
 # Beware: do not use this on xenial's zsh 5.1.1:
 # https://github.com/zsh-users/zsh-autosuggestions/issues/281
-ZSH_AUTOSUGGEST_USE_ASYNC=1
+# Beware: do not use this on anything:
+# https://github.com/zsh-users/zsh-autosuggestions/issues/249#issuecomment-349854541
+# ZSH_AUTOSUGGEST_USE_ASYNC=1
