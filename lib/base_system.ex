@@ -1219,8 +1219,8 @@ defmodule BaseSystem.Configure do
 	# https://github.com/stuffo/scaleway-ubuntukernel/tree/28f17d8231ad114034d8bbc684fc5afb9f902758#install
 	defp boot_units(_release, "scaleway_kexec", _),        do: [%SystemdUnitDisabled{name: "kexec.service"},
 	                                                            %SystemdUnitEnabled{name: "scaleway-ubuntu-kernel.service"}]
-	defp boot_units(release, "mbr",      boot_resolution), do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     gfxpayload: boot_resolution}]
-	defp boot_units(release, "uefi",     boot_resolution), do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     gfxpayload: boot_resolution}]
+	defp boot_units(release, "mbr",      boot_resolution), do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     gfxmode: boot_resolution, gfxpayload: boot_resolution}]
+	defp boot_units(release, "uefi",     boot_resolution), do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     gfxmode: boot_resolution, gfxpayload: boot_resolution}]
 	defp boot_units(release, "ovh_vps", _),                do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     cmdline_normal_and_recovery: ["console=tty1", "console=ttyS0"]}]
 	defp boot_units(release, "do_vps", _),                 do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     cmdline_normal_and_recovery: ["console=tty1", "console=ttyS0"]}]
 	defp boot_units(release, "do_vps_stretch", _),         do: [%Grub{cmdline_normal_only: release_specific_cmdline(release) ++ ["biosdevname=0", "net.ifnames=0", "console=tty0", "console=ttyS0,115200", "earlyprintk=ttyS0,115200", "systemd.show_status=true"]}]
