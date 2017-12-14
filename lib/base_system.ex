@@ -665,11 +665,6 @@ defmodule BaseSystem.Configure do
 			# the boot with a scan for btrfs volumes.
 			"btrfs-tools",
 
-			# Container technology that works until it doesn't
-			"lxd",
-			"lxcfs",
-			"lxc-common",
-
 			# Gave us names like em0 and em1 for network devices, but we don't want
 			# this anywhere; we want systemd's predictable network interface names.
 			"biosdevname",
