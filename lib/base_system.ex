@@ -643,13 +643,6 @@ defmodule BaseSystem.Configure do
 			"ntp",
 			"openntpd",
 
-			# Superfluous stuff that we would find on a non-minbase install
-			"snapd",
-			"unattended-upgrades",
-			"libnss-mdns",
-			"avahi-daemon",
-			"popularity-contest",
-
 			# We probably don't have many computers that need thermald because the
 			# BIOS and kernel also take actions to keep the CPU cool.
 			# https://01.org/linux-thermal-daemon/documentation/introduction-thermal-daemon
