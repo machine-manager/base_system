@@ -102,6 +102,8 @@ defmodule BaseSystem.Configure do
 		:ferm_postrouting_chain,
 		:udev_rules,
 		:security_limits,
+		:cmdline_normal_only,
+		:cmdline_normal_and_recovery,
 	])
 
 	@spec configure_with_roles([String.t], [module]) :: nil
@@ -122,28 +124,30 @@ defmodule BaseSystem.Configure do
 		end
 		configure(
 			tags,
-			extra_desired_packages:           descriptors |> Enum.flat_map(fn desc -> desc[:desired_packages]           || [] end),
-			extra_desired_early_packages:     descriptors |> Enum.flat_map(fn desc -> desc[:desired_early_packages]     || [] end),
-			extra_undesired_packages:         descriptors |> Enum.flat_map(fn desc -> desc[:undesired_packages]         || [] end),
-			extra_apt_pins:                   descriptors |> Enum.flat_map(fn desc -> desc[:apt_pins]                   || [] end),
-			extra_apt_keys:                   descriptors |> Enum.flat_map(fn desc -> desc[:apt_keys]                   || [] end),
-			extra_apt_sources:                descriptors |> Enum.flat_map(fn desc -> desc[:apt_sources]                || [] end),
-			extra_etc_systemd_unit_files:     descriptors |> Enum.flat_map(fn desc -> desc[:etc_systemd_unit_files]     || [] end),
-			extra_regular_users:              descriptors |> Enum.flat_map(fn desc -> desc[:regular_users]              || [] end),
-			extra_ssh_allow_users:            descriptors |> Enum.flat_map(fn desc -> desc[:ssh_allow_users]            || [] end),
-			extra_hosts:                      descriptors |> Enum.flat_map(fn desc -> desc[:hosts]                      || [] end),
-			extra_boot_time_kernel_modules:   descriptors |> Enum.flat_map(fn desc -> desc[:boot_time_kernel_modules]   || [] end),
-			extra_blacklisted_kernel_modules: descriptors |> Enum.flat_map(fn desc -> desc[:blacklisted_kernel_modules] || [] end),
-			extra_udev_rules:                 descriptors |> Enum.flat_map(fn desc -> desc[:udev_rules]                 || [] end),
-			extra_security_limits:            descriptors |> Enum.flat_map(fn desc -> desc[:security_limits]            || [] end),
-			extra_pre_install_units:          descriptors |> Enum.map(fn desc -> desc[:pre_install_unit] end)           |> Enum.reject(&is_nil/1),
-			extra_post_install_units:         descriptors |> Enum.map(fn desc -> desc[:post_install_unit] end)          |> Enum.reject(&is_nil/1),
-			extra_ferm_input_chain:           descriptors |> Enum.map(fn desc -> desc[:ferm_input_chain] end)           |> Enum.reject(&is_nil/1),
-			extra_ferm_output_chain:          descriptors |> Enum.map(fn desc -> desc[:ferm_output_chain] end)          |> Enum.reject(&is_nil/1),
-			extra_ferm_forward_chain:         descriptors |> Enum.map(fn desc -> desc[:ferm_forward_chain] end)         |> Enum.reject(&is_nil/1),
-			extra_ferm_postrouting_chain:     descriptors |> Enum.map(fn desc -> desc[:ferm_postrouting_chain] end)     |> Enum.reject(&is_nil/1),
-			extra_sysctl_parameters:          descriptors |> Enum.map(fn desc -> desc[:sysctl_parameters]               || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end),
-			extra_sysfs_variables:            descriptors |> Enum.map(fn desc -> desc[:sysfs_variables]                 || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end)
+			extra_desired_packages:            descriptors |> Enum.flat_map(fn desc -> desc[:desired_packages]            || [] end),
+			extra_desired_early_packages:      descriptors |> Enum.flat_map(fn desc -> desc[:desired_early_packages]      || [] end),
+			extra_undesired_packages:          descriptors |> Enum.flat_map(fn desc -> desc[:undesired_packages]          || [] end),
+			extra_apt_pins:                    descriptors |> Enum.flat_map(fn desc -> desc[:apt_pins]                    || [] end),
+			extra_apt_keys:                    descriptors |> Enum.flat_map(fn desc -> desc[:apt_keys]                    || [] end),
+			extra_apt_sources:                 descriptors |> Enum.flat_map(fn desc -> desc[:apt_sources]                 || [] end),
+			extra_etc_systemd_unit_files:      descriptors |> Enum.flat_map(fn desc -> desc[:etc_systemd_unit_files]      || [] end),
+			extra_regular_users:               descriptors |> Enum.flat_map(fn desc -> desc[:regular_users]               || [] end),
+			extra_ssh_allow_users:             descriptors |> Enum.flat_map(fn desc -> desc[:ssh_allow_users]             || [] end),
+			extra_hosts:                       descriptors |> Enum.flat_map(fn desc -> desc[:hosts]                       || [] end),
+			extra_boot_time_kernel_modules:    descriptors |> Enum.flat_map(fn desc -> desc[:boot_time_kernel_modules]    || [] end),
+			extra_blacklisted_kernel_modules:  descriptors |> Enum.flat_map(fn desc -> desc[:blacklisted_kernel_modules]  || [] end),
+			extra_udev_rules:                  descriptors |> Enum.flat_map(fn desc -> desc[:udev_rules]                  || [] end),
+			extra_security_limits:             descriptors |> Enum.flat_map(fn desc -> desc[:security_limits]             || [] end),
+			extra_cmdline_normal_only:         descriptors |> Enum.flat_map(fn desc -> desc[:cmdline_normal_only]         || [] end),
+			extra_cmdline_normal_and_recovery: descriptors |> Enum.flat_map(fn desc -> desc[:cmdline_normal_and_recovery] || [] end),
+			extra_pre_install_units:           descriptors |> Enum.map(fn desc -> desc[:pre_install_unit] end)            |> Enum.reject(&is_nil/1),
+			extra_post_install_units:          descriptors |> Enum.map(fn desc -> desc[:post_install_unit] end)           |> Enum.reject(&is_nil/1),
+			extra_ferm_input_chain:            descriptors |> Enum.map(fn desc -> desc[:ferm_input_chain] end)            |> Enum.reject(&is_nil/1),
+			extra_ferm_output_chain:           descriptors |> Enum.map(fn desc -> desc[:ferm_output_chain] end)           |> Enum.reject(&is_nil/1),
+			extra_ferm_forward_chain:          descriptors |> Enum.map(fn desc -> desc[:ferm_forward_chain] end)          |> Enum.reject(&is_nil/1),
+			extra_ferm_postrouting_chain:      descriptors |> Enum.map(fn desc -> desc[:ferm_postrouting_chain] end)      |> Enum.reject(&is_nil/1),
+			extra_sysctl_parameters:           descriptors |> Enum.map(fn desc -> desc[:sysctl_parameters]                || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end),
+			extra_sysfs_variables:             descriptors |> Enum.map(fn desc -> desc[:sysfs_variables]                  || %{} end) |> Enum.reduce(%{}, fn(m, acc) -> Map.merge(acc, m) end)
 		)
 	end
 
@@ -170,28 +174,30 @@ defmodule BaseSystem.Configure do
 	end
 
 	def configure(tags, opts) do
-		extra_desired_packages           = opts[:extra_desired_packages]           || []
-		extra_desired_early_packages     = opts[:extra_desired_early_packages]     || []
-		extra_undesired_packages         = opts[:extra_undesired_packages]         || []
-		extra_apt_pins                   = opts[:extra_apt_pins]                   || []
-		extra_apt_keys                   = opts[:extra_apt_keys]                   || []
-		extra_apt_sources                = opts[:extra_apt_sources]                || []
-		extra_etc_systemd_unit_files     = opts[:extra_etc_systemd_unit_files]     || []
-		extra_regular_users              = opts[:extra_regular_users]              || []
-		extra_ssh_allow_users            = opts[:extra_ssh_allow_users]            || []
-		extra_hosts                      = opts[:extra_hosts]                      || []
-		extra_boot_time_kernel_modules   = opts[:extra_boot_time_kernel_modules]   || []
-		extra_blacklisted_kernel_modules = opts[:extra_blacklisted_kernel_modules] || []
-		extra_pre_install_units          = opts[:extra_pre_install_units]          || []
-		extra_post_install_units         = opts[:extra_post_install_units]         || []
-		extra_ferm_input_chain           = opts[:extra_ferm_input_chain]           || []
-		extra_ferm_output_chain          = opts[:extra_ferm_output_chain]          || []
-		extra_ferm_forward_chain         = opts[:extra_ferm_forward_chain]         || []
-		extra_ferm_postrouting_chain     = opts[:extra_ferm_postrouting_chain]     || []
-		extra_udev_rules                 = opts[:extra_udev_rules]                 || []
-		extra_security_limits            = opts[:extra_security_limits]            || []
-		extra_sysctl_parameters          = opts[:extra_sysctl_parameters]          || %{}
-		extra_sysfs_variables            = opts[:extra_sysfs_variables]            || %{}
+		extra_desired_packages            = opts[:extra_desired_packages]            || []
+		extra_desired_early_packages      = opts[:extra_desired_early_packages]      || []
+		extra_undesired_packages          = opts[:extra_undesired_packages]          || []
+		extra_apt_pins                    = opts[:extra_apt_pins]                    || []
+		extra_apt_keys                    = opts[:extra_apt_keys]                    || []
+		extra_apt_sources                 = opts[:extra_apt_sources]                 || []
+		extra_etc_systemd_unit_files      = opts[:extra_etc_systemd_unit_files]      || []
+		extra_regular_users               = opts[:extra_regular_users]               || []
+		extra_ssh_allow_users             = opts[:extra_ssh_allow_users]             || []
+		extra_hosts                       = opts[:extra_hosts]                       || []
+		extra_boot_time_kernel_modules    = opts[:extra_boot_time_kernel_modules]    || []
+		extra_blacklisted_kernel_modules  = opts[:extra_blacklisted_kernel_modules]  || []
+		extra_pre_install_units           = opts[:extra_pre_install_units]           || []
+		extra_post_install_units          = opts[:extra_post_install_units]          || []
+		extra_ferm_input_chain            = opts[:extra_ferm_input_chain]            || []
+		extra_ferm_output_chain           = opts[:extra_ferm_output_chain]           || []
+		extra_ferm_forward_chain          = opts[:extra_ferm_forward_chain]          || []
+		extra_ferm_postrouting_chain      = opts[:extra_ferm_postrouting_chain]      || []
+		extra_udev_rules                  = opts[:extra_udev_rules]                  || []
+		extra_security_limits             = opts[:extra_security_limits]             || []
+		extra_cmdline_normal_only         = opts[:extra_cmdline_normal_only]         || []
+		extra_cmdline_normal_and_recovery = opts[:extra_cmdline_normal_and_recovery] || []
+		extra_sysctl_parameters           = opts[:extra_sysctl_parameters]           || %{}
+		extra_sysfs_variables             = opts[:extra_sysfs_variables]             || %{}
 		optimize_for_short_lived_files   = "optimize_for_short_lived_files" in tags
 		ipv6                             = "ipv6"                           in tags
 		release                          = Util.tag_value!(tags, "release") |> String.to_atom()
@@ -1011,7 +1017,13 @@ defmodule BaseSystem.Configure do
 				trigger: fn -> {_, 0} = System.cmd("/bin/zsh", ["-c", "true"]) end
 			},
 
-			%All{units: boot_units(release, Util.tag_value!(tags, "boot"), Util.tag_value(tags, "boot_resolution"))},
+			boot_unit(
+				release,
+				Util.tag_value!(tags, "boot"),
+				Util.tag_value(tags, "boot_resolution"),
+				extra_cmdline_normal_only,
+				extra_cmdline_normal_and_recovery
+			),
 			%All{units: extra_post_install_units},
 
 			# To stabilize on the first run, this should be near-last, after any possible
@@ -1191,23 +1203,30 @@ defmodule BaseSystem.Configure do
 	# E: busybox or busybox-static, version 1:1.22.0-17~ or later, is required but not installed
 	defp kernel_packages(:stretch), do: ["linux-image-amd64", "busybox"]
 
-	defp bootloader_packages("uefi"),            do: ["grub-efi-amd64"]
 	# outside = our boot is fully managed by the host, to the point where we don't
 	# have to install a Linux kernel and bootloader.  You can use this on scaleway.
-	defp bootloader_packages("outside"),         do: ["grub-efi-amd64"]
+	defp bootloader_packages("outside"),         do: []
+	defp bootloader_packages("mbr"),             do: ["grub-pc"]
+	defp bootloader_packages("uefi"),            do: ["grub-efi-amd64"]
 	defp bootloader_packages("scaleway_kexec"),  do: ["scaleway-ubuntu-kernel"]
-	defp bootloader_packages(_),                 do: ["grub-pc"]
 
-	defp boot_units(_release, "outside", _),               do: []
-	# disabling kexec.service is "required as Ubuntu will kexec too early and leave a dirty filesystem"
-	# https://github.com/stuffo/scaleway-ubuntukernel/tree/28f17d8231ad114034d8bbc684fc5afb9f902758#install
-	defp boot_units(_release, "scaleway_kexec", _),        do: [%SystemdUnitDisabled{name: "kexec.service"},
-	                                                            %SystemdUnitEnabled{name: "scaleway-ubuntu-kernel.service"}]
-	defp boot_units(release, "mbr",      boot_resolution), do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     gfxmode: boot_resolution, gfxpayload: boot_resolution}]
-	defp boot_units(release, "uefi",     boot_resolution), do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     gfxmode: boot_resolution, gfxpayload: boot_resolution}]
-	defp boot_units(release, "ovh_vps", _),                do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     cmdline_normal_and_recovery: ["console=tty1", "console=ttyS0"]}]
-	defp boot_units(release, "do_vps", _),                 do: [%Grub{cmdline_normal_only: release_specific_cmdline(release),                     cmdline_normal_and_recovery: ["console=tty1", "console=ttyS0"]}]
-	defp boot_units(release, "do_vps_stretch", _),         do: [%Grub{cmdline_normal_only: release_specific_cmdline(release) ++ ["biosdevname=0", "net.ifnames=0", "console=tty0", "console=ttyS0,115200", "earlyprintk=ttyS0,115200", "systemd.show_status=true"]}]
+	defp boot_unit(_release, "outside", _, _, _), do: %All{units: []}
+	defp boot_unit(release, type, boot_resolution, extra_cmdline_normal_only, extra_cmdline_normal_and_recovery) when type in ["mbr", "uefi"] do
+		%Grub{
+			cmdline_normal_only:         release_specific_cmdline(release) ++ extra_cmdline_normal_only,
+			cmdline_normal_and_recovery: extra_cmdline_normal_and_recovery,
+			gfxmode:                     boot_resolution,
+			gfxpayload:                  boot_resolution,
+		}
+	end
+	defp boot_unit(_release, "scaleway_kexec", _, _, _) do
+		%All{units: [
+			# disabling kexec.service is "required as Ubuntu will kexec too early and leave a dirty filesystem"
+			# https://github.com/stuffo/scaleway-ubuntukernel/tree/28f17d8231ad114034d8bbc684fc5afb9f902758#install
+			%SystemdUnitDisabled{name: "kexec.service"},
+			%SystemdUnitEnabled{name: "scaleway-ubuntu-kernel.service"},
+		]}
+	end
 
 	defp release_specific_cmdline(:xenial),  do: [
 		# Kernels before 4.12 blank the console after a delay
