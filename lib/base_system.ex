@@ -296,7 +296,8 @@ defmodule BaseSystem.Configure do
 
 		dirty_settings = get_dirty_settings(optimize_for_short_lived_files: optimize_for_short_lived_files)
 
-		# TODO: min_free_kbytes
+		memtotal = Util.get_meminfo()["MemTotal"] # bytes
+
 		# TODO: optimize network stack based on wikimedia-puppet
 		base_sysctl_parameters = %{
 			# Standard Ubuntu console log level that we want on Debian as well
@@ -347,6 +348,10 @@ defmodule BaseSystem.Configure do
 			# https://bugs.launchpad.net/ubuntu/+source/procps/+bug/1068756
 			"net.ipv6.conf.all.use_tempaddr"     => 0,
 			"net.ipv6.conf.default.use_tempaddr" => 0,
+
+			# Try to avoid possible bugs like http://lkml.iu.edu/hypermail/linux/kernel/1712.2/01256.html
+			# by leaving more memory free for contiguous allocation.
+			"vm.min_free_kbytes"                 => max(67584, round((memtotal * 0.01) / 1024)),
 
 			# Prefer to retain directory and inode objects.
 			# http://www.beegfs.com/wiki/StorageServerTuning
