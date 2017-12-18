@@ -560,6 +560,7 @@ defmodule BaseSystem.Configure do
 			"dnsutils",          # for dig, used below to make sure unbound works
 			"netbase",
 			"ifupdown",
+			"bridge-utils",
 			"isc-dhcp-client",
 			"rsyslog",
 			"logrotate",
