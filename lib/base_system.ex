@@ -1358,34 +1358,26 @@ defmodule BaseSystem.Configure do
 		# /etc/passwd sha256sum: #{sha256sum("/etc/passwd")}
 		# /etc/group  sha256sum: #{sha256sum("/etc/group")}
 
-		@def $ethernet_interfaces = (#{ethernet_interfaces |> Enum.join(" ")});
-		@def $wifi_interfaces     = (#{wifi_interfaces     |> Enum.join(" ")});
+		@def $ethernet_interfaces = (#{Enum.join(ethernet_interfaces, " ")});
+		@def $wifi_interfaces     = (#{Enum.join(wifi_interfaces, " ")});
 
 		table filter {
 			chain INPUT {
 				policy DROP;
 
-				mod state state ESTABLISHED ACCEPT;
+				mod state state ESTABLISHED        ACCEPT;
 				mod state state RELATED proto icmp ACCEPT;
 
-				# allow local packet
-				interface lo ACCEPT;
+				interface lo           ACCEPT;
+				proto icmp             ACCEPT;
+				proto tcp syn dport 22 ACCEPT; # ssh
 
-				# respond to ping
-				proto icmp ACCEPT; 
-
-				# allow SSH connections + 29933 spiped
-				proto tcp syn dport (22 29933) ACCEPT;
-
-				# allow WireGuard traffic
 				interface ($ethernet_interfaces $wifi_interfaces) {
-					proto udp dport 51820 ACCEPT;
+					proto udp dport 51820 ACCEPT; # WireGuard
 				}
 
 				# allow localhost or any wg0 host to reach prometheus-node-exporter
-				#
-				# TODO: add configuration to lock this down to a few hosts that actually
-				# need to see the metrics
+				# TODO: lock this down to a few hosts that actually need the metrics
 				interface (lo wg0) {
 					proto tcp syn dport 9100 ACCEPT;
 				}
@@ -1406,27 +1398,21 @@ defmodule BaseSystem.Configure do
 					# Allow anyone to make DNS lookups using local unbound
 					proto (tcp udp) dport 53 ACCEPT;
 
-					# Allow root to talk to the unbound control port
-					proto tcp dport 8953 {
-						mod owner uid-owner root ACCEPT;
-					}
-
-					# No `daddr` to allow access to ssh even when using the LAN IP instead of 127.0.0.1
-					proto tcp syn dport 22 {
-						mod owner uid-owner root ACCEPT;
+					mod owner uid-owner root {
+						proto tcp dport 8953   ACCEPT; # unbound control port
+						proto tcp syn dport 22 ACCEPT; # ssh
 					}
 				}
 
 				outerface wg0 {
-					# Allow root to ping anyone over the WireGuard interface
-					proto icmp {
-						mod owner uid-owner root ACCEPT;
+					mod owner uid-owner root {
+						proto icmp ACCEPT;
 					}
 				}
 
 		#{output_chain |> Enum.join("\n") |> indent |> indent}
 
-				# To suppress this rule, add your own with REJECT to the output chain
+				# Note: to suppress this rule, add your own REJECT to the output chain
 				outerface ($ethernet_interfaces $wifi_interfaces) {
 					ACCEPT;
 				}
