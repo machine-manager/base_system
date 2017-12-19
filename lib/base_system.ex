@@ -666,6 +666,9 @@ defmodule BaseSystem.Configure do
 			"python3-apport",
 			"python3-problem-report",
 
+			# Doesn't work well with bridges; sometimes breaks things hard
+			"network-manager",
+
 			# Gave us names like em0 and em1 for network devices, but we don't want
 			# this anywhere; we want systemd's predictable network interface names.
 			"biosdevname",
