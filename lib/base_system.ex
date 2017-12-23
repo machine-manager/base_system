@@ -1404,10 +1404,8 @@ defmodule BaseSystem.Configure do
 					}
 				}
 
-				outerface wg0 {
-					mod owner uid-owner root {
-						proto icmp ACCEPT;
-					}
+				mod owner uid-owner root {
+					proto icmp ACCEPT;
 				}
 
 		#{output_chain |> Enum.join("\n") |> indent |> indent}
