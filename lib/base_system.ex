@@ -296,7 +296,7 @@ defmodule BaseSystem.Configure do
 
 		dirty_settings = get_dirty_settings(optimize_for_short_lived_files: optimize_for_short_lived_files)
 
-		memtotal = Util.get_meminfo()["MemTotal"] # bytes
+		memtotal = nearest_mb(Util.get_meminfo()["MemTotal"]) # bytes
 
 		# TODO: optimize network stack based on wikimedia-puppet
 		base_sysctl_parameters = %{
@@ -1289,7 +1289,8 @@ defmodule BaseSystem.Configure do
 		optimize_for_short_lived_files = Keyword.get(opts, :optimize_for_short_lived_files)
 		mb                             = 1024 * 1024
 		gb                             = 1024 * mb
-		memtotal                       = Util.get_meminfo()["MemTotal"] # bytes
+		# Round to keep configuration stable on servers where memory varies slightly
+		memtotal                       = nearest_mb(Util.get_meminfo()["MemTotal"]) # bytes
 		threshold                      = 4 * gb
 		if optimize_for_short_lived_files do
 			# Some servers have a workload where they download files, keep them on
@@ -1330,10 +1331,14 @@ defmodule BaseSystem.Configure do
 	# Return the number of inotify watchers to allow per user, alotting a
 	# maximum of RAM * `max_ram_ratio` to each user for inotify watchers.
 	defp inotify_max_user_watches(max_ram_ratio) when max_ram_ratio > 0 and max_ram_ratio < 1 do
-		memtotal_bytes = Util.get_meminfo()["MemTotal"]
+		memtotal_bytes = nearest_mb(Util.get_meminfo()["MemTotal"])
 		# https://unix.stackexchange.com/questions/13751/kernel-inotify-watch-limit-reached
 		watcher_bytes  = 1024
 		round((max_ram_ratio * memtotal_bytes) / watcher_bytes)
+	end
+
+	defp nearest_mb(bytes) do
+		round(bytes / (1024 * 1024)) * (1024 * 1024)
 	end
 
 	def make_apt_preferences(pins) do
