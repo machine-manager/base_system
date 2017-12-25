@@ -686,6 +686,15 @@ defmodule BaseSystem.Configure do
 
 		packages_to_purge = MapSet.difference(MapSet.new(undesired_packages), MapSet.new(all_desired_packages))
 
+		# By default, ignore power key because it's easy to press accidentally
+		# or unintentionally (e.g. when you assume a blank-screen laptop is off)
+		# Tag KVM/QEMU guests with "power_button_action:poweroff" so that the
+		# host shutdown script can shutdown the guests.
+		power_button_action = case Util.tag_value(tags, "power_button_action") do
+			nil   -> "ignore"
+			other -> other
+		end
+
 		units = [
 			# We need a git config with a name and email for etckeeper to work
 			%DirectoryPresent{path: "/root/.config",     mode: 0o700},
@@ -764,11 +773,11 @@ defmodule BaseSystem.Configure do
 						content: EEx.eval_string(content("files/etc/systemd/system.conf.eex"), [default_limit_nofile: default_limit_nofile]),
 						mode:    0o644
 					},
-
-					# Ignore power key because we don't need it to shut down a machine and it's easy to
-					# press accidentally or unintentionally (if you assume a blank-screen laptop is off)
-					conf_file("/etc/systemd/logind.conf"),
-
+					%FilePresent{
+						path:    "/etc/systemd/logind.conf",
+						content: EEx.eval_string(content("files/etc/systemd/logind.conf.eex"), [power_button_action: power_button_action]),
+						mode:    0o644
+					},
 					# Disable systemd's atrocious "one ctrl-alt-del reboots the system" feature.
 					# This does not affect the 7x ctrl-alt-del force reboot feature.
 					%SymlinkPresent{path: "/etc/systemd/system/ctrl-alt-del.target", target: "/dev/null"},

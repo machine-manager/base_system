@@ -18,7 +18,7 @@
 #KillOnlyUsers=
 #KillExcludeUsers=root
 #InhibitDelayMaxSec=5
-HandlePowerKey=ignore
+HandlePowerKey=<%= power_button_action %>
 #HandleSuspendKey=suspend
 #HandleHibernateKey=hibernate
 #HandleLidSwitch=suspend
