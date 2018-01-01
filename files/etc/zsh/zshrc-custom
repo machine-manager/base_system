@@ -175,6 +175,11 @@ alias aginir='apt-get install --no-install-recommends'
 alias Grep=grep
 alias Sort=sort
 
+# Don't let crashed Xorg sessions leave us at an unlocked text-mode VT
+startx() {
+	/usr/bin/startx "$@"; exit
+}
+
 typeset -A program_to_color_flag
 program_to_color_flag=(
 	ls    --color=always
