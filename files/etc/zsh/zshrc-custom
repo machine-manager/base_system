@@ -177,7 +177,7 @@ alias Sort=sort
 
 # Don't let crashed Xorg sessions leave us at an unlocked text-mode VT
 startx() {
-	/usr/bin/startx "$@"; exit
+	exec /usr/bin/startx "$@"
 }
 
 typeset -A program_to_color_flag
