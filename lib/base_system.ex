@@ -1365,8 +1365,8 @@ defmodule BaseSystem.Configure do
 		interface_names     = File.ls!("/sys/class/net")
 		# eno, ens, enp, enx, eth: https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
 		# br to include bridge interfaces
-		ethernet_interfaces = interface_names |> Enum.filter(fn name -> String.starts_with?(name, "e") or String.starts_with?(name, "br") end)
-		wifi_interfaces     = interface_names |> Enum.filter(fn name -> String.starts_with?(name, "wlo") end)
+		ethernet_interfaces = Enum.filter(interface_names, fn name -> String.starts_with?(name, "e") or String.starts_with?(name, "br") end)
+		wifi_interfaces     = Enum.filter(interface_names, fn name -> String.starts_with?(name, "wlo") end)
 		"""
 		# ferm configuration is dependent on uids and gids, so make sure ferm gets reloaded when users/groups change
 		# /etc/passwd sha256sum: #{sha256sum("/etc/passwd")}
