@@ -200,6 +200,7 @@ defmodule BaseSystem.Configure do
 		extra_sysfs_variables             = opts[:extra_sysfs_variables]             || %{}
 		optimize_for_short_lived_files   = "optimize_for_short_lived_files" in tags
 		ipv6                             = "ipv6"                           in tags
+		firewall_verbose_log             = "firewall:verbose_log"           in tags
 		release                          = Util.tag_value!(tags, "release") |> String.to_atom()
 
 		base_keys = case release do
@@ -876,6 +877,7 @@ defmodule BaseSystem.Configure do
 			hosts_and_ferm_unit(
 				extra_hosts,
 				make_ferm_config(
+					firewall_verbose_log,
 					extra_ferm_input_chain,
 					base_output_chain ++ extra_ferm_output_chain,
 					extra_ferm_forward_chain,
@@ -887,6 +889,7 @@ defmodule BaseSystem.Configure do
 				# chain.  This configuration is replaced after package installation
 				# below.
 				make_ferm_config(
+					firewall_verbose_log,
 					extra_ferm_input_chain,
 					["ACCEPT;"],
 					extra_ferm_forward_chain,
@@ -1049,6 +1052,7 @@ defmodule BaseSystem.Configure do
 			hosts_and_ferm_unit(
 				extra_hosts,
 				make_ferm_config(
+					firewall_verbose_log,
 					extra_ferm_input_chain,
 					base_output_chain ++ extra_ferm_output_chain,
 					extra_ferm_forward_chain,
@@ -1361,12 +1365,21 @@ defmodule BaseSystem.Configure do
 		|> Enum.join("\n")
 	end
 
-	def make_ferm_config(input_chain, output_chain, forward_chain, postrouting_chain) do
+	def make_ferm_config(verbose_log, input_chain, output_chain, forward_chain, postrouting_chain) do
 		interface_names     = File.ls!("/sys/class/net")
 		# eno, ens, enp, enx, eth: https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
 		# br to include bridge interfaces
 		ethernet_interfaces = Enum.filter(interface_names, fn name -> String.starts_with?(name, "e") or String.starts_with?(name, "br") end)
 		wifi_interfaces     = Enum.filter(interface_names, fn name -> String.starts_with?(name, "wlo") end)
+		log_input =
+			"""
+			LOG log-prefix "Dropped inbound packet: " log-level debug log-uid;
+			REJECT reject-with icmp-port-unreachable;
+			"""
+		log_input = case verbose_log do
+			true  -> log_input
+			false -> log_input |> comment
+		end
 		"""
 		# ferm configuration is dependent on uids and gids, so make sure ferm gets reloaded when users/groups change
 		# /etc/passwd sha256sum: #{sha256sum("/etc/passwd")}
@@ -1400,8 +1413,7 @@ defmodule BaseSystem.Configure do
 
 		#{input_chain |> Enum.join("\n") |> indent |> indent}
 
-				#LOG log-prefix "Dropped inbound packet: " log-level debug log-uid;
-				#REJECT reject-with icmp-port-unreachable;
+		#{log_input |> indent |> indent}
 			}
 
 			chain OUTPUT {
@@ -1470,6 +1482,13 @@ defmodule BaseSystem.Configure do
 		s
 		|> String.split("\n")
 		|> Enum.map(fn line -> "\t#{line}" end)
+		|> Enum.join("\n")
+	end
+
+	defp comment(s) do
+		s
+		|> String.split("\n")
+		|> Enum.map(fn line -> "##{line}" end)
 		|> Enum.join("\n")
 	end
 
