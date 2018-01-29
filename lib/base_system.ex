@@ -257,10 +257,13 @@ defmodule BaseSystem.Configure do
 
 		base_output_chain = [
 			"""
+			# User may not exist yet
+			@def $user__chrony = `(getent passwd chrony > /dev/null && echo chrony) || echo root`;
+
 			outerface lo {
 				# Necessary for chrony to work properly, also for `chronyc tracking`
 				daddr 127.0.0.1 proto udp dport 323 {
-					mod owner uid-owner (root _chrony) ACCEPT;
+					mod owner uid-owner (root $user__chrony) ACCEPT;
 				}
 			}
 			"""
@@ -874,24 +877,14 @@ defmodule BaseSystem.Configure do
 			# Do this before ferm config, which may require users already exist
 			%RegularUsersPresent{users: base_regular_users ++ extra_regular_users},
 
+			# Set up firewall even before all necessary users exist (they will be
+			# replaced with "root")
 			hosts_and_ferm_unit(
 				extra_hosts,
 				make_ferm_config(
 					firewall_verbose_log,
 					extra_ferm_input_chain,
 					base_output_chain ++ extra_ferm_output_chain,
-					extra_ferm_forward_chain,
-					extra_ferm_postrouting_chain
-				),
-				# Because the system may not yet have the packages installed that
-				# create the users mentioned in extra_ferm_output_chain, fall back
-				# to a ferm configuration that just does ACCEPT; on the output
-				# chain.  This configuration is replaced after package installation
-				# below.
-				make_ferm_config(
-					firewall_verbose_log,
-					extra_ferm_input_chain,
-					["ACCEPT;"],
 					extra_ferm_forward_chain,
 					extra_ferm_postrouting_chain
 				)
