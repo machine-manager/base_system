@@ -258,7 +258,7 @@ defmodule BaseSystem.Configure do
 		base_output_chain = [
 			"""
 			# User may not exist yet
-			@def $user__chrony = `(getent passwd chrony > /dev/null && echo chrony) || echo root`;
+			@def $user__chrony = `(getent passwd _chrony > /dev/null && echo _chrony) || echo root`;
 
 			outerface lo {
 				# Necessary for chrony to work properly, also for `chronyc tracking`
