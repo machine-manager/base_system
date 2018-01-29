@@ -551,7 +551,7 @@ defmodule BaseSystem.Configure do
 
 		# Packages not used by the unit implementations themselves but still necessary for base_system
 		early_packages = [
-			"ferm",              # before we install a bunch of other packages; used by hosts_and_ferm_unit_base
+			"ferm",              # before we install a bunch of other packages; used by hosts_and_ferm_unit
 			"chrony",            # because the fallback ferm configuration depends on _chrony user
 			"apparmor",          # protect the system early
 			"apparmor-profiles", # protect the system early
@@ -1140,19 +1140,7 @@ defmodule BaseSystem.Configure do
 		]}
 	end
 
-	defp hosts_and_ferm_unit(extra_hosts, ferm_config, ferm_config_fallback \\ nil) do
-		case ferm_config_fallback do
-			nil ->
-				hosts_and_ferm_unit_base(extra_hosts, ferm_config)
-			_   ->
-				%Fallback{
-					primary:  hosts_and_ferm_unit_base(extra_hosts, ferm_config),
-					fallback: hosts_and_ferm_unit_base(extra_hosts, ferm_config_fallback)
-				}
-		end
-	end
-
-	defp hosts_and_ferm_unit_base(extra_hosts, ferm_config) do
+	defp hosts_and_ferm_unit(extra_hosts, ferm_config) do
 		%All{units: [
 			%RedoAfterMeet{
 				marker: marker("ferm.service"),
