@@ -1173,7 +1173,7 @@ defmodule BaseSystem.Configure do
 			TableFormatter.format(
 				preamble_hosts() ++
 				[[]] ++
-				Poison.decode!(File.read!("#{script_dir}/hosts.json")) ++
+				Jason.decode!(File.read!("#{script_dir}/hosts.json")) ++
 				[[]] ++
 				extra_hosts
 			)

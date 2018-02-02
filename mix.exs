@@ -20,7 +20,7 @@ defmodule BaseSystem.Mixfile do
 		[
 			{:converge, ">= 0.1.0"},
 			{:gears,    ">= 0.1.0"},
-			{:poison,   ">= 3.1.0"},
+			{:jason,    ">= 1.0.0"},
 		]
 	end
 end
