@@ -314,10 +314,13 @@ defmodule BaseSystem.Configure do
 			# namespace sandbox or break `unshare`.
 			"kernel.unprivileged_userns_clone"   => 1,
 
-			# Turn on Source Address Verification in all interfaces to
-			# prevent some spoofing attacks.
+			# Turn on Source Address Verification by default to prevent some
+			# spoofing attacks.
 			"net.ipv4.conf.default.rp_filter"    => 1,
-			"net.ipv4.conf.all.rp_filter"        => 1,
+			# wireguard changes this from 1 to 2 on startup (even after being
+			# patched with "device: disable rp_filter for wireguard devices"),
+			# so use 2 instead of 1 to avoid converge failures.
+			"net.ipv4.conf.all.rp_filter"        => 2,
 
 			# Note that some important settings are already set by the procps package,
 			# which creates .conf files in /etc/sysctl.d/.  Anything we set here will
