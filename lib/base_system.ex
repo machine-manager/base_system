@@ -788,6 +788,9 @@ defmodule BaseSystem.Configure do
 					# Disable systemd's atrocious "one ctrl-alt-del reboots the system" feature.
 					# This does not affect the 7x ctrl-alt-del force reboot feature.
 					%SymlinkPresent{path: "/etc/systemd/system/ctrl-alt-del.target", target: "/dev/null"},
+					# Disable apt timers because we handle upgrades manually
+					%SymlinkPresent{path: "/etc/systemd/system/apt-daily.timer", target: "/dev/null"},
+					%SymlinkPresent{path: "/etc/systemd/system/apt-daily-upgrade.timer", target: "/dev/null"},
 				]},
 				trigger: fn -> {_, 0} = System.cmd("systemctl", ["daemon-reload"]) end
 			},
