@@ -423,17 +423,17 @@ defmodule BaseSystem.Configure do
 		default_limit_nofile = 128 * 1024
 		security_limits = [
 			# Enable core dumps for everyone
-			["root",             "soft", "core",   "unlimited"],
-			["*",                "soft", "core",   "unlimited"],
+			["root", "soft", "core",   "unlimited"],
+			["*",    "soft", "core",   "unlimited"],
 
 			# The default limit of 1024 is too low
-			["root",             "soft", "nofile", default_limit_nofile],
-			["root",             "hard", "nofile", default_limit_nofile],
-			["*",                "soft", "nofile", default_limit_nofile],
-			["*",                "hard", "nofile", default_limit_nofile],
+			["root", "soft", "nofile", default_limit_nofile],
+			["root", "hard", "nofile", default_limit_nofile],
+			["*",    "soft", "nofile", default_limit_nofile],
+			["*",    "hard", "nofile", default_limit_nofile],
 
 			# Assume @non_root_username might need to nice down to -11 for Chrome, etc
-			[@non_root_username, "-",    "nice",   -11],
+			[@non_root_username, "-", "nice",   -11],
 		] ++ extra_security_limits
 
 		blacklisted_kernel_modules = [
