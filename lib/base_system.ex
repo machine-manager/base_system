@@ -257,7 +257,8 @@ defmodule BaseSystem.Configure do
 
 		base_output_chain = [
 			"""
-			# User may not exist yet
+			# If user does not exist yet, replace with "root" instead of breaking
+			# the firewall configuration.
 			@def $user__chrony = `(getent passwd _chrony > /dev/null && echo _chrony) || echo root`;
 
 			outerface lo {
