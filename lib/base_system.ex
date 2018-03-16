@@ -582,7 +582,6 @@ defmodule BaseSystem.Configure do
 			"apt-transport-https",
 			"ca-certificates",
 			"zsh",               # root's default shell
-			"intel-microcode",
 			"console-setup",     # needed to change console font and prevent keyboard-configuration from erroring out on boot
 			"cryptsetup",
 			"util-linux",
@@ -1213,10 +1212,11 @@ defmodule BaseSystem.Configure do
 	defp kernel_packages(:stretch), do: ["linux-image-amd64", "busybox"]
 
 	# outside = our boot is fully managed by the host, to the point where we don't
-	# have to install a Linux kernel and bootloader.  You can use this on scaleway.
+	# have to install a Linux kernel and bootloader.  You can use this on scaleway
+	# or an LXC container.
 	defp bootloader_packages("outside"),         do: []
-	defp bootloader_packages("mbr"),             do: ["grub-pc"]
-	defp bootloader_packages("uefi"),            do: ["grub-efi-amd64"]
+	defp bootloader_packages("mbr"),             do: ["grub-pc", "intel-microcode"]
+	defp bootloader_packages("uefi"),            do: ["grub-efi-amd64", "intel-microcode"]
 	defp bootloader_packages("scaleway_kexec"),  do: ["scaleway-ubuntu-kernel"]
 
 	defp boot_unit(_release, "outside", _, _, _), do: %All{units: []}
