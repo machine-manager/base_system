@@ -640,8 +640,7 @@ defmodule BaseSystem.Configure do
 			"whois",
 		]
 		all_desired_packages =
-			kernel_packages(release) ++
-			bootloader_packages(Util.tag_value!(tags, "boot")) ++
+			boot_packages(release, Util.tag_value!(tags, "boot")) ++
 			unit_packages ++
 			early_packages ++
 			base_packages ++
@@ -1205,19 +1204,19 @@ defmodule BaseSystem.Configure do
 		end
 	end
 
+	# outside = our boot is fully managed by the host, to the point where we don't
+	# have to install a Linux kernel and bootloader.  You can use this on scaleway
+	# or an LXC container.
+	defp boot_packages(release, "outside"),         do: []
+	defp boot_packages(release, "mbr"),             do: kernel_packages(release) ++ ["grub-pc", "intel-microcode"]
+	defp boot_packages(release, "uefi"),            do: kernel_packages(release) ++ ["grub-efi-amd64", "intel-microcode"]
+	defp boot_packages(release, "scaleway_kexec"),  do: kernel_packages(release) ++ ["scaleway-ubuntu-kernel"]
+
 	defp kernel_packages(:xenial),  do: ["linux-image-generic"]
 	# initramfs-tools trigger requires busybox | busybox-static even though it doesn't list it in Depends!?
 	# update-initramfs: Generating /boot/initrd.img-4.9.0-4-amd64
 	# E: busybox or busybox-static, version 1:1.22.0-17~ or later, is required but not installed
 	defp kernel_packages(:stretch), do: ["linux-image-amd64", "busybox"]
-
-	# outside = our boot is fully managed by the host, to the point where we don't
-	# have to install a Linux kernel and bootloader.  You can use this on scaleway
-	# or an LXC container.
-	defp bootloader_packages("outside"),         do: []
-	defp bootloader_packages("mbr"),             do: ["grub-pc", "intel-microcode"]
-	defp bootloader_packages("uefi"),            do: ["grub-efi-amd64", "intel-microcode"]
-	defp bootloader_packages("scaleway_kexec"),  do: ["scaleway-ubuntu-kernel"]
 
 	defp boot_unit(_release, "outside", _, _, _), do: %All{units: []}
 	defp boot_unit(release, type, boot_resolution, extra_cmdline_normal_only, extra_cmdline_normal_and_recovery) when type in ["mbr", "uefi"] do
