@@ -1011,7 +1011,10 @@ defmodule BaseSystem.Configure do
 			# to do this instead.
 			%FileMissing{path: "/etc/cron.weekly/fstrim"},
 
-			%SystemdUnitStarted{name: "chrony.service"},
+			case lxc_guest?() do
+				true  -> %All{units: []}
+				false -> %SystemdUnitStarted{name: "chrony.service"}
+			end,
 			%SystemdUnitStarted{name: "ssh.service"},
 
 			conf_file("/etc/dhcp/dhclient-enter-hooks.d/base_system"),
