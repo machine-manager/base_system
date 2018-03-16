@@ -1366,11 +1366,16 @@ defmodule BaseSystem.Configure do
 		temp = FileUtil.temp_path("base_system_chattr_i_test")
 		File.write!(temp, "")
 		{out, code} = System.cmd("chattr", ["+i", "--", temp], stderr_to_stdout: true)
-		File.rm(temp)
-		case {out, code} do
-			{0, _} -> true
-			_      -> false
+		can = case {out, code} do
+			{0, _} ->
+				# So that File.rm can work
+				System.cmd("chattr", ["-i", "--", temp], stderr_to_stdout: true)
+				true
+			_ ->
+				false
 		end
+		File.rm(temp)
+		can
 	end
 
 	# Return the number of inotify watchers to allow per user, alotting a
