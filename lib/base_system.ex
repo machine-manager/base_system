@@ -37,7 +37,7 @@ alias Converge.{
 	UserPresent,
 	Util
 }
-alias Gears.TableFormatter
+alias Gears.{FileUtil, TableFormatter}
 
 defmodule BaseSystem.Configure do
 	# Keep in sync with the units above; this list is queried to determine which
@@ -706,6 +706,9 @@ defmodule BaseSystem.Configure do
 			other -> other
 		end
 
+		# We cannot chattr +i inside an unprivileged LXC container
+		can_chattr_i = can_chattr_i?()
+
 		units = [
 			# We need a git config with a name and email for etckeeper to work
 			%DirectoryPresent{path: "/root/.config",     mode: 0o700},
@@ -815,7 +818,7 @@ defmodule BaseSystem.Configure do
 				# Make _apt the user owner because there is no _apt group
 				user:      "_apt",
 				group:     "root",
-				immutable: true
+				immutable: can_chattr_i
 			},
 
 			# Don't let any user read the package cache and other metadata
@@ -827,14 +830,14 @@ defmodule BaseSystem.Configure do
 
 			# We centralize management of our apt sources in /etc/apt/sources.list,
 			# so remove anything that may be in /etc/apt/sources.list.d/
-			%DirectoryPresent{path: "/etc/apt/sources.list.d", mode: 0o755, immutable: true},
+			%DirectoryPresent{path: "/etc/apt/sources.list.d", mode: 0o755, immutable: can_chattr_i},
 			%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
 
 			(case release do
-				:xenial  -> %GPGSimpleKeyring{path: "/etc/apt/trusted.gpg", keys: apt_keys, mode: 0o644, immutable: true}
-				:stretch -> %GPGKeybox{path: "/etc/apt/trusted.gpg", keys: apt_keys, mode: 0o644, immutable: true}
+				:xenial  -> %GPGSimpleKeyring{path: "/etc/apt/trusted.gpg", keys: apt_keys, mode: 0o644, immutable: can_chattr_i}
+				:stretch -> %GPGKeybox{path: "/etc/apt/trusted.gpg", keys: apt_keys, mode: 0o644, immutable: can_chattr_i}
 			end),
-			%DirectoryPresent{path: "/etc/apt/trusted.gpg.d", mode: 0o755, immutable: true},
+			%DirectoryPresent{path: "/etc/apt/trusted.gpg.d", mode: 0o755, immutable: can_chattr_i},
 			# We centralize management of our apt sources in /etc/apt/trusted.gpg,
 			# so remove anything that may be in /etc/apt/trusted.gpg.d/
 			%DirectoryEmpty{path: "/etc/apt/trusted.gpg.d"},
@@ -842,7 +845,7 @@ defmodule BaseSystem.Configure do
 			%FileMissing{path: "/etc/apt/trusted.gpg~"},
 
 			%FilePresent{path: "/etc/apt/preferences", mode: 0o644, content: make_apt_preferences(extra_apt_pins)},
-			%DirectoryPresent{path: "/etc/apt/preferences.d", mode: 0o755, immutable: true},
+			%DirectoryPresent{path: "/etc/apt/preferences.d", mode: 0o755, immutable: can_chattr_i},
 			# We centralize management of our apt preferences in /etc/apt/preferences,
 			# so remove anything that may be in /etc/apt/preferences.d/
 			%DirectoryEmpty{path: "/etc/apt/preferences.d"},
@@ -1005,7 +1008,7 @@ defmodule BaseSystem.Configure do
 			%SystemdUnitStarted{name: "unbound.service"},
 			# Set /etc/resolv.conf nameservers to the local unbound server
 			%BeforeMeet{
-				unit:    conf_file("/etc/resolv.conf", 0o644, immutable: true),
+				unit:    conf_file("/etc/resolv.conf", 0o644, immutable: can_chattr_i),
 				# Make sure unbound actually works before pointing resolv.conf to localhost
 				trigger: fn -> {_, 0} = System.cmd("dig", ["-t", "A", "localhost", "@127.0.0.1"]) end
 			},
@@ -1330,6 +1333,17 @@ defmodule BaseSystem.Configure do
 					dirty_expire_centisecs: 3000, # Linux default of 30 sec
 				}
 			end
+		end
+	end
+
+	defp can_chattr_i?() do
+		temp = FileUtil.temp_path("base_system_chattr_i_test")
+		File.write!(temp, "")
+		{out, code} = System.cmd("chattr", ["+i", "--", temp], stderr_to_stdout: true)
+		File.rm(temp)
+		case {out, code} do
+			{0, _} -> true
+			_      -> false
 		end
 	end
 
