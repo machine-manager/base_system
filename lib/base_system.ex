@@ -1207,10 +1207,10 @@ defmodule BaseSystem.Configure do
 	# outside = our boot is fully managed by the host, to the point where we don't
 	# have to install a Linux kernel and bootloader.  You can use this on scaleway
 	# or an LXC container.
-	defp boot_packages(release, "outside"),         do: []
-	defp boot_packages(release, "mbr"),             do: kernel_packages(release) ++ ["grub-pc", "intel-microcode"]
-	defp boot_packages(release, "uefi"),            do: kernel_packages(release) ++ ["grub-efi-amd64", "intel-microcode"]
-	defp boot_packages(release, "scaleway_kexec"),  do: kernel_packages(release) ++ ["scaleway-ubuntu-kernel"]
+	defp boot_packages(_release, "outside"),        do: []
+	defp boot_packages(release,  "mbr"),            do: kernel_packages(release) ++ ["grub-pc", "intel-microcode"]
+	defp boot_packages(release,  "uefi"),           do: kernel_packages(release) ++ ["grub-efi-amd64", "intel-microcode"]
+	defp boot_packages(release,  "scaleway_kexec"), do: kernel_packages(release) ++ ["scaleway-ubuntu-kernel"]
 
 	defp kernel_packages(:xenial),  do: ["linux-image-generic"]
 	# initramfs-tools trigger requires busybox | busybox-static even though it doesn't list it in Depends!?
