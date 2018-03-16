@@ -558,12 +558,7 @@ defmodule BaseSystem.Configure do
 			# We use the Grub unit below, but not for all types of machines
 			|> Kernel.--(["grub2-common"])
 
-		chrony_packages = case lxc_guest?() do
-			# LXC guests generally lack CAP_SYS_TIME because it is not namespaced
-			# and therefore do not need chrony.
-			true  -> []
-			false -> ["chrony"]
-		end
+		need_chrony = not lxc_guest?()
 
 		# Packages not used by the unit implementations themselves but still necessary for base_system
 		early_packages = [
@@ -579,7 +574,13 @@ defmodule BaseSystem.Configure do
 			"unbound",           # started before full MetaPackageInstalled
 			"locales",           # used by locale-gen below
 		] ++
-		chrony_packages ++      # the _chrony user is referenced by the ferm configuration
+		case need_chrony do
+			# Installed early because the _chrony user is referenced by the ferm configuration.
+			true  -> ["chrony"]
+			# LXC guests generally lack CAP_SYS_TIME because it is not namespaced
+			# and therefore they do not need chrony.
+			false -> []
+		end ++
 		extra_desired_early_packages
 
 		base_packages  = [
@@ -1011,9 +1012,9 @@ defmodule BaseSystem.Configure do
 			# to do this instead.
 			%FileMissing{path: "/etc/cron.weekly/fstrim"},
 
-			case lxc_guest?() do
-				true  -> %All{units: []}
-				false -> %SystemdUnitStarted{name: "chrony.service"}
+			case need_chrony do
+				true  -> %SystemdUnitStarted{name: "chrony.service"}
+				false -> %All{units: []}
 			end,
 			%SystemdUnitStarted{name: "ssh.service"},
 
