@@ -545,7 +545,7 @@ defmodule BaseSystem.Configure do
 				"hidp",
 				"rfcomm",
 			]
-		end ++ \
+		end ++
 		extra_blacklisted_kernel_modules
 
 		# Remove from blacklist if a role has the module listed in boot_time_kernel_modules
@@ -558,10 +558,16 @@ defmodule BaseSystem.Configure do
 			# We use the Grub unit below, but not for all types of machines
 			|> Kernel.--(["grub2-common"])
 
+		chrony_packages = case lxc_guest?() do
+			# LXC guests generally lack CAP_SYS_TIME because it is not namespaced
+			# and therefore do not need chrony.
+			true  -> []
+			false -> ["chrony"]
+		end
+
 		# Packages not used by the unit implementations themselves but still necessary for base_system
 		early_packages = [
 			"ferm",              # before we install a bunch of other packages; used by hosts_and_ferm_unit
-			"chrony",            # because the fallback ferm configuration depends on _chrony user
 			"apparmor",          # protect the system early
 			"apparmor-profiles", # protect the system early
 			# Do not install apparmor-profiles-extra because it includes a broken profile
@@ -572,7 +578,10 @@ defmodule BaseSystem.Configure do
 			# requested_mask="w" denied_mask="w" fsuid=110 ouid=0
 			"unbound",           # started before full MetaPackageInstalled
 			"locales",           # used by locale-gen below
-		] ++ extra_desired_early_packages
+		] ++
+		chrony_packages ++      # the _chrony user is referenced by the ferm configuration
+		extra_desired_early_packages
+
 		base_packages  = [
 			"rsync",             # used by machine_manager to copy files to machine
 			"dnsutils",          # for dig, used below to make sure unbound works
@@ -597,7 +606,6 @@ defmodule BaseSystem.Configure do
 			"libpam-systemd",    # to make ssh server disconnect clients when it shuts down
 			"openssh-server",
 			"openssh-client",
-			"chrony",
 			"psmisc",            # for killall
 			"acl",
 			"prometheus-node-exporter",
@@ -610,6 +618,7 @@ defmodule BaseSystem.Configure do
 				"debian-security-support", # for `check-support-status` (printing list of packages with limited security support)
 			]
 		end)
+
 		human_admin_needs = [
 			"dosfstools",          # for making UEFI partitions
 			"file",
@@ -645,6 +654,7 @@ defmodule BaseSystem.Configure do
 			"nmap",
 			"whois",
 		]
+
 		all_desired_packages =
 			boot_packages(release, Util.tag_value!(tags, "boot")) ++
 			unit_packages ++
@@ -652,6 +662,7 @@ defmodule BaseSystem.Configure do
 			base_packages ++
 			human_admin_needs ++
 			extra_desired_packages
+
 		# Packages to be purged, unless listed in all_desired_packages.  Prevents
 		# some package from installing an undesired package because converge will
 		# detect a conflict.
