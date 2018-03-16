@@ -395,8 +395,12 @@ defmodule BaseSystem.Configure do
 				%{}
 			end
 
-		bbr_parameters = case release do
-			:xenial -> %{}
+		bbr_parameters = case {
+			release,
+			# LXC containers do not have these sysctl parameters
+			File.exists?("/proc/sys/kernel/unprivileged_bpf_disabled"),
+			File.exists?("/proc/sys/net/ipv4/tcp_congestion_control")
+		} do
 			# BBR congestion control (T147569)
 			# https://lwn.net/Articles/701165/
 			#
@@ -408,10 +412,11 @@ defmodule BaseSystem.Configure do
 			#
 			# To send out data at the proper rate, BBR uses the tc-fq packet scheduler
 			# instead of the TCP congestion window.
-			:stretch -> %{
+			{:stretch, true, true} -> %{
 				"net.core.default_qdisc"          => "fq",
 				"net.ipv4.tcp_congestion_control" => "bbr",
 			}
+			_ -> %{}
 		end
 
 		sysctl_parameters =
