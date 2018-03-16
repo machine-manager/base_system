@@ -1367,7 +1367,7 @@ defmodule BaseSystem.Configure do
 		File.write!(temp, "")
 		{out, code} = System.cmd("chattr", ["+i", "--", temp], stderr_to_stdout: true)
 		can = case {out, code} do
-			{0, _} ->
+			{_, 0} ->
 				# So that File.rm can work
 				System.cmd("chattr", ["-i", "--", temp], stderr_to_stdout: true)
 				true
