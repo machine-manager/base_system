@@ -1289,8 +1289,19 @@ defmodule BaseSystem.Configure do
 		%RedoAfterMeet{
 			marker:  marker("remount-proc"),
 			unit:    %Fstab{entries: fstab_entries},
-			trigger: fn -> {_, 0} = System.cmd("mount", ["-o", "remount", "/proc"]) end
+			trigger: fn ->
+				if not lxc_guest?() do
+					# Inside an LXC guest (tested: unprivileged), we get:
+					# mount: permission denied
+					{_, 0} = System.cmd("mount", ["-o", "remount", "/proc"])
+				end
+			end
 		}
+	end
+
+	defp lxc_guest?() do
+		{out, 0} = System.cmd("df", ["--output=fstype", "/proc/stat"])
+		out =~ "lxcfs"
 	end
 
 	defp get_dirty_settings(opts) do
