@@ -311,10 +311,6 @@ defmodule BaseSystem.Configure do
 			# See https://www.kernel.org/doc/Documentation/sysctl/kernel.txt
 			"kernel.kptr_restrict"               => 1,
 
-			# Debian has this off by default but we don't want to disable Chrome
-			# namespace sandbox or break `unshare`.
-			"kernel.unprivileged_userns_clone"   => 1,
-
 			# Turn on Source Address Verification by default to prevent some
 			# spoofing attacks.
 			"net.ipv4.conf.default.rp_filter"    => 1,
@@ -395,6 +391,18 @@ defmodule BaseSystem.Configure do
 				%{}
 			end
 
+		unprivileged_userns_clone_parameters =
+			if File.exists?("/proc/sys/kernel/unprivileged_userns_clone") do
+				%{
+					# Debian has this off by default but we don't want to disable Chrome
+					# namespace sandbox or break `unshare`.
+					"kernel.unprivileged_userns_clone" => 1,
+				}
+			else
+				# scaleway kernels lack kernel.unprivileged_userns_clone
+				%{}
+			end
+
 		bbr_parameters = case {
 			release,
 			# LXC containers do not have these sysctl parameters
@@ -422,6 +430,7 @@ defmodule BaseSystem.Configure do
 		sysctl_parameters =
 			base_sysctl_parameters
 			|> Map.merge(unprivileged_bpf_parameters)
+			|> Map.merge(unprivileged_userns_clone_parameters)
 			|> Map.merge(bbr_parameters)
 			|> Map.merge(extra_sysctl_parameters)
 
