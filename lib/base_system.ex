@@ -311,12 +311,10 @@ defmodule BaseSystem.Configure do
 			# See https://www.kernel.org/doc/Documentation/sysctl/kernel.txt
 			"kernel.kptr_restrict"               => 1,
 
-			# Turn on Source Address Verification by default to prevent some
-			# spoofing attacks.
-			"net.ipv4.conf.default.rp_filter"    => 1,
-			# wireguard changes this from 1 to 2 on startup (even after being
-			# patched with "device: disable rp_filter for wireguard devices"),
-			# so use 2 instead of 1 to avoid converge failures.
+			# See https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt
+			# We don't use rp_filter=1 (RFC3704 Strict Reverse Path) because
+			# wg-quick sets everything to rp_filter=2
+			"net.ipv4.conf.default.rp_filter"    => 2,
 			"net.ipv4.conf.all.rp_filter"        => 2,
 
 			# Note that some important settings are already set by the procps package,
