@@ -1055,7 +1055,7 @@ defmodule BaseSystem.Configure do
 			conf_file("/etc/nano.d/git-commit-msg.nanorc"),
 
 			# Prevent zsh-newuser-install from running automatically when there is no ~/.zshrc
-			%FileMissing{path: "/usr/share/zsh/#{zsh_version()}/scripts/newuser"},
+			%FileMissing{path: "/usr/share/zsh/5.3.1/scripts/newuser"}, # Update version after stretch
 
 			# Make sure root's shell is zsh
 			%BeforeMeet{
@@ -1542,7 +1542,7 @@ defmodule BaseSystem.Configure do
 	defp value_to_string(value) when is_binary(value),  do: value
 	defp value_to_string(value) when is_integer(value), do: to_string(value)
 
-	defp zsh_version() do
+	def zsh_version() do
 		{out, 0} = System.cmd("zsh", ["--version"])
 		case Regex.run(~r"^[^ ]+ ([\d\.]+) ", out, capture: :all_but_first) do
 			[v] -> v
