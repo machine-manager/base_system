@@ -363,14 +363,12 @@ defmodule BaseSystem.Configure do
 			"vm.dirty_bytes"                     => dirty_settings.dirty_bytes,
 			"vm.dirty_expire_centisecs"          => dirty_settings.dirty_expire_centisecs,
 
-			# Ubuntu 16.04 ships with a default of fs.inotify.max_user_watches = 8192,
-			# too low for some applications.
+			# The default is fs.inotify.max_user_watches = 8192, too low for some applications.
 			"fs.inotify.max_user_watches"        => inotify_max_user_watches(1/32),
 
-			# Ubuntu 16.04 ships with a default of fs.inotify.max_user_instances = 128,
-			# while Sublime Text 3 likes to use > 120 instances and therefore prevent
-			# other programs from using inotify at all, unless we raise the limit.
-			# https://github.com/SublimeTextIssues/Core/issues/1195
+			# The default is fs.inotify.max_user_instances = 128, while Sublime Text < 3.1 uses
+			# > 120 instances and therefore prevents other programs from using inotify at all,
+			# unless we raise the limit: https://github.com/SublimeTextIssues/Core/issues/1195
 			"fs.inotify.max_user_instances"      => 8192,
 		}
 
