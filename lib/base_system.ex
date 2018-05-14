@@ -198,10 +198,10 @@ defmodule BaseSystem.Configure do
 		extra_cmdline_normal_and_recovery = opts[:extra_cmdline_normal_and_recovery] || []
 		extra_sysctl_parameters           = opts[:extra_sysctl_parameters]           || %{}
 		extra_sysfs_variables             = opts[:extra_sysfs_variables]             || %{}
-		optimize_for_short_lived_files   = "optimize_for_short_lived_files" in tags
-		ipv6                             = "ipv6"                           in tags
-		firewall_verbose_log             = "firewall:verbose_log"           in tags
-		release                          = Util.tag_value!(tags, "release") |> String.to_atom()
+		optimize_for_short_lived_files    = "optimize_for_short_lived_files" in tags
+		ipv6                              = "ipv6"                           in tags
+		firewall_verbose_log              = "firewall:verbose_log"           in tags
+		release                           = Util.tag_value!(tags, "release") |> String.to_atom()
 
 		base_keys = case release do
 			:xenial  -> [content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).gpg")]
