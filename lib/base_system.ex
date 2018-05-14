@@ -202,6 +202,7 @@ defmodule BaseSystem.Configure do
 		ipv6                              = "ipv6"                           in tags
 		firewall_verbose_log              = "firewall:verbose_log"           in tags
 		release                           = Util.tag_value!(tags, "release") |> String.to_atom()
+		arch                              = Util.architecture_for_tags(tags)
 
 		base_keys = case release do
 			:xenial  -> [content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).gpg")]
@@ -643,7 +644,6 @@ defmodule BaseSystem.Configure do
 			"strace",
 			"htop",
 			"iotop",
-			"perf-tools-unstable", # for execsnoop, opensnoop, cachestat, kprobe, etc
 			"dstat",
 			"tmux",
 			"git",
@@ -659,7 +659,10 @@ defmodule BaseSystem.Configure do
 			"tree",
 			"nmap",
 			"whois",
-		]
+		] ++ (case arch do
+			"amd64" -> ["perf-tools-unstable"] # for execsnoop, opensnoop, cachestat, kprobe, etc
+			"arm64" -> []                      # we're missing a linux-perf-4.14 for arm64 right now
+		end)
 
 		all_desired_packages =
 			boot_packages(release, Util.tag_value!(tags, "boot")) ++
