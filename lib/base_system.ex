@@ -1419,6 +1419,7 @@ defmodule BaseSystem.Configure do
 		# br to include bridge interfaces
 		ethernet_interfaces = Enum.filter(interface_names, fn name -> String.starts_with?(name, "e") or String.starts_with?(name, "br") end)
 		wifi_interfaces     = Enum.filter(interface_names, fn name -> String.starts_with?(name, "wlo") end)
+		lxc_interfaces      = Enum.filter(interface_names, fn name -> String.starts_with?(name, "lxcbr") end)
 		log_input =
 			"""
 			LOG log-prefix "Dropped inbound packet: " log-level debug log-uid;
@@ -1435,6 +1436,7 @@ defmodule BaseSystem.Configure do
 
 		@def $ethernet_interfaces = (#{Enum.join(ethernet_interfaces, " ")});
 		@def $wifi_interfaces     = (#{Enum.join(wifi_interfaces, " ")});
+		@def $lxc_interfaces      = (#{Enum.join(lxc_interfaces, " ")});
 
 		table filter {
 			chain INPUT {
