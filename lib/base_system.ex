@@ -364,6 +364,9 @@ defmodule BaseSystem.Configure do
 			"vm.dirty_bytes"                     => dirty_settings.dirty_bytes,
 			"vm.dirty_expire_centisecs"          => dirty_settings.dirty_expire_centisecs,
 
+			# elasticsearch refuses to start with the default of 65530 and requires at least 262144
+			"vm.max_map_count"                   => 262144,
+
 			# The default is fs.inotify.max_user_watches = 8192, too low for some applications.
 			"fs.inotify.max_user_watches"        => inotify_max_user_watches(1/32),
 
