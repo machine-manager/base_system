@@ -86,6 +86,7 @@ defmodule BaseSystem.Configure do
 		:apt_keys,
 		:apt_sources,
 		:etc_systemd_unit_files,
+		:etc_systemd_keep_unit_files,
 		:sysctl_parameters,
 		:sysfs_variables,
 		:boot_time_kernel_modules,
@@ -131,6 +132,7 @@ defmodule BaseSystem.Configure do
 			extra_apt_keys:                    descriptors |> Enum.flat_map(fn desc -> desc[:apt_keys]                    || [] end),
 			extra_apt_sources:                 descriptors |> Enum.flat_map(fn desc -> desc[:apt_sources]                 || [] end),
 			extra_etc_systemd_unit_files:      descriptors |> Enum.flat_map(fn desc -> desc[:etc_systemd_unit_files]      || [] end),
+			extra_etc_systemd_keep_unit_files: descriptors |> Enum.flat_map(fn desc -> desc[:etc_systemd_keep_unit_files] || [] end),
 			extra_regular_users:               descriptors |> Enum.flat_map(fn desc -> desc[:regular_users]               || [] end),
 			extra_ssh_allow_users:             descriptors |> Enum.flat_map(fn desc -> desc[:ssh_allow_users]             || [] end),
 			extra_hosts:                       descriptors |> Enum.flat_map(fn desc -> desc[:hosts]                       || [] end),
@@ -181,6 +183,7 @@ defmodule BaseSystem.Configure do
 		extra_apt_keys                    = opts[:extra_apt_keys]                    || []
 		extra_apt_sources                 = opts[:extra_apt_sources]                 || []
 		extra_etc_systemd_unit_files      = opts[:extra_etc_systemd_unit_files]      || []
+		extra_etc_systemd_keep_unit_files = opts[:extra_etc_systemd_keep_unit_files] || []
 		extra_regular_users               = opts[:extra_regular_users]               || []
 		extra_ssh_allow_users             = opts[:extra_ssh_allow_users]             || []
 		extra_hosts                       = opts[:extra_hosts]                       || []
@@ -987,7 +990,8 @@ defmodule BaseSystem.Configure do
 				units: [
 					conf_file("/etc/systemd/system/fstrim.service"),
 					conf_file("/etc/systemd/system/fstrim.timer"),
-				] ++ extra_etc_systemd_unit_files
+				] ++ extra_etc_systemd_unit_files,
+				keep_units: extra_etc_systemd_keep_unit_files
 			},
 			%SystemdUnitEnabled{name: "fstrim.timer"},
 
