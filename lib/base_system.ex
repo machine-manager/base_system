@@ -1458,7 +1458,7 @@ defmodule BaseSystem.Configure do
 				# the rare event of an Ethernet interface change.
 				proto tcp syn dport 22 ACCEPT; # ssh
 
-				interface ($ethernet_interfaces $wifi_interfaces) {
+				interface ($ethernet_interfaces $wifi_interfaces $lxc_interfaces) {
 					proto udp dport 51820 ACCEPT; # WireGuard
 				}
 
