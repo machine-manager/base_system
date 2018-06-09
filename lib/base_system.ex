@@ -1484,8 +1484,8 @@ defmodule BaseSystem.Configure do
 					proto (tcp udp) dport 53 ACCEPT;
 
 					mod owner uid-owner root {
-						proto tcp dport 8953   ACCEPT; # unbound control port
-						proto tcp syn dport 22 ACCEPT; # ssh
+						proto tcp dport 8953         ACCEPT; # unbound control port
+						proto tcp syn dport (22 904) ACCEPT; # ssh
 					}
 				}
 
