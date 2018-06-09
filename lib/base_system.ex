@@ -1456,7 +1456,7 @@ defmodule BaseSystem.Configure do
 				proto icmp             ACCEPT;
 				# Do not specify an interface here, because we need access even in
 				# the rare event of an Ethernet interface change.
-				proto tcp syn dport 22 ACCEPT; # ssh
+				proto tcp syn dport (22 904) ACCEPT; # ssh
 
 				interface ($ethernet_interfaces $wifi_interfaces $lxc_interfaces) {
 					proto udp dport 51820 ACCEPT; # WireGuard
