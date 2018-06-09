@@ -1459,7 +1459,7 @@ defmodule BaseSystem.Configure do
 				proto tcp syn dport 904 ACCEPT; # ssh
 
 				interface ($ethernet_interfaces $wifi_interfaces $lxc_interfaces) {
-					proto udp dport 51820 ACCEPT; # WireGuard
+					proto udp dport 904 ACCEPT; # WireGuard
 				}
 
 				# allow localhost or any wg0 host to reach prometheus-node-exporter
