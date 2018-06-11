@@ -596,6 +596,7 @@ defmodule BaseSystem.Configure do
 		extra_desired_early_packages
 
 		base_packages  = [
+			"bash-builtins",     # used by various scripts
 			"rsync",             # used by machine_manager to copy files to machine
 			"dnsutils",          # for dig, used below to make sure unbound works
 			"netbase",
