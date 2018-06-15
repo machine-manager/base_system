@@ -603,6 +603,32 @@ defmodule BaseSystem.Configure do
 		end ++
 		extra_desired_early_packages
 
+		unbound_resolv_conf =
+			"""
+			nameserver 127.0.0.1
+			"""
+		cloudflare_resolv_conf =
+			"""
+			nameserver 1.1.1.1
+			nameserver 1.0.0.1
+			nameserver 2606:4700:4700::1111
+			nameserver 2606:4700:4700::1001
+			"""
+		unbound_unit =
+			%RedoAfterMeet{
+				marker:  marker("unbound.service"),
+				unit:    %All{units: [
+					conf_dir("/etc/unbound"),
+					conf_file("/etc/unbound/unbound.conf"),
+				]},
+				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("unbound.service") end
+			}
+		noop_unit = %All{units: []}
+		{maybe_unbound_unit, resolv_conf, resolver_test_ip, early_packages} = case low_memory do
+			false -> {unbound_unit, unbound_resolv_conf,    "127.0.0.1", early_packages}
+			true  -> {noop_unit,    cloudflare_resolv_conf, "1.1.1.1",   early_packages -- ["unbound"]}
+		end
+
 		base_packages  = [
 			"bash-builtins",     # used by various scripts
 			"rsync",             # used by machine_manager to copy files to machine
@@ -957,14 +983,7 @@ defmodule BaseSystem.Configure do
 				mode:    0o644
 			},
 
-			%RedoAfterMeet{
-				marker:  marker("unbound.service"),
-				unit:    %All{units: [
-					conf_dir("/etc/unbound"),
-					conf_file("/etc/unbound/unbound.conf"),
-				]},
-				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("unbound.service") end
-			},
+			maybe_unbound_unit,
 
 			%RedoAfterMeet{
 				marker: marker("chrony.service"),
@@ -1043,12 +1062,10 @@ defmodule BaseSystem.Configure do
 
 			conf_file("/etc/dhcp/dhclient-enter-hooks.d/base_system"),
 
-			%SystemdUnitStarted{name: "unbound.service"},
-			# Set /etc/resolv.conf nameservers to the local unbound server
 			%BeforeMeet{
-				unit:    conf_file("/etc/resolv.conf", 0o644, immutable: can_chattr_i),
-				# Make sure unbound actually works before pointing resolv.conf to localhost
-				trigger: fn -> {_, 0} = System.cmd("dig", ["-t", "A", "localhost", "@127.0.0.1"]) end
+				unit:    %FilePresent{path: "/etc/resolv.conf", mode: 0o644, content: resolv_conf, immutable: can_chattr_i},
+				# Make sure resolver actually works before writing over resolv.conf
+				trigger: fn -> {_, 0} = System.cmd("dig", ["-t", "A", "localhost", "@#{resolver_test_ip}"]) end
 			},
 
 			%SystemdUnitEnabled{name: "prometheus-node-exporter.service"},
