@@ -737,7 +737,14 @@ defmodule BaseSystem.Configure do
 		can_chattr_i = can_chattr_i?()
 
 		units = [
-			root_config_git_unit(),
+			# We need a git config with a name and email for etckeeper to work
+			%DirectoryPresent{path: "/root/.config",     mode: 0o700},
+			%DirectoryPresent{path: "/root/.config/git", mode: 0o700},
+			%FilePresent{
+				path:    "/root/.config/git/config",
+				content: EEx.eval_string(content("files/root/.config/git/config.eex"), [hostname: Util.get_hostname()]),
+				mode:    0o640
+			},
 
 			%EtcCommitted{message: "converge (before any converging)"},
 			%Sysctl{parameters: sysctl_parameters},
@@ -1116,28 +1123,9 @@ defmodule BaseSystem.Configure do
 			:ok = IO.puts("Installing packages #{inspect missing_unit_impl_packages} before converging, this could take a few minutes...")
 			Util.dpkg_configure_pending()
 			for package <- missing_unit_impl_packages do
-				if package == "etckeeper" do
-					# If we're installing etckeeper, we need to set up root's git
-					# config very early, or future package installations will break.
-					ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}
-					Runner.converge(root_config_git_unit(), ctx)
-				end
 				Util.install_package(package)
 			end
 		end
-	end
-
-	defp root_config_git_unit() do
-		%All{units: [
-			# We need a git config with a name and email for etckeeper to work
-			%DirectoryPresent{path: "/root/.config",     mode: 0o700},
-			%DirectoryPresent{path: "/root/.config/git", mode: 0o700},
-			%FilePresent{
-				path:    "/root/.config/git/config",
-				content: EEx.eval_string(content("files/root/.config/git/config.eex"), [hostname: Util.get_hostname()]),
-				mode:    0o640
-			},
-		]}
 	end
 
 	defp leftover_files_unit(:xenial), do: %All{units: []}
