@@ -75,7 +75,7 @@ defmodule BaseSystem.Configure do
 	]
 
 	require Util
-	import Util, only: [content: 1, path_expand_content: 1, conf_file: 1, conf_file: 3, conf_dir: 1, conf_dir: 2, marker: 1]
+	import Util, only: [content: 1, path_expand_content: 1, conf_file: 1, conf_dir: 1, conf_dir: 2, marker: 1]
 	Util.declare_external_resources("files")
 
 	@allowed_descriptor_keys MapSet.new([
