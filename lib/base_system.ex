@@ -204,6 +204,7 @@ defmodule BaseSystem.Configure do
 		optimize_for_short_lived_files    = "optimize_for_short_lived_files" in tags
 		ipv6                              = "ipv6"                           in tags
 		firewall_verbose_log              = "firewall:verbose_log"           in tags
+		low_memory                        = "low_memory"                     in tags
 		release                           = Util.tag_value!(tags, "release") |> String.to_atom()
 		arch                              = Util.architecture_for_tags(tags)
 
@@ -569,6 +570,13 @@ defmodule BaseSystem.Configure do
 			|> Enum.flat_map(fn mod -> Unit.package_dependencies(%{__struct__: mod}, release) end)
 			# We use the Grub unit below, but not for all types of machines
 			|> Kernel.--(["grub2-common"])
+
+		unit_packages = case low_memory do
+			false -> unit_packages
+			# apt-show-versions consumes a lot of memory building or checking its index;
+			# gets OOMed on a VM with 384MB of RAM.
+			true  -> unit_packages -- ["apt-show-versions"]
+		end
 
 		need_chrony = not lxc_guest?()
 
@@ -1013,8 +1021,7 @@ defmodule BaseSystem.Configure do
 			%DanglingPackagesPurged{},
 			# Hopefully it doesn't need to be run a third time...
 
-			%NoPackagesUnavailableInSource{whitelist_regexp: ~r/\A(converge-desired-packages(-early)?|linux-(image|tools|headers)-.*)\z/},
-			%NoPackagesNewerThanInSource{whitelist_regexp: ~r/\Alinux-(image|tools|headers)-.*\z/},
+			unexpected_packages_unit(low_memory),
 
 			# Make sure this is cleared out after a google-chrome-* install drops a file here
 			%DirectoryEmpty{path: "/etc/apt/sources.list.d"},
@@ -1105,6 +1112,15 @@ defmodule BaseSystem.Configure do
 		install_unit_impl_packages(unit_packages ++ ["apt-transport-https", "ca-certificates"])
 		ctx = %Context{run_meet: true, reporter: TerminalReporter.new()}
 		Runner.converge(%All{units: units}, ctx)
+	end
+
+	defp unexpected_packages_unit(low_memory) do
+		unavailable_unit       = %NoPackagesUnavailableInSource{whitelist_regexp: ~r/\A(converge-desired-packages(-early)?|linux-(image|tools|headers)-.*)\z/}
+		newer_than_source_unit = %NoPackagesNewerThanInSource{whitelist_regexp: ~r/\Alinux-(image|tools|headers)-.*\z/}
+		case low_memory do
+			false -> %All{units: [unavailable_unit, newer_than_source_unit]}
+			true  -> unavailable_unit
+		end
 	end
 
 	defp install_unit_impl_packages(unit_packages) do
