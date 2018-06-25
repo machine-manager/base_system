@@ -673,7 +673,7 @@ defmodule BaseSystem.Configure do
 			"dosfstools",          # for making UEFI partitions
 			"file",
 			"attr",                # for printing xattrs with getfattr -d
-			"man",
+			"man-db",
 			"manpages",
 			"info",
 			"molly-guard",
