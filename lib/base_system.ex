@@ -205,8 +205,10 @@ defmodule BaseSystem.Configure do
 		ipv6                              = "ipv6"                           in tags
 		firewall_verbose_log              = "firewall:verbose_log"           in tags
 		low_memory                        = "low_memory"                     in tags
-		release                           = Util.tag_value!(tags, "release") |> String.to_atom()
 		arch                              = Util.architecture_for_tags(tags)
+		release                           = Util.tag_value!(tags, "release")        |> String.to_atom()
+		ssh_port                          = Util.tag_value!(tags, "ssh_port")       |> String.to_integer()
+		wireguard_port                    = Util.tag_value!(tags, "wireguard_port") |> String.to_integer()
 
 		base_keys = case release do
 			:xenial  -> [content("files/apt_keys/C0B21F32 Ubuntu Archive Automatic Signing Key (2012).gpg")]
@@ -960,7 +962,9 @@ defmodule BaseSystem.Configure do
 					extra_ferm_input_chain,
 					base_output_chain ++ extra_ferm_output_chain,
 					extra_ferm_forward_chain,
-					extra_ferm_postrouting_chain
+					extra_ferm_postrouting_chain,
+					ssh_port,
+					wireguard_port
 				)
 			),
 
@@ -1004,7 +1008,7 @@ defmodule BaseSystem.Configure do
 					conf_dir("/etc/ssh"),
 					%FilePresent{
 						path:    "/etc/ssh/sshd_config",
-						content: EEx.eval_string(content("files/etc/ssh/sshd_config.eex"), [allow_users: ssh_allow_users]),
+						content: EEx.eval_string(content("files/etc/ssh/sshd_config.eex"), [ssh_port: ssh_port, allow_users: ssh_allow_users]),
 						mode:    0o644
 					},
 					# Remove obsolete keys no longer used by config
@@ -1120,7 +1124,9 @@ defmodule BaseSystem.Configure do
 					extra_ferm_input_chain,
 					base_output_chain ++ extra_ferm_output_chain,
 					extra_ferm_forward_chain,
-					extra_ferm_postrouting_chain
+					extra_ferm_postrouting_chain,
+					ssh_port,
+					wireguard_port
 				)
 			),
 
@@ -1454,7 +1460,7 @@ defmodule BaseSystem.Configure do
 		|> Enum.join("\n")
 	end
 
-	def make_ferm_config(verbose_log, input_chain, output_chain, forward_chain, postrouting_chain) do
+	def make_ferm_config(verbose_log, input_chain, output_chain, forward_chain, postrouting_chain, ssh_port, wireguard_port) do
 		interface_names     = File.ls!("/sys/class/net")
 		# eno, ens, enp, enx, eth: https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
 		# br to include bridge interfaces
@@ -1490,10 +1496,10 @@ defmodule BaseSystem.Configure do
 				proto icmp             ACCEPT;
 				# Do not specify an interface here, because we need access even in
 				# the rare event of an Ethernet interface change.
-				proto tcp syn dport 904 ACCEPT; # ssh
+				proto tcp syn dport #{ssh_port} ACCEPT; # ssh
 
 				interface ($ethernet_interfaces $wifi_interfaces $lxc_interfaces) {
-					proto udp dport 904 ACCEPT; # WireGuard
+					proto udp dport #{wireguard_port} ACCEPT; # WireGuard
 				}
 
 				# allow localhost or any wg0 host to reach prometheus-node-exporter
@@ -1518,8 +1524,8 @@ defmodule BaseSystem.Configure do
 					proto (tcp udp) dport 53 ACCEPT;
 
 					mod owner uid-owner root {
-						proto tcp dport 8953         ACCEPT; # unbound control port
-						proto tcp syn dport (22 904) ACCEPT; # ssh
+						proto tcp dport 8953                     ACCEPT; # unbound control port
+						proto tcp syn dport (22 904 #{ssh_port}) ACCEPT; # ssh
 					}
 				}
 
