@@ -1289,6 +1289,8 @@ defmodule BaseSystem.Configure do
 	# outside = our boot is fully managed by the host, to the point where we don't
 	# have to install a Linux kernel and bootloader.  You can use this on scaleway
 	# or an LXC container.
+	#
+	# Developer note: sync these options with `mm help add`
 	defp boot_packages(_release, "outside"),        do: []
 	defp boot_packages(release,  "mbr"),            do: kernel_packages(release) ++ ["grub-pc", "intel-microcode"]
 	defp boot_packages(release,  "uefi"),           do: kernel_packages(release) ++ ["grub-efi-amd64", "intel-microcode"]
