@@ -992,6 +992,11 @@ defmodule BaseSystem.Configure do
 			%RedoAfterMeet{
 				marker: marker("chrony.service"),
 				unit:   %All{units: [
+					%FilePresent{
+						path:    "/etc/default/chrony",
+						content: EEx.eval_string(content("files/etc/default/chrony"), [ipv6: ipv6]),
+						mode:    0o644
+					},
 					conf_dir("/etc/chrony"),
 					%FilePresent{
 						path:    "/etc/chrony/chrony.conf",
