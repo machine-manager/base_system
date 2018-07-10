@@ -75,6 +75,9 @@ hwclockfile /etc/adjtime
 
 rtcsync
 
+# Allow any amount of clock step
+maxchange 0 -1 -1
+
 # Step the system clock immediately when it's off by more than 0.1 sec.
 # https://chrony.tuxfamily.org/doc/devel/chrony.conf.html#makestep
 makestep 0.1 -1
