@@ -19,11 +19,6 @@ server time4.google.com iburst trust
 
 keyfile /etc/chrony/chrony.keys
 
-# This directive sets the key ID used for authenticating user commands via the
-# 'chronyc' program at run time.
-
-commandkey 1
-
 # I moved the driftfile to /var/lib/chrony to comply with the Debian
 # filesystem standard.
 
