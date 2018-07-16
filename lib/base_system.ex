@@ -448,8 +448,8 @@ defmodule BaseSystem.Configure do
 		default_limit_nofile = 128 * 1024
 		security_limits = [
 			# Enable core dumps for everyone
-			["root", "soft", "core",   "unlimited"],
-			["*",    "soft", "core",   "unlimited"],
+			# ["root", "soft", "core",   "unlimited"],
+			# ["*",    "soft", "core",   "unlimited"],
 
 			# The default limit of 1024 is too low
 			["root", "soft", "nofile", default_limit_nofile],
