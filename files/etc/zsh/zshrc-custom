@@ -168,6 +168,7 @@ alias gs='git status'
 alias gc='git commit'
 alias gca='git commit -a'
 alias gcam='git commit -a -m'
+alias tigm='TIG_DIFF_OPTS=--first-parent tig --first-parent -m'
 
 alias aginir='apt-get install --no-install-recommends'
 
