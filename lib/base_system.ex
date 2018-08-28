@@ -504,7 +504,6 @@ defmodule BaseSystem.Configure do
 			"floppy",
 
 			# We do not use these filesystems anywhere
-			"btrfs",
 			"qnx4",
 			"hfs",
 			"hfsplus",
