@@ -221,38 +221,6 @@ info-or-man() {
 }
 alias man=info-or-man
 
-# Starts an process with arguments and restarts it when it exits,
-# slowing down the restart speed if the process returns a non-0
-# exit code.  Useful for development-mode servers that exit when
-# they detect source changes.
-restarter() {
-	local wait=0.0625
-	while true; do
-		echo -n -e '\e[33m'
-		print -n -P '[restarter] %D %*'
-		echo -E " starting ${*}"
-		echo -n -e '\e[39m'
-		# eval "$@" is need to make `restarter somealias args` work
-		# eval "${(q)@}" is need to make that work with spaces
-		eval "${(q)@}"
-		local exitcode=$?
-		if [[ $exitcode -eq 0 ]]; then
-			wait=0.0625
-		else
-			wait=$(( wait * 2))
-			# zsh adds a needless trailing . on integers
-			wait=${wait%%.}
-			if [[ $wait -gt 4 ]]; then
-				wait=4
-			fi
-		fi
-		echo -n -e '\e[33m'
-		echo -E "[restarter] Child exit code: $exitcode.  Restarting in $wait seconds..."
-		echo -n -e '\e[39m'
-		sleep $wait
-	done
-}
-
 . /etc/zsh/zsh-autosuggestions.zsh
 
 # https://github.com/zsh-users/zsh-autosuggestions#configuration
