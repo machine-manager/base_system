@@ -170,6 +170,7 @@ alias gca='git commit -a'
 alias gcam='git commit -a -m'
 alias tigm='TIG_DIFF_OPTS=--first-parent tig --first-parent -m'
 
+alias wget='wget --content-disposition --no-use-server-timestamps'
 alias aginir='apt-get install --no-install-recommends'
 
 # Typos caused by keyboard matrix circuit not releasing Shift fast enough
