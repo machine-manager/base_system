@@ -597,7 +597,6 @@ defmodule BaseSystem.Configure do
 			# kernel: audit: type=1400 audit(1509580980.586:74): apparmor="DENIED" operation="sendmsg"
 			# profile="/usr/sbin/apt-cacher-ng" name="/run/systemd/notify" pid=2597 comm="apt-cacher-ng"
 			# requested_mask="w" denied_mask="w" fsuid=110 ouid=0
-			"unbound",           # started before full MetaPackageInstalled
 			"locales",           # used by locale-gen below
 		] ++
 		case need_chrony do
@@ -609,36 +608,19 @@ defmodule BaseSystem.Configure do
 		end ++
 		extra_desired_early_packages
 
-		unbound_resolv_conf =
-			"""
-			nameserver 127.0.0.1
-			"""
-		cloudflare_resolv_conf =
+		resolv_conf =
 			"""
 			nameserver 1.1.1.1
 			nameserver 1.0.0.1
 			nameserver 2606:4700:4700::1111
 			nameserver 2606:4700:4700::1001
 			"""
-		unbound_unit =
-			%RedoAfterMeet{
-				marker:  marker("unbound.service"),
-				unit:    %All{units: [
-					conf_dir("/etc/unbound"),
-					conf_file("/etc/unbound/unbound.conf"),
-				]},
-				trigger: fn -> Util.systemd_unit_reload_or_restart_if_active("unbound.service") end
-			}
-		noop_unit = %All{units: []}
-		{maybe_unbound_unit, resolv_conf, resolver_test_ip, early_packages} = case low_memory do
-			false -> {unbound_unit, unbound_resolv_conf,    "127.0.0.1", early_packages}
-			true  -> {noop_unit,    cloudflare_resolv_conf, "1.1.1.1",   early_packages -- ["unbound"]}
-		end
+		resolver_test_ip = "1.1.1.1"
 
 		base_packages  = [
 			"bash-builtins",     # used by various scripts
 			"rsync",             # used by machine_manager to copy files to machine
-			"dnsutils",          # for dig, used below to make sure unbound works
+			"dnsutils",          # for dig, used below to make sure resolver works
 			"netbase",
 			"ifupdown",
 			"bridge-utils",
@@ -991,8 +973,6 @@ defmodule BaseSystem.Configure do
 				content: content("files/etc/zsh/zshrc.factory") <> "\n\n" <> "source /etc/zsh/zshrc-custom",
 				mode:    0o644
 			},
-
-			maybe_unbound_unit,
 
 			%RedoAfterMeet{
 				marker: marker("chrony.service"),
@@ -1547,11 +1527,7 @@ defmodule BaseSystem.Configure do
 				mod state state RELATED proto icmp ACCEPT;
 
 				outerface lo {
-					# Allow anyone to make DNS lookups using local unbound
-					proto (tcp udp) dport 53 ACCEPT;
-
 					mod owner uid-owner root {
-						proto tcp dport 8953                     ACCEPT; # unbound control port
 						proto tcp syn dport (22 904 #{ssh_port}) ACCEPT; # ssh
 					}
 				}
