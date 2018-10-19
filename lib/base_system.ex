@@ -1277,10 +1277,15 @@ defmodule BaseSystem.Configure do
 
 	defp preamble_hosts() do
 		[
-			["127.0.0.1", "localhost #{Util.get_hostname()}"],
-			["::1",       "localhost ip6-localhost ip6-loopback"],
-			["ff02::1",   "ip6-allnodes"],
-			["ff02::2",   "ip6-allrouters"],
+			# cloudflare dns doesn't resolve archive.is domains correctly
+			["127.0.0.1",    "localhost #{Util.get_hostname()}"],
+			["::1",          "localhost ip6-localhost ip6-loopback"],
+			["ff02::1",      "ip6-allnodes"],
+			["ff02::2",      "ip6-allrouters"],
+			["95.130.9.111", "archive.li"],
+			["95.130.9.111", "archive.is"],
+			["95.130.9.111", "archive.fo"],
+			["95.130.9.111", "archive.today"],
 		]
 	end
 
