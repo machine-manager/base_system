@@ -1009,13 +1009,9 @@ defmodule BaseSystem.Configure do
 			},
 
 			%EtcSystemdUnitFiles{
-				units: [
-					conf_file("/etc/systemd/system/fstrim.service"),
-					conf_file("/etc/systemd/system/fstrim.timer"),
-				] ++ extra_etc_systemd_unit_files,
+				units:      extra_etc_systemd_unit_files,
 				keep_units: extra_etc_systemd_keep_unit_files
 			},
-			%SystemdUnitEnabled{name: "fstrim.timer"},
 
 			%All{units: extra_pre_install_units},
 
